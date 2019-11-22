@@ -7,8 +7,9 @@ authors = ["***REMOVED*** ***REMOVED*** <***REMOVED***@***REMOVED***>"]
 [tool.poetry.dependencies]
 python = "^3.7"
 py-sonic = "^0.7.6"
-PySide2 = "^5.13"
 pyyaml = "^5.1"
+pyqt5 = "^5.13"
+pyqt5-stubs = "^5.13"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
