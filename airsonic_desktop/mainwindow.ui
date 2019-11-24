@@ -128,6 +128,12 @@
                                             <enum>Qt::Vertical</enum>
                                         </property>
                                         <widget class="QSplitter" name="splitter">
+                                            <property name="sizePolicy">
+                                                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>1</verstretch>
+                                                </sizepolicy>
+                                            </property>
                                             <property name="orientation">
                                                 <enum>Qt::Horizontal</enum>
                                             </property>
@@ -183,9 +189,7 @@
                                                                                 <string>Title</string>
                                                                             </property>
                                                                             <property name="textInteractionFlags">
-                                                                                <set>
-                                                                                    Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse
-                                                                                </set>
+                                                                                <set>Qt::NoTextInteraction</set>
                                                                             </property>
                                                                         </widget>
                                                                     </item>
@@ -201,9 +205,7 @@
                                                                                 <string>Artist</string>
                                                                             </property>
                                                                             <property name="textInteractionFlags">
-                                                                                <set>
-                                                                                    Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse
-                                                                                </set>
+                                                                                <set>Qt::NoTextInteraction</set>
                                                                             </property>
                                                                         </widget>
                                                                     </item>
@@ -285,18 +287,27 @@
                                                 </layout>
                                             </widget>
                                         </widget>
-                                        <widget class="QListWidget" name="playQueueList">
+                                        <widget class="QListView" name="playQueueList">
                                             <property name="sizePolicy">
                                                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                                                     <horstretch>0</horstretch>
                                                     <verstretch>0</verstretch>
                                                 </sizepolicy>
                                             </property>
+                                            <property name="selectionMode">
+                                                <enum>QAbstractItemView::MultiSelection</enum>
+                                            </property>
                                             <property name="flow">
                                                 <enum>QListView::TopToBottom</enum>
                                             </property>
+                                            <property name="resizeMode">
+                                                <enum>QListView::Adjust</enum>
+                                            </property>
                                             <property name="viewMode">
                                                 <enum>QListView::ListMode</enum>
+                                            </property>
+                                            <property name="uniformItemSizes">
+                                                <bool>true</bool>
                                             </property>
                                         </widget>
                                     </widget>
@@ -386,10 +397,6 @@
                                     </layout>
                                 </item>
                             </layout>
-                            <zorder>splitter_2</zorder>
-                            <zorder>playQueueList</zorder>
-                            <zorder>splitter_2</zorder>
-                            <zorder>verticalLayoutWidget_3</zorder>
                         </widget>
                     </widget>
                 </item>

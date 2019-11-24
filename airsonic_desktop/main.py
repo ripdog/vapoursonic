@@ -6,12 +6,17 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 
 import config
 from networkWorker import networkWorker
+from playbackController import playbackController
 from ui_mainwindow import Ui_AirsonicDesktop
 
 
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str)
 	loadAlbumWithId = pyqtSignal(int)
+
+
+playIcon = QIcon('icons/baseline-play-arrow.svg')
+pauseIcon = QIcon('icons/baseline-pause.svg')
 
 
 class MainWindow(QMainWindow):
@@ -41,6 +46,7 @@ class MainWindow(QMainWindow):
 		self.signals.loadAlbumWithId.connect(self.networkWorker.getAlbumSongs)
 		self.networkWorker.returnAlbumSongs.connect(self.displayLoadedSongs)
 
+		self.currentAlbum = None
 
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.config['domain'])
@@ -56,13 +62,14 @@ class MainWindow(QMainWindow):
 			self.populatePlayerUI()
 		else:
 			pass
+
 	# should slap an error somewhere lol
 
 	def populatePlayerUI(self):
 		# Populate icons
 		self.ui.nextTrack.setIcon(QIcon('icons/baseline-skip-next.svg'))
 		self.ui.prevTrack.setIcon(QIcon('icons/baseline-skip-previous.svg'))
-		self.ui.playPause.setIcon(QIcon('icons/baseline-play-arrow.svg'))
+		self.ui.playPause.setIcon(playIcon)
 		self.ui.stop.setIcon(QIcon('icons/baseline-stop.svg'))
 		self.ui.search.setClearButtonEnabled(True)
 		countIconPixmap = QIcon('icons/audio-spectrum.svg').pixmap(QSize(24, 24))
@@ -92,6 +99,24 @@ class MainWindow(QMainWindow):
 		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
 		self.ui.albumTrackList.setItemsExpandable(False)
 		self.ui.albumTrackList.setIndentation(0)
+		self.ui.albumTrackList.doubleClicked.connect(self.albumTrackListClick)
+		# populate play queue
+		self.playbackController = playbackController(self.networkWorker)
+		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
+		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
+		self.ui.playPause.clicked.connect(self.playbackController.playPause)
+
+	@pyqtSlot(object, str)
+	def updatePlayerUI(self, update, type):
+		if type == 'progress':
+			self.ui.trackProgressBar.setValue(update)
+		if type == 'title':
+			self.ui.currentPlayingLabel.setText(update)
+		if type == 'idle':
+			if update:
+				self.ui.playPause.setIcon(playIcon)
+			else:
+				self.ui.playPause.setIcon(pauseIcon)
 
 	def albumListClick(self, index):
 		item = self.albumTreeListModel.itemFromIndex(index)
@@ -107,15 +132,21 @@ class MainWindow(QMainWindow):
 				print('got data {}'.format(data))
 				self.signals.loadAlbumWithId.emit(data)
 
+	def albumTrackListClick(self, index):
+		item = self.albumTrackListModel.itemFromIndex(index)
+		text = item.text()
+		print('{} dblclicked in track list, adding to play queue'.format(text))
+		self.playbackController.playNow(self.currentAlbum['song'], item.data(1))
+
 	@pyqtSlot(object, str)
-	def displayLoadedAlbums(self, albums, type):
+	def displayLoadedAlbums(self, albums, albumType):
 		print(albums)
-		destination = self.albumTreeListModel.findItems(type.capitalize())
+		destination = self.albumTreeListModel.findItems(albumType.capitalize())
 		for item in albums['albumList2']['album']:
 			print(item)
 			standarditem = [QStandardItem(item['name']), QStandardItem(item['artist'])]
-			standarditem[0].setData(item['id'],
-									1)  # 1 is the 'data role'. I'm not sure what it is, perhaps a way to store
+			standarditem[0].setData(item['id'], 1)
+			# 1 is the 'data role'. I'm not sure what it is, perhaps a way to store
 			# multiple types of data in a single item?
 			standarditem[1].setData(item['id'], 1)
 			destination[0].appendRow(standarditem)
@@ -135,12 +166,18 @@ class MainWindow(QMainWindow):
 		except KeyError:
 			self.ui.selectedAlbumReleaseYear.setText('')
 		for song in albumsongs:
-			items = [QStandardItem(str(song['track'])),
-					 QStandardItem(song['title']),
-					 QStandardItem(song['artist'])]
+			items = []
+			if 'track' in song:
+				items.append(QStandardItem(str(song['track'])))
+			if 'title' in song:
+				items.append(QStandardItem(song['title']))
+			if 'artist' in song:
+				items.append(QStandardItem(song['artist']))
 			for item in items:
-				item.setData(song['id'], 1)
+				item.setData(song, 1)
 			self.albumTrackListModel.appendRow(items)
+		self.currentAlbum = albumdeets
+
 
 if __name__ == "__main__":
 	app = QApplication([])
