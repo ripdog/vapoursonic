@@ -105,6 +105,8 @@ class MainWindow(QMainWindow):
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
+		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSong)
+		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, type):
@@ -127,8 +129,8 @@ class MainWindow(QMainWindow):
 		elif text == "Random":
 			self.signals.loadAlbumsOfType.emit("random")
 		else:
-			if item.data(1):
-				data = int(item.data(1))
+			if item.data():
+				data = int(item.data())
 				print('got data {}'.format(data))
 				self.signals.loadAlbumWithId.emit(data)
 
@@ -136,7 +138,7 @@ class MainWindow(QMainWindow):
 		item = self.albumTrackListModel.itemFromIndex(index)
 		text = item.text()
 		print('{} dblclicked in track list, adding to play queue'.format(text))
-		self.playbackController.playNow(self.currentAlbum['song'], item.data(1))
+		self.playbackController.playNow(self.currentAlbum['song'], item.data())
 
 	@pyqtSlot(object, str)
 	def displayLoadedAlbums(self, albums, albumType):
@@ -145,10 +147,10 @@ class MainWindow(QMainWindow):
 		for item in albums['albumList2']['album']:
 			print(item)
 			standarditem = [QStandardItem(item['name']), QStandardItem(item['artist'])]
-			standarditem[0].setData(item['id'], 1)
+			standarditem[0].setData(item['id'])
 			# 1 is the 'data role'. I'm not sure what it is, perhaps a way to store
 			# multiple types of data in a single item?
-			standarditem[1].setData(item['id'], 1)
+			standarditem[1].setData(item['id'])
 			destination[0].appendRow(standarditem)
 
 	@pyqtSlot(object)
@@ -174,7 +176,7 @@ class MainWindow(QMainWindow):
 			if 'artist' in song:
 				items.append(QStandardItem(song['artist']))
 			for item in items:
-				item.setData(song, 1)
+				item.setData(song)
 			self.albumTrackListModel.appendRow(items)
 		self.currentAlbum = albumdeets
 
