@@ -53,6 +53,10 @@ class MainWindow(QMainWindow):
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
 
+		self.albumListState = 'home'
+
+	# options are 'home', 'albums', 'artists', 'recentlyAdded', 'recentlyPlayed', 'random', 'search', maybe folders?
+
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.config['domain'])
 		self.ui.usernameInput.setText(config.config['username'])
@@ -83,21 +87,28 @@ class MainWindow(QMainWindow):
 		self.ui.selectedAlbumReleaseYearIcon.setPixmap(yearIconPixmap)
 		self.ui.selectedAlbumTrackCountIcon.setPixmap(countIconPixmap)
 		self.ui.selectedAlbumTotalLengthIcon.setPixmap(lengthIconPixmap)
+		self.ui.albumListViewPreviousPage.setIcon(QIcon('icons/baseline-navigate-before.svg'))
+		self.ui.albumListViewPreviousPage.setText('')
+		self.ui.albumListViewNextPage.setIcon(QIcon('icons/baseline-navigate-next.svg'))
+		self.ui.albumListViewNextPage.setText('')
+		self.ui.albumListViewRefresh.setIcon(QIcon('icons/baseline-refresh.svg'))
+		self.ui.albumListViewRefresh.setText('')
+		self.ui.backHomeButton.setIcon(QIcon('icons/baseline-arrow-back.svg'))
+		self.ui.backHomeButton.setStyleSheet('QPushButton { text-align: left; }')
 		# Populate Left Panel
 		self.albumTreeListModel = QStandardItemModel()
-		for item in ['Playlists', 'Random', 'Recently Added', 'Artists', 'Albums', 'Folders']:
-			standardItem = QStandardItem(item)
-			if not item == "Random":
-				standardItem.appendRow(QStandardItem('Loading...'))
-			self.albumTreeListModel.appendRow(standardItem)
+		self.ui.backHomeButtonLayout.close()
+
 		self.ui.albumTreeList.setModel(self.albumTreeListModel)
 		self.ui.albumTreeList.setHeaderHidden(False)
 		self.ui.albumTreeList.clicked[QModelIndex].connect(self.albumListClick)
 		self.albumTreeListModel.setColumnCount(2)
-		self.albumTreeListModel.setHorizontalHeaderLabels(["Album", "Artists"])
+
 		self.ui.albumTreeList.setUniformRowHeights(True)
 		self.ui.albumTreeList.setColumnWidth(0, 300)
 		self.ui.albumTreeList.setIndentation(0)
+		self.ui.backHomeButton.clicked.connect(self.backHome)
+		self.backHome()
 		# populate right panel
 		self.albumTrackListModel = QStandardItemModel()
 		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
@@ -114,9 +125,12 @@ class MainWindow(QMainWindow):
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
 		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSong)
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
+		self.ui.trackProgressBar.sliderMoved.connect(self.playbackController.setTrackProgress)
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, type):
+		if type == 'total':
+			self.ui.trackProgressBar.setRange(0, update)
 		if type == 'progress':
 			self.ui.trackProgressBar.setValue(update)
 		if type == 'title':
@@ -131,10 +145,15 @@ class MainWindow(QMainWindow):
 		item = self.albumTreeListModel.itemFromIndex(index)
 		text = item.text()
 		print('{} clicked, attempting load...'.format(text))
-		if text == "Loading...":
-			pass
-		elif text == "Random":
-			self.signals.loadAlbumsOfType.emit("random")
+		if self.albumListState == 'home':
+			if text == "Random":
+				self.signals.loadAlbumsOfType.emit("random")
+			elif text == "Recently Added":
+				self.signals.loadAlbumsOfType.emit("recentlyAdded")
+			elif text == "Recently Played":
+				self.signals.loadAlbumsOfType.emit('recentlyPlayed')
+			elif text == 'Albums':
+				self.signals.loadAlbumsOfType.emit('albums')
 		else:
 			if item.data():
 				data = int(item.data())
@@ -147,10 +166,29 @@ class MainWindow(QMainWindow):
 		print('{} dblclicked in track list, adding to play queue'.format(text))
 		self.playbackController.playNow(self.currentAlbum['song'], item.data())
 
+	def changeAlbumListState(self, state):
+		self.albumListState = state
+		self.albumTreeListModel.clear()
+		if state != 'home':
+			self.ui.backHomeButtonLayout.setHidden(False)
+		else:
+			self.ui.backHomeButtonLayout.setHidden(True)
+
+	@pyqtSlot()
+	def backHome(self):
+		self.changeAlbumListState('home')
+		self.albumTreeListModel.setColumnCount(1)
+		self.ui.albumTreeList.setHeaderHidden(True)
+		for item in ['Playlists', 'Random', 'Recently Added', 'Recently Played', 'Artists', 'Albums', 'Folders']:
+			standardItem = QStandardItem(item)
+			self.albumTreeListModel.appendRow(standardItem)
+
 	@pyqtSlot(object, str)
 	def displayLoadedAlbums(self, albums, albumType):
 		print(albums)
-		destination = self.albumTreeListModel.findItems(albumType.capitalize())
+		self.changeAlbumListState(albumType)
+		self.albumTreeListModel.setHorizontalHeaderLabels(["Album", "Artists"])
+		self.ui.albumTreeList.setHeaderHidden(False)
 		for item in albums['albumList2']['album']:
 			print(item)
 			standarditem = [QStandardItem(item['name']), QStandardItem(item['artist'])]
@@ -158,7 +196,8 @@ class MainWindow(QMainWindow):
 			# 1 is the 'data role'. I'm not sure what it is, perhaps a way to store
 			# multiple types of data in a single item?
 			standarditem[1].setData(item['id'])
-			destination[0].appendRow(standarditem)
+			self.albumTreeListModel.appendRow(standarditem)
+		self.ui.albumTreeList.setColumnWidth(0, 250)
 
 	@pyqtSlot(object)
 	def displayLoadedSongs(self, album):
@@ -170,6 +209,7 @@ class MainWindow(QMainWindow):
 			self.signals.loadAlbumArtWithId.emit(albumdeets['coverArt'])
 		except KeyError:
 			print('no cover art :(')
+			self.ui.selectedAlbumArt.setText("No Art")
 			pass
 		self.ui.selectedAlbumTitle.setText(albumdeets['name'])
 		self.ui.selectedAlbumArtist.setText(albumdeets['artist'])
@@ -183,10 +223,16 @@ class MainWindow(QMainWindow):
 			items = []
 			if 'track' in song:
 				items.append(QStandardItem(str(song['track'])))
+			else:
+				items.append(QStandardItem("-"))
 			if 'title' in song:
 				items.append(QStandardItem(song['title']))
+			else:
+				items.append(QStandardItem("Unk. Title"))
 			if 'artist' in song:
 				items.append(QStandardItem(song['artist']))
+			else:
+				items.append(QStandardItem("Unk. Artist"))
 			for item in items:
 				item.setData(song)
 			self.albumTrackListModel.appendRow(items)
@@ -202,7 +248,6 @@ class MainWindow(QMainWindow):
 			image = QImage()
 			image.loadFromData(art)
 			self.ui.selectedAlbumArt.setPixmap(QPixmap.fromImage(image))
-			QMediaPlayer
 if __name__ == "__main__":
 	app = QApplication([])
 	window = MainWindow()

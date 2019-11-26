@@ -85,6 +85,7 @@ class playbackController(QObject):
 			os.stat(fulldir)
 			self.play(song)
 		except FileNotFoundError:
+			print('emitting getsonghandle')
 			self.getSongHandle.emit(song)
 
 	@pyqtSlot(object, object)
@@ -125,7 +126,7 @@ class playbackController(QObject):
 			self.changeCurrentSong(song)
 			self.loadIfNecessary(song)
 		else:  # if at top of queue, restart song.
-			self.currentPlayer.seek(0, 'absolute-percentage')
+			self.currentPlayer.seek(0, 'absolute-percentage+exact')
 
 	@pyqtSlot(QModelIndex)
 	def playSongFromQueue(self, index):
@@ -158,18 +159,26 @@ class playbackController(QObject):
 			return None
 
 	def updateProgressBar(self, _name, value):
-		progress = value
-		total = self.currentSong.data()['duration']
 		try:
-			percent = progress / total * 100
-		except TypeError:  # fires when we are called with a time of 0
-			percent = 100  # is this correct?!
+			total = self.currentSong.data()['duration']
+		except RuntimeError:
+			return
 		# print("progress: {}, percent: {}". format(value, percent))
-		self.updatePlayerUI.emit(math.ceil(percent), 'progress')
 		if value:
-			if math.floor(value) >= self.currentSong.data()['duration']:
+			self.updatePlayerUI.emit(math.ceil(self.currentSong.data()['duration']), 'total')
+			self.updatePlayerUI.emit(math.ceil(value), 'progress')
+			# print('mpv pos ceil\'d: {}, max: {}'.format(math.ceil(value), self.currentSong.data()['duration']))
+			if math.ceil(value) >= self.currentSong.data()['duration'] and \
+					self.currentSong.data()['title'] == self.currentPlayer['title']:
 				print('song appears done, skipping to next')
 				self.playNextSong()
+
+	@pyqtSlot(int)
+	def setTrackProgress(self, position):
+		try:
+			self.currentPlayer.command('seek', position, 'absolute')
+		except SystemError:
+			pass
 
 	def filenameChanged(self, _name, value):
 		if value:
@@ -197,6 +206,7 @@ class playbackController(QObject):
 			print('unable to find song in queue :(')
 
 	def updateSongDetails(self, _name, value):
+		print('emitting update title')
 		self.updatePlayerUI.emit(value, 'title')
 
 	def updateIdleState(self, _name, value):

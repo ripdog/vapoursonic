@@ -23,10 +23,16 @@ class networkWorker(QObject):
 		self.connectResult.emit(ping)
 
 	@pyqtSlot(str)
-	def getAlbumsOfType(self, type):
+	def getAlbumsOfType(self, type, page=0):
 		print('getting {} albums'.format(type))
 		if type == "random":
-			albums = self.connection.getAlbumList2('random', 50, 0)
+			albums = self.connection.getAlbumList2('random', 50, page)
+		elif type == 'recentlyAdded':
+			albums = self.connection.getAlbumList2('newest', 50, page)
+		elif type == 'recentlyPlayed':
+			albums = self.connection.getAlbumList2('recent', 50, page)
+		elif type == 'albums':
+			albums = self.connection.getAlbumList2('alphabeticalByName', 50, page)
 		self.returnAlbums.emit(albums, type)
 
 	@pyqtSlot(int)
