@@ -1,10 +1,11 @@
 from datetime import timedelta
 
-from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
+from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
 import config
+from albumArtLoader import albumArtLoader
 from networkWorker import networkWorker
 from playbackController import playbackController
 from ui_mainwindow import Ui_AirsonicDesktop
@@ -13,6 +14,7 @@ from ui_mainwindow import Ui_AirsonicDesktop
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str)
 	loadAlbumWithId = pyqtSignal(int)
+	loadAlbumArtWithId = pyqtSignal(str)
 
 
 playIcon = QIcon('icons/baseline-play-arrow.svg')
@@ -45,8 +47,11 @@ class MainWindow(QMainWindow):
 		self.signals.loadAlbumsOfType.connect(self.networkWorker.getAlbumsOfType)
 		self.signals.loadAlbumWithId.connect(self.networkWorker.getAlbumSongs)
 		self.networkWorker.returnAlbumSongs.connect(self.displayLoadedSongs)
+		self.signals.loadAlbumArtWithId.connect(self.networkWorker.getAlbumArtWithId)
+		self.networkWorker.returnAlbumArtHandle.connect(self.startAlbumArtLoad)
 
 		self.currentAlbum = None
+		self.albumArtLoaderThreads = QThreadPool()
 
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.config['domain'])
@@ -95,14 +100,16 @@ class MainWindow(QMainWindow):
 		self.ui.albumTreeList.setIndentation(0)
 		# populate right panel
 		self.albumTrackListModel = QStandardItemModel()
-		self.ui.albumTrackList.setModel(self.albumTrackListModel)
 		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
+		self.ui.albumTrackList.setModel(self.albumTrackListModel)
+
 		self.ui.albumTrackList.setItemsExpandable(False)
 		self.ui.albumTrackList.setIndentation(0)
 		self.ui.albumTrackList.doubleClicked.connect(self.albumTrackListClick)
 		# populate play queue
 		self.playbackController = playbackController(self.networkWorker)
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
+		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
 		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSong)
@@ -159,6 +166,11 @@ class MainWindow(QMainWindow):
 		self.albumTrackListModel.clear()
 		albumdeets = album['album']
 		albumsongs = albumdeets['song']
+		try:
+			self.signals.loadAlbumArtWithId.emit(albumdeets['coverArt'])
+		except KeyError:
+			print('no cover art :(')
+			pass
 		self.ui.selectedAlbumTitle.setText(albumdeets['name'])
 		self.ui.selectedAlbumArtist.setText(albumdeets['artist'])
 		self.ui.selectedAlbumTrackCount.setText(str(albumdeets['songCount']))
@@ -180,7 +192,17 @@ class MainWindow(QMainWindow):
 			self.albumTrackListModel.appendRow(items)
 		self.currentAlbum = albumdeets
 
+	def startAlbumArtLoad(self, handle, aid):
+		loader = albumArtLoader(handle, aid)
+		loader.signals.albumArtLoaded.connect(self.displayAlbumArt)
+		self.albumArtLoaderThreads.start(loader)
 
+	def displayAlbumArt(self, art, aid):
+		if aid == self.currentAlbum['coverArt']:
+			image = QImage()
+			image.loadFromData(art)
+			self.ui.selectedAlbumArt.setPixmap(QPixmap.fromImage(image))
+			QMediaPlayer
 if __name__ == "__main__":
 	app = QApplication([])
 	window = MainWindow()

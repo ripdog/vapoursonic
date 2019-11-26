@@ -3,8 +3,8 @@ import os
 import pathlib
 
 import mpv
-from PyQt5.QtCore import QObject, QThreadPool, QRunnable, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtCore import QObject, QThreadPool, QRunnable, pyqtSlot, pyqtSignal, QModelIndex
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 
 import config
 
@@ -32,11 +32,20 @@ class playbackController(QObject):
 		self.getSongHandle.connect(networkWorker.getSongHandle)
 		networkWorker.returnSongHandle.connect(self.preparePlay)
 
+	def changeCurrentSong(self, newsong):
+		if self.currentSong:
+			try:
+				self.currentSong.setIcon(QIcon())
+			except RuntimeError:
+				pass
+		self.currentSong = newsong
+		self.currentSong.setIcon(QIcon('icons/baseline-play-arrow.svg'))
+
 	def playNow(self, allSongs, song):
 		# replace the play queue with the album (allSongs), then play song from that album.
 		# should assert that song is in allSongs
 		self.playQueueModel.clear()
-		self.currentSong = self.addSongs(allSongs, song)
+		self.changeCurrentSong(self.addSongs(allSongs, song))
 		song = self.currentSong.data()
 		self.loadIfNecessary(song)
 
@@ -63,10 +72,14 @@ class playbackController(QObject):
 			self.playQueueModel.appendRow(standardItems)
 			if currentSong and currentSong['id'] == item['id']:
 				returnme = standardItems[0]
+		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
 		return returnme
 
 	def loadIfNecessary(self, song):
-		# TODO: Transcoding might cause us to get a different format, should change the extension somehow
+		try:
+			song = song.data()
+		except AttributeError:
+			pass
 		try:
 			fulldir = song['fullpath']
 			os.stat(fulldir)
@@ -91,7 +104,7 @@ class playbackController(QObject):
 			nextsong = self.getNextSong()
 			if nextsong:
 				print('preloading next song')
-				self.loadIfNecessary(nextsong.data())
+				self.loadIfNecessary(nextsong)
 		elif song['id'] == self.getNextSong().data()['id']:
 			self.currentPlayer.playlist_append(song['fullpath'])
 
@@ -99,8 +112,8 @@ class playbackController(QObject):
 	def playNextSong(self):
 		if self.getNextSong():
 			song = self.getNextSong()
-			self.currentSong = song
-			self.loadIfNecessary(song.data())
+			self.changeCurrentSong(song)
+			self.loadIfNecessary(song)
 		else:
 			# with no next song, either repeat (TODO) or stop.
 			self.currentPlayer.command('stop')
@@ -109,10 +122,17 @@ class playbackController(QObject):
 	def playPreviousSong(self):
 		if self.getPreviousSong():
 			song = self.getPreviousSong()
-			self.currentSong = song
-			self.loadIfNecessary(song.data())
+			self.changeCurrentSong(song)
+			self.loadIfNecessary(song)
 		else:  # if at top of queue, restart song.
 			self.currentPlayer.seek(0, 'absolute-percentage')
+
+	@pyqtSlot(QModelIndex)
+	def playSongFromQueue(self, index):
+		index = index.siblingAtColumn(0)
+		song = self.playQueueModel.itemFromIndex(index)
+		self.changeCurrentSong(song)
+		self.loadIfNecessary(song)
 
 	@pyqtSlot(object)
 	def evaluatePreload(self, song):
@@ -120,7 +140,7 @@ class playbackController(QObject):
 			nextsong = self.getNextSong()
 			if nextsong:
 				print('preloading next song')
-				self.loadIfNecessary(nextsong.data())
+				self.loadIfNecessary(nextsong)
 
 	def getPreviousSong(self):
 		currentindex = self.playQueueModel.indexFromItem(self.currentSong)
@@ -155,11 +175,14 @@ class playbackController(QObject):
 		if value:
 			print('MPV song changed. mpv path:')
 			print(value)
+			if value == os.path.basename(self.currentSong.data()['fullpath']):
+				print('no need to adjust currentSong')
+				return
 			try:
 				nextpath = self.getNextSong().data()['fullpath']
 				print(os.path.basename(nextpath))
 				if os.path.basename(nextpath) == value:
-					self.currentSong = self.getNextSong()
+					self.changeCurrentSong(self.getNextSong())
 					return
 			except AttributeError:
 				pass
@@ -169,7 +192,7 @@ class playbackController(QObject):
 				print('checking against {} '.format(path))
 				if path == value:
 					print('this is it!')
-					self.currentSong = self.playQueueModel.item(n, 0)
+					self.changeCurrentSong(self.playQueueModel.item(n, 0))
 					return
 			print('unable to find song in queue :(')
 
@@ -213,7 +236,7 @@ class songLoader(QRunnable):
 			while chunk := self.download.read(16384):
 				write.write(chunk)
 				writes += 1
-				if writes == 5:
+				if writes == 8:
 					self.signals.readyForPlay.emit(self.song)
 					print('emitted readyForPlay')
 		print('closed song {}'.format(self.song['title']))

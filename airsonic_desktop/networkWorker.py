@@ -8,6 +8,7 @@ class networkWorker(QObject):
 	returnAlbums = pyqtSignal(object, str)
 	returnAlbumSongs = pyqtSignal(object)
 	returnSongHandle = pyqtSignal(object, object)
+	returnAlbumArtHandle = pyqtSignal(object, str)
 
 	@pyqtSlot(str, str, str, result=bool)
 	def connectToServer(self, domain, username, password):
@@ -39,3 +40,7 @@ class networkWorker(QObject):
 		# TODO: set max bitrate if configured
 		handle = self.connection.stream(song['id'])
 		self.returnSongHandle.emit(song, handle)
+
+	@pyqtSlot(str)
+	def getAlbumArtWithId(self, id):
+		self.returnAlbumArtHandle.emit(self.connection.getCoverArt(id, 128), id)
