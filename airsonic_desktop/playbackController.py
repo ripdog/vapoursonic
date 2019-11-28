@@ -20,6 +20,9 @@ class playbackController(QObject):
 		self.songLoaderThreads = QThreadPool()
 
 		self.player = mpv.MPV(log_handler=print, loglevel='info')
+		self.player['cache'] = False
+		# self.player['cache-secs'] = 99999999.0
+		# self.player['demuxer-max-bytes'] = 99999999999
 		self.currentPlayer = self.player
 		self.player.observe_property('time-pos', self.updateProgressBar)
 		self.player.observe_property('media-title', self.updateSongDetails)
@@ -214,7 +217,7 @@ class playbackController(QObject):
 		self.updatePlayerUI.emit(value, 'idle')
 
 	@pyqtSlot(bool)
-	def playPause(self, clicked):
+	def playPause(self, clicked=False):
 		if self.currentPlayer['pause']:
 			self.currentPlayer['pause'] = False
 		else:

@@ -12,6 +12,7 @@ pyqt5 = "^5.13"
 pyqt5-stubs = "^5.13"
 python-vlc = "^3.0"
 python-mpv = "^0.3.10"
+pyqtkeybind = "^0.0.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"

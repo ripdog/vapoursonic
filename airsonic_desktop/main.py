@@ -1,8 +1,10 @@
 from datetime import timedelta
 
-from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage
+from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
+	QAbstractNativeEventFilter, QAbstractEventDispatcher
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage, QKeySequence
 from PyQt5.QtWidgets import QApplication, QMainWindow
+from pyqtkeybind import keybinder
 
 import config
 from albumArtLoader import albumArtLoader
@@ -19,6 +21,16 @@ class MainWindowSignals(QObject):
 
 playIcon = QIcon('icons/baseline-play-arrow.svg')
 pauseIcon = QIcon('icons/baseline-pause.svg')
+
+
+class WinEventFilter(QAbstractNativeEventFilter):
+	def __init__(self, keybinder):
+		self.keybinder = keybinder
+		super().__init__()
+
+	def nativeEventFilter(self, eventType, message):
+		ret = self.keybinder.handler(eventType, message)
+		return ret, 0
 
 
 class MainWindow(QMainWindow):
@@ -52,7 +64,6 @@ class MainWindow(QMainWindow):
 
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
-
 		self.albumListState = 'home'
 
 	# options are 'home', 'albums', 'artists', 'recentlyAdded', 'recentlyPlayed', 'random', 'search', maybe folders?
@@ -108,6 +119,7 @@ class MainWindow(QMainWindow):
 		self.ui.albumTreeList.setColumnWidth(0, 300)
 		self.ui.albumTreeList.setIndentation(0)
 		self.ui.backHomeButton.clicked.connect(self.backHome)
+		self.ui.albumListViewRefresh.clicked.connect(self.refreshAlbumListView)
 		self.backHome()
 		# populate right panel
 		self.albumTrackListModel = QStandardItemModel()
@@ -126,6 +138,13 @@ class MainWindow(QMainWindow):
 		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSong)
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
 		self.ui.trackProgressBar.sliderMoved.connect(self.playbackController.setTrackProgress)
+
+		# keybinding the media keys
+		keybinder.init()
+		keybinder.register_hotkey(self.winId(), QKeySequence("Media Play"), self.playbackController.playPause)
+		winEventFilter = WinEventFilter(keybinder)
+		eventDispatcher = QAbstractEventDispatcher.instance()
+		eventDispatcher.installNativeEventFilter(winEventFilter)
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, type):
@@ -146,19 +165,23 @@ class MainWindow(QMainWindow):
 		text = item.text()
 		print('{} clicked, attempting load...'.format(text))
 		if self.albumListState == 'home':
-			if text == "Random":
-				self.signals.loadAlbumsOfType.emit("random")
-			elif text == "Recently Added":
-				self.signals.loadAlbumsOfType.emit("recentlyAdded")
-			elif text == "Recently Played":
-				self.signals.loadAlbumsOfType.emit('recentlyPlayed')
-			elif text == 'Albums':
-				self.signals.loadAlbumsOfType.emit('albums')
+			self.loadDataforAlbumListView(text)
 		else:
 			if item.data():
 				data = int(item.data())
 				print('got data {}'.format(data))
 				self.signals.loadAlbumWithId.emit(data)
+
+	def loadDataforAlbumListView(self, type):
+		type = type.lower()
+		if type == "random":
+			self.signals.loadAlbumsOfType.emit("random")
+		elif type == "recently added":
+			self.signals.loadAlbumsOfType.emit("recentlyAdded")
+		elif type == "recently played":
+			self.signals.loadAlbumsOfType.emit('recentlyPlayed')
+		elif type == 'albums':
+			self.signals.loadAlbumsOfType.emit('albums')
 
 	def albumTrackListClick(self, index):
 		item = self.albumTrackListModel.itemFromIndex(index)
@@ -248,6 +271,11 @@ class MainWindow(QMainWindow):
 			image = QImage()
 			image.loadFromData(art)
 			self.ui.selectedAlbumArt.setPixmap(QPixmap.fromImage(image))
+
+	def refreshAlbumListView(self):
+		self.loadDataforAlbumListView(self.albumListState)
+
+
 if __name__ == "__main__":
 	app = QApplication([])
 	window = MainWindow()
