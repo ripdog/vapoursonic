@@ -1,7 +1,8 @@
 import yaml
 
 config = {'domain': 'example.com', 'username': 'yourUsername',
-		  'password': 'yourPassword', 'volume': 100, 'cacheLocation': 'cache'}
+		  'password': 'yourPassword', 'volume': 100, 'cacheLocation': 'cache',
+		  'appname': 'airsonic-desktop'}
 try:
 	with open('config.yaml') as file:
 		config = yaml.full_load(file)

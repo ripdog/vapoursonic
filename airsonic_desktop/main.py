@@ -1,9 +1,9 @@
 from datetime import timedelta
 
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
-	QAbstractNativeEventFilter, QAbstractEventDispatcher
+	QAbstractNativeEventFilter, QAbstractEventDispatcher, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage, QKeySequence
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu
 from pyqtkeybind import keybinder
 
 import config
@@ -129,13 +129,16 @@ class MainWindow(QMainWindow):
 		self.ui.albumTrackList.setItemsExpandable(False)
 		self.ui.albumTrackList.setIndentation(0)
 		self.ui.albumTrackList.doubleClicked.connect(self.albumTrackListClick)
+		self.ui.albumTrackList.setContextMenuPolicy(Qt.CustomContextMenu)
+		self.ui.albumTrackList.customContextMenuRequested.connect(self.openAlbumTrackListMenu)
+
 		# populate play queue
 		self.playbackController = playbackController(self.networkWorker)
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
 		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
-		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSong)
+		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSongExplicitly)
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
 		self.ui.trackProgressBar.sliderMoved.connect(self.playbackController.setTrackProgress)
 
@@ -275,6 +278,21 @@ class MainWindow(QMainWindow):
 	def refreshAlbumListView(self):
 		self.loadDataforAlbumListView(self.albumListState)
 
+	def openAlbumTrackListMenu(self, position):
+		if len(self.ui.albumTrackList.selectedIndexes()) > 0:
+			menu = QMenu()
+			playTracksNextAction = menu.addAction('Play Next')
+			playTracksLastAction = menu.addAction('Play Last')
+			action = menu.exec_(self.ui.albumTrackList.mapToGlobal(position))
+			if action == playTracksNextAction or action == playTracksLastAction:
+				songs = []
+				for item in self.ui.albumTrackList.selectedIndexes():
+					if item.column() == 0:
+						songs.append(self.albumTrackListModel.itemFromIndex(item).data())
+				if action == playTracksNextAction:
+					self.playbackController.addSongs(songs, afterCurrent=True)
+				else:
+					self.playbackController.addSongs(songs, afterCurrent=False)
 
 if __name__ == "__main__":
 	app = QApplication([])

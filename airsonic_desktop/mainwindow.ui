@@ -304,6 +304,9 @@
                                                             <property name="editTriggers">
                                                                 <set>QAbstractItemView::NoEditTriggers</set>
                                                             </property>
+                                                            <property name="selectionMode">
+                                                                <enum>QAbstractItemView::ExtendedSelection</enum>
+                                                            </property>
                                                             <attribute name="headerDefaultSectionSize">
                                                                 <number>17</number>
                                                             </attribute>
@@ -523,6 +526,9 @@
                                                             </property>
                                                             <property name="editTriggers">
                                                                 <set>QAbstractItemView::NoEditTriggers</set>
+                                                            </property>
+                                                            <property name="selectionMode">
+                                                                <enum>QAbstractItemView::ExtendedSelection</enum>
                                                             </property>
                                                         </widget>
                                                     </item>

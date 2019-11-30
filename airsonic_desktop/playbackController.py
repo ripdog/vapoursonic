@@ -1,16 +1,24 @@
 import math
 import os
-import pathlib
+from _md5 import md5
+from time import perf_counter, sleep
 
 import mpv
-from PyQt5.QtCore import QObject, QThreadPool, QRunnable, pyqtSlot, pyqtSignal, QModelIndex
+from PyQt5.QtCore import QObject, QThreadPool, pyqtSlot, pyqtSignal, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 
-import config
+from config import config
+
+
+def print1(level, prefix, message):
+	print('MPV 1 message: {}'.format(message))
+
+
+def print2(level, prefix, message):
+	print('MPV 2 message: {}'.format(message))
 
 
 class playbackController(QObject):
-	getSongHandle = pyqtSignal(object)
 	updatePlayerUI = pyqtSignal(object, str)
 
 	def __init__(self, networkWorker):
@@ -19,21 +27,25 @@ class playbackController(QObject):
 
 		self.songLoaderThreads = QThreadPool()
 
-		self.player = mpv.MPV(log_handler=print, loglevel='info')
-		self.player['cache'] = False
-		# self.player['cache-secs'] = 99999999.0
-		# self.player['demuxer-max-bytes'] = 99999999999
-		self.currentPlayer = self.player
-		self.player.observe_property('time-pos', self.updateProgressBar)
-		self.player.observe_property('media-title', self.updateSongDetails)
-		self.player.observe_property('pause', self.updateIdleState)
-		self.player.observe_property('filename', self.filenameChanged)
+		self.player1 = mpv.MPV(log_handler=print1, loglevel='info')
+		self.player2 = mpv.MPV(log_handler=print2, loglevel='info')
+		self.player1.playerNo = 1
+		self.player1['cache-secs'] = 99999999.0
+		self.player1['demuxer-max-bytes'] = 99999999999
+		self.player2.playerNo = 2
+		self.player2['cache-secs'] = 99999999.0
+		self.player2['demuxer-max-bytes'] = 99999999999
+		self.currentPlayer = self.player1
+		self.offPlayer = self.player2
 
 		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
 		self.currentSong = None
 		# signals
-		self.getSongHandle.connect(networkWorker.getSongHandle)
-		networkWorker.returnSongHandle.connect(self.preparePlay)
+		self.currentSongFullyLoaded = False
+		self.nextSongPreloaded = False
+
+		self.salt = md5(os.urandom(100)).hexdigest()
+		self.token = md5((config['password'] + self.salt).encode('utf-8')).hexdigest()
 
 	def changeCurrentSong(self, newsong):
 		if self.currentSong:
@@ -42,82 +54,108 @@ class playbackController(QObject):
 			except RuntimeError:
 				pass
 		self.currentSong = newsong
-		self.currentSong.setIcon(QIcon('icons/baseline-play-arrow.svg'))
+		if newsong:
+			self.currentSong.setIcon(QIcon('icons/baseline-play-arrow.svg'))
 
 	def playNow(self, allSongs, song):
 		# replace the play queue with the album (allSongs), then play song from that album.
 		# should assert that song is in allSongs
-		self.playQueueModel.clear()
+		self.clearPlayQueue()
 		self.changeCurrentSong(self.addSongs(allSongs, song))
-		song = self.currentSong.data()
-		self.loadIfNecessary(song)
+		self.playSong(song)
 
-	def improveSong(self, song):  # add expanded song path w/ cache
-		song['fullpath'] = os.path.abspath(os.path.join(config.config['cacheLocation'], song['path']))
-		pre, ext = os.path.splitext(song['fullpath'])
+	def clearPlayQueue(self):
+		self.playQueueModel.clear()
+		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
+
+	def connectObservables(self):
+		print('attempting to connect observables')
 		try:
-			song['fullpath'] = str(pathlib.Path(song['fullpath']).with_suffix("." + song['transcodedSuffix']))
-		except KeyError as e:
-			pass
-		return song
+			self.offPlayer.unobserve_property('time-pos', self.updateProgressBar)
+			self.offPlayer.unobserve_property('media-title', self.updateSongDetails)
+			self.offPlayer.unobserve_property('pause', self.updateIdleState)
+		except ValueError:
+			print('no need to unobserve yet')
+		self.currentPlayer.observe_property('time-pos', self.updateProgressBar)
+		self.currentPlayer.observe_property('media-title', self.updateSongDetails)
+		self.currentPlayer.observe_property('pause', self.updateIdleState)
 
-	def addSongs(self, songs, currentSong):
+	def addSongs(self, songs, currentSong=None, afterCurrent=False):
 		# pass in a list of song dicts from the subsonic api, not an album!
 		print('adding songs to playqueue')
 		print(songs)
+		returnme = None
+		if afterCurrent and self.currentSong:
+			row = self.playQueueModel.indexFromItem(self.currentSong).row() + 1
+		else:
+			row = None
 		for item in songs:
 			standardItems = []
-			item = self.improveSong(item)
 			for key in ['title', 'artist', 'album']:
 				standardItems.append(QStandardItem(item[key]))
 			for standardItem in standardItems:
 				standardItem.setData(item)
-			self.playQueueModel.appendRow(standardItems)
+			if row:
+				self.playQueueModel.insertRow(row, standardItems)
+				print('inserting row for {}'.format(item['title']))
+			else:
+				self.playQueueModel.appendRow(standardItems)
 			if currentSong and currentSong['id'] == item['id']:
 				returnme = standardItems[0]
-		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
+		if self.currentSongFullyLoaded and afterCurrent:
+			self.preloadNextSong(force=True)  # TODO: Is this safe? Should it happen
+		# regardless to ensure the correct song is preloaded?
 		return returnme
 
-	def loadIfNecessary(self, song):
+	def getUrlForSongId(self, id):
+		return config['fqdn'] + '/rest/download.view?f=json&v=1.15.0&c=' + \
+			   config['appname'] + '&u=' + config['username'] + '&s=' + self.salt + \
+			   '&t=' + self.token + '&id=' + id
+
+	def playSong(self, song):
+		# self.changeCurrentSong(song)
 		try:
 			song = song.data()
 		except AttributeError:
 			pass
-		try:
-			fulldir = song['fullpath']
-			os.stat(fulldir)
-			self.play(song)
-		except FileNotFoundError:
-			print('emitting getsonghandle')
-			self.getSongHandle.emit(song)
+		url = self.getUrlForSongId(song['id'])
+		self.connectObservables()
+		self.currentPlayer.play(url)
+		self.currentPlayer['pause'] = False
+		self.currentSongFullyLoaded = False
+		self.nextSongPreloaded = False
 
-	@pyqtSlot(object, object)
-	def preparePlay(self, song, download):
-		loader = songLoader(song, download)
-		loader.signals.readyForPlay.connect(self.play)
-		loader.signals.songLoadFinished.connect(self.evaluatePreload)
-		self.songLoaderThreads.start(loader)
+	def preloadNextSong(self, force=False):
+		if self.getNextSong() and (not self.nextSongPreloaded or force):
+			self.offPlayer['pause'] = True
+			self.offPlayer.play(
+				self.getUrlForSongId(
+					self.getNextSong().data()['id']
+				)
+			)
+			self.nextSongPreloaded = True
 
-	@pyqtSlot(object)
-	def play(self, song):
-		print('pre-load finished for {}'.format(song['title']))
-		if song['id'] == self.currentSong.data()['id']:
-			self.currentPlayer.playlist_clear()
-			self.currentPlayer.play(song['fullpath'])
-			self.currentPlayer['pause'] = False
-			nextsong = self.getNextSong()
-			if nextsong:
-				print('preloading next song')
-				self.loadIfNecessary(nextsong)
-		elif song['id'] == self.getNextSong().data()['id']:
-			self.currentPlayer.playlist_append(song['fullpath'])
+	def gaplesslyAdvance(self):
+		timeStart = perf_counter()
+		print('gaplesslyAdvancing to {}'.format(self.getNextSong().data()['title']))
+		self.changeCurrentSong(self.getNextSong())
+		self.currentPlayer, self.offPlayer = self.offPlayer, self.currentPlayer
+		self.connectObservables()
+		print('players swapped')
+		self.currentPlayer['pause'] = False
+		timeEnd = perf_counter()
+		print('this gaplessAdvance took {} seconds'.format(timeEnd - timeStart))
+		self.offPlayer.time_pos = 0
+		self.offPlayer.command('stop')
+		self.currentSongFullyLoaded = False
+		self.nextSongPreloaded = False
 
 	@pyqtSlot()
-	def playNextSong(self):
+	def playNextSongExplicitly(self):
 		if self.getNextSong():
 			song = self.getNextSong()
 			self.changeCurrentSong(song)
-			self.loadIfNecessary(song)
+			self.playSong(song)
 		else:
 			# with no next song, either repeat (TODO) or stop.
 			self.currentPlayer.command('stop')
@@ -127,7 +165,7 @@ class playbackController(QObject):
 		if self.getPreviousSong():
 			song = self.getPreviousSong()
 			self.changeCurrentSong(song)
-			self.loadIfNecessary(song)
+			self.playSong(song)
 		else:  # if at top of queue, restart song.
 			self.currentPlayer.seek(0, 'absolute-percentage+exact')
 
@@ -136,15 +174,7 @@ class playbackController(QObject):
 		index = index.siblingAtColumn(0)
 		song = self.playQueueModel.itemFromIndex(index)
 		self.changeCurrentSong(song)
-		self.loadIfNecessary(song)
-
-	@pyqtSlot(object)
-	def evaluatePreload(self, song):
-		if song['id'] == self.currentSong.data()['id']:
-			nextsong = self.getNextSong()
-			if nextsong:
-				print('preloading next song')
-				self.loadIfNecessary(nextsong)
+		self.playSong(song)
 
 	def getPreviousSong(self):
 		currentindex = self.playQueueModel.indexFromItem(self.currentSong)
@@ -154,66 +184,67 @@ class playbackController(QObject):
 			return None
 
 	def getNextSong(self):
-		currentindex = self.playQueueModel.indexFromItem(self.currentSong)
+		try:
+			currentindex = self.playQueueModel.indexFromItem(self.currentSong)
+		except RuntimeError:
+			return None
 		# print('got index for current song: {}'.format(currentindex.row()))
 		try:
 			return self.playQueueModel.item(currentindex.row() + 1, 0)
 		except AttributeError:
 			return None
 
-	def updateProgressBar(self, _name, value):
-		try:
+	def updateProgressBar(self, _name, _value):
+		try:  # observables might not be getting changed properly. Perhaps add handlers specific to each player which only run when their player is current? Ugh.
+			# Hold on, perhaps we could ignore `value` and just grab the value direct from self.currentPlayer?!
 			total = self.currentSong.data()['duration']
 		except RuntimeError:
+			print('updateProgressBar here: currentsong has been deleted.')
 			return
+		value = self.currentPlayer.time_pos  # Get the value direct from currentPlayer to ensure not getting a
+		duration = self.currentPlayer.duration
+		# leftover from offPlayer
 		# print("progress: {}, percent: {}". format(value, percent))
-		if value:
+		if value and duration:
 			self.updatePlayerUI.emit(math.ceil(self.currentSong.data()['duration']), 'total')
 			self.updatePlayerUI.emit(math.ceil(value), 'progress')
-			# print('mpv pos ceil\'d: {}, max: {}'.format(math.ceil(value), self.currentSong.data()['duration']))
-			if math.ceil(value) >= self.currentSong.data()['duration'] and \
-					self.currentSong.data()['title'] == self.currentPlayer['title']:
-				print('song appears done, skipping to next')
-				self.playNextSong()
+			#
+			# print('currentSongFullyLoaded: {}'.format(self.currentSongFullyLoaded))
+			if value >= duration / 2 and not self.currentSongFullyLoaded:
+				self.currentSongFullyLoaded = True
+				if self.getNextSong():
+					print('preloading {}'.format(self.getNextSong().data()['title']))
+					print('value: {}, duration: {}'.format(value, self.currentPlayer.duration))
+					self.preloadNextSong()
+			elif duration > 2 and \
+					duration - value <= 0.5:
+				if self.nextSongPreloaded:
+					print('Less than 0.5s remaining')
+					print('value: {}, duration: {}'.format(value, duration))
+					print('sleeping {} seconds'.format((duration - value) - 0.2))
+					sleep((duration - value) - 0.2)
+					print('current playback time: {}, duration: {}'.format(self.currentPlayer.time_pos, duration))
+					self.gaplesslyAdvance()
+				else:  # this should be the end of the queue
+					self.changeCurrentSong(None)
+
+	# print('mpv pos ceil\'d: {}, max: {}'.format(math.ceil(value), self.currentSong.data()['duration']))
 
 	@pyqtSlot(int)
 	def setTrackProgress(self, position):
 		try:
-			self.currentPlayer.command('seek', position, 'absolute')
+			self.currentPlayer.command('seek', position, 'absolute+exact')
 		except SystemError:
 			pass
 
-	def filenameChanged(self, _name, value):
-		if value:
-			print('MPV song changed. mpv path:')
-			print(value)
-			if value == os.path.basename(self.currentSong.data()['fullpath']):
-				print('no need to adjust currentSong')
-				return
-			try:
-				nextpath = self.getNextSong().data()['fullpath']
-				print(os.path.basename(nextpath))
-				if os.path.basename(nextpath) == value:
-					self.changeCurrentSong(self.getNextSong())
-					return
-			except AttributeError:
-				pass
-			for n in range(self.playQueueModel.rowCount()):
-				print(n)
-				path = os.path.basename(self.playQueueModel.item(n, 0).data()['fullpath'])
-				print('checking against {} '.format(path))
-				if path == value:
-					print('this is it!')
-					self.changeCurrentSong(self.playQueueModel.item(n, 0))
-					return
-			print('unable to find song in queue :(')
-
 	def updateSongDetails(self, _name, value):
-		print('emitting update title')
+		# print('emitting update title')
+		value = self.currentPlayer.media_title
 		self.updatePlayerUI.emit(value, 'title')
 
 	def updateIdleState(self, _name, value):
-		print('player idle state: {}'.format(value))
+		# print('player idle state: {}'.format(value))
+		value = self.currentPlayer.core_idle
 		self.updatePlayerUI.emit(value, 'idle')
 
 	@pyqtSlot(bool)
@@ -222,36 +253,3 @@ class playbackController(QObject):
 			self.currentPlayer['pause'] = False
 		else:
 			self.currentPlayer['pause'] = True
-
-
-class songLoaderSignals(QObject):
-	readyForPlay = pyqtSignal(object)
-	songLoadFinished = pyqtSignal(object)
-
-
-class songLoader(QRunnable):
-	def __init__(self, song, download):
-		super().__init__()
-		cacheDir = os.path.abspath(config.config['cacheLocation'])
-		if not os.path.isdir(cacheDir):
-			os.makedirs(cacheDir, exist_ok=True)
-		self.signals = songLoaderSignals()
-		self.song = song
-		self.download = download
-
-	def run(self):
-		print('loading song {}'.format(self.song['title']))
-		fulldir = self.song['fullpath']
-		dir = os.path.split(fulldir)
-		os.makedirs(dir[0], exist_ok=True)
-		writes = 0
-		with open(fulldir, 'wb', buffering=16384) as write:
-			while chunk := self.download.read(16384):
-				write.write(chunk)
-				writes += 1
-				if writes == 8:
-					self.signals.readyForPlay.emit(self.song)
-					print('emitted readyForPlay')
-		print('closed song {}'.format(self.song['title']))
-		self.signals.songLoadFinished.emit(self.song)
-# check for new file to dl?
