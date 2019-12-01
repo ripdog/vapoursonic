@@ -182,6 +182,7 @@ class playbackController(QObject):
 			return
 		if id == self.currentSong.data()['id']:
 			self.changeCurrentSong(self.getNextSong())
+		self.evaluateNextSongForLoad()
 
 	def playNow(self, allSongs, song):
 		# replace the play queue with the album (allSongs), then play song from that album.
