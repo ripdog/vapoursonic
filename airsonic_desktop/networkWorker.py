@@ -44,6 +44,10 @@ class networkWorker(QObject):
 		songs = self.connection.getAlbum(id)
 		self.returnAlbumSongs.emit(songs)
 
+	def getSongHandle(self, song):
+		# TODO: set max bitrate if configured
+		handle = self.connection.download(song['id'])
+		self.returnSongHandle.emit(song, handle)
 
 	# test urls: https://***REMOVED***/rest/download.view?f=json&v=1.15.0&c=airsonic-desktop&u=ripdog&s=bce396f3e7a0&t=4d0ad881fb5a66b0867af131eef68bf2&id=444
 	# https://***REMOVED***/rest/download.view?f=json&v=1.15.0&c=airsonic-desktop&u=ripdog&s=bce396f3e7a0&t=4d0ad881fb5a66b0867af131eef68bf2&id=437

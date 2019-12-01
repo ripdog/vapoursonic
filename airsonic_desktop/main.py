@@ -75,8 +75,8 @@ class MainWindow(QMainWindow):
 
 	@pyqtSlot(bool)
 	def connectResult(self, success):
-		print('got connect result: ')
-		print(success)
+		# print('got connect result: ')
+		# print(success)
 		if success:
 			self.ui.stackedWidget.setCurrentIndex(1)
 			self.populatePlayerUI()
@@ -172,7 +172,7 @@ class MainWindow(QMainWindow):
 		else:
 			if item.data():
 				data = int(item.data())
-				print('got data {}'.format(data))
+				# print('got data {}'.format(data))
 				self.signals.loadAlbumWithId.emit(data)
 
 	def loadDataforAlbumListView(self, type):
@@ -211,12 +211,12 @@ class MainWindow(QMainWindow):
 
 	@pyqtSlot(object, str)
 	def displayLoadedAlbums(self, albums, albumType):
-		print(albums)
+		# print(albums)
 		self.changeAlbumListState(albumType)
 		self.albumTreeListModel.setHorizontalHeaderLabels(["Album", "Artists"])
 		self.ui.albumTreeList.setHeaderHidden(False)
 		for item in albums['albumList2']['album']:
-			print(item)
+			# print(item)
 			standarditem = [QStandardItem(item['name']), QStandardItem(item['artist'])]
 			standarditem[0].setData(item['id'])
 			# 1 is the 'data role'. I'm not sure what it is, perhaps a way to store
@@ -227,8 +227,9 @@ class MainWindow(QMainWindow):
 
 	@pyqtSlot(object)
 	def displayLoadedSongs(self, album):
-		print(album)
+		# print(album)
 		self.albumTrackListModel.clear()
+		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
 		albumdeets = album['album']
 		albumsongs = albumdeets['song']
 		try:
