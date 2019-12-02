@@ -1,4 +1,5 @@
 import math
+import sys
 from time import sleep
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSlot, pyqtSignal, QModelIndex, QRunnable
@@ -24,25 +25,40 @@ class MpvStream(QObject):
 			try:
 				cache = self.playbackController.songCache[self.id][1]
 			except KeyError:
-				print('ERROR: Mpv trying to read unloaded song!')
+				print('ERROR: Mpv trying to read unloaded song! {}'.format(self.id))
 				sleep(0.1)
 				continue
-			attempts = 0
-			while True:
-				if len(cache) - self.readPos >= size:
-					# enough data or more than enough is available. Provide data and advance read position.
-					ret = cache[self.readPos:self.readPos + size]
-					self.readPos += size
-					return ret
-				elif len(cache) - self.readPos < size:
-					# insufficient cache to fufill entire request, just give the rest.
-					ret = cache[self.readPos:]
-					self.readPos = len(cache)
-					return ret
-				elif self.playbackController.songCache[self.id][0] == songLoadInProgress:
-					sleep(0.1)
-				else:
-					return b'0'
+			if len(cache) == self.readPos:
+				# fast case
+				return b''
+			if len(cache) >= (size + self.readPos):
+				# enough data or more than enough is available. Provide data and advance read position.
+				# print('returning full read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
+				# 																		 len(cache)))
+				# print('doing this because {} >= {}'.format(len(cache), size + self.readPos))
+				ret = cache[self.readPos:self.readPos + size]
+				# print('data size: {}'.format(len(ret)))
+				self.readPos += size
+				return ret
+			elif len(cache) < (size + self.readPos) \
+					and len(cache) - self.readPos > 0:
+				# insufficient cache to fufill entire request, just give the rest.
+				ret = cache[self.readPos:]
+				# print('returning partial read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id, len(cache)))
+				self.readPos = len(cache)
+				# print('data size: {}'.format(len(ret)))
+				return ret
+			elif self.playbackController.songCache[self.id][0] == songLoadInProgress or \
+					self.playbackController.songCache[self.id][0] == songLoadBegun:
+				# print('No data available, waiting. size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id, len(cache)))
+				sleep(0.1)
+			else:
+				# print('Returning 0 from read. size {}, readPos {}, id {}, len {}, song status: {}'.format(size,
+				# 										  self.readPos,
+				# 										  self.id,
+				# 										  len(cache),
+				# 										  self.playbackController.songCache[self.id][0]))
+				return b''
 
 	def seek(self, offset):
 		print('seeking song {} to offset {}'.format(self.id, offset))
@@ -73,7 +89,6 @@ class playbackController(QObject):
 	def __init__(self, networkWorker):
 		super(playbackController, self).__init__()
 		self.playQueueModel = QStandardItemModel()
-
 		self.songLoaderThreads = QThreadPool()
 
 		self.player = mpv.MPV(log_handler=my_log, loglevel='info')
@@ -131,6 +146,8 @@ class playbackController(QObject):
 				self.beginSongLoad(self.getNextSong().data())
 
 	def changeCurrentSong(self, newsong):
+		if newsong == None:
+			print('setting current song to None. Caller: {}'.format(sys._getframe().f_back.f_code.co_name))
 		if self.currentSong:
 			try:
 				self.currentSong.setIcon(QIcon())
@@ -170,9 +187,17 @@ class playbackController(QObject):
 			self.songCache[id] = [1, b'']
 		self.songCache[id][0] = songLoadInProgress
 		self.songCache[id][1] += chunk
-		#	print('chunk received for {}, size now {}'.format(id, len(self.songCache[id][1])))
-		if self.player.path != 'airsonic://{}'.format(self.currentSong.data()['id']):
-			self.playSong(self.currentSong)
+		# print('chunk received for {}, size now {}'.format(id, len(self.songCache[id][1])))
+		try:
+			if not self.currentSong.data()['id'] in self.player.path \
+					and len(self.songCache[id][1]) >= 131072:
+				self.playSong(self.currentSong)
+		except AttributeError:
+			print('loadSongWithHandle called without currentSong!')
+		except TypeError:
+			# this happens when mpv doesn't have a song loaded at all.
+			if len(self.songCache[id][1]) >= 131072 and self.currentSong:
+				self.playSong(self.currentSong)
 
 	def songClose(self, id):
 		try:
@@ -180,6 +205,8 @@ class playbackController(QObject):
 		except KeyError:
 			# this should only happen when the play queue has been cleared, so bail
 			return
+		# if not self.currentSongFullyLoaded(): WORK ON THIS FURTHER?!
+		# 	self.songLoadingCancel.set()
 		if id == self.currentSong.data()['id']:
 			self.changeCurrentSong(self.getNextSong())
 		self.evaluateNextSongForLoad()
@@ -235,7 +262,7 @@ class playbackController(QObject):
 		while True:
 			song = self.playQueueModel.item(index, 0)
 			if song:
-				self.player.playlist_append('airsonic://' + song.data()['id'])
+				self.player.playlist_append('airsonic://{}'.format(song.data()['id']))
 				index += 1
 			else:
 				break
@@ -247,6 +274,7 @@ class playbackController(QObject):
 		except AttributeError:
 			pass
 		url = "airsonic://" + song['id']
+		print('playing {}'.format(url))
 		self.player.play(url)
 		self.player['pause'] = False
 		self.syncMpvPlaylist()
@@ -274,6 +302,7 @@ class playbackController(QObject):
 	def playSongFromQueue(self, index):
 		index = index.siblingAtColumn(0)
 		song = self.playQueueModel.itemFromIndex(index)
+		print('playing {} from queue click'.format(song.data()['title']))
 		self.changeCurrentSong(song)
 		self.beginSongLoad(song.data())
 
@@ -357,6 +386,5 @@ class songLoader(QRunnable):
 		id = self.song['id']
 		while chunk := self.download.read(65536):
 			self.signals.songChunkReturn.emit(id, chunk)
-		# print('emitted songChunkReturn')
 		print('Song load finished for {}'.format(self.song['title']))
 		self.signals.songLoadFinished.emit(self.song)
