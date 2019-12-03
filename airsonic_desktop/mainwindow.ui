@@ -131,24 +131,6 @@
                                             <bool>false</bool>
                                         </property>
                                         <widget class="QSplitter" name="splitter">
-                                            <property name="sizePolicy">
-                                                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                                                    <horstretch>0</horstretch>
-                                                    <verstretch>1</verstretch>
-                                                </sizepolicy>
-                                            </property>
-                                            <property name="maximumSize">
-                                                <size>
-                                                    <width>16777215</width>
-                                                    <height>16777215</height>
-                                                </size>
-                                            </property>
-                                            <property name="baseSize">
-                                                <size>
-                                                    <width>0</width>
-                                                    <height>0</height>
-                                                </size>
-                                            </property>
                                             <property name="orientation">
                                                 <enum>Qt::Horizontal</enum>
                                             </property>
@@ -186,6 +168,9 @@
                                                                                 <width>250</width>
                                                                                 <height>35</height>
                                                                             </size>
+                                                                        </property>
+                                                                        <property name="toolTip">
+                                                                            <string>Return to the home screen.</string>
                                                                         </property>
                                                                         <property name="text">
                                                                             <string>Back</string>
@@ -236,6 +221,11 @@
                                                                                 <height>35</height>
                                                                             </size>
                                                                         </property>
+                                                                        <property name="toolTip">
+                                                                            <string>Return to the previous page of query
+                                                                                results.
+                                                                            </string>
+                                                                        </property>
                                                                         <property name="text">
                                                                             <string>Prev</string>
                                                                         </property>
@@ -259,6 +249,9 @@
                                                                                 <height>35</height>
                                                                             </size>
                                                                         </property>
+                                                                        <property name="toolTip">
+                                                                            <string>Refresh the current view.</string>
+                                                                        </property>
                                                                         <property name="text">
                                                                             <string>Refresh</string>
                                                                         </property>
@@ -281,6 +274,11 @@
                                                                                 <width>35</width>
                                                                                 <height>35</height>
                                                                             </size>
+                                                                        </property>
+                                                                        <property name="toolTip">
+                                                                            <string>Advance to the next page of query
+                                                                                results.
+                                                                            </string>
                                                                         </property>
                                                                         <property name="text">
                                                                             <string>Next</string>
@@ -314,8 +312,11 @@
                                                     </item>
                                                 </layout>
                                             </widget>
-                                            <widget class="QWidget" name="verticalLayoutWidget">
-                                                <layout class="QVBoxLayout" name="selectedAlbum">
+                                            <widget class="QWidget" name="verticalLayoutWidget_2">
+                                                <layout class="QVBoxLayout" name="selectAlbumDetailsAndListLayout">
+                                                    <property name="sizeConstraint">
+                                                        <enum>QLayout::SetDefaultConstraint</enum>
+                                                    </property>
                                                     <item>
                                                         <layout class="QHBoxLayout" name="selectedAlbumDetails">
                                                             <item>
@@ -520,9 +521,15 @@
                                                         <widget class="QTreeView" name="albumTrackList">
                                                             <property name="sizePolicy">
                                                                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                                                                    <horstretch>1</horstretch>
+                                                                    <horstretch>0</horstretch>
                                                                     <verstretch>0</verstretch>
                                                                 </sizepolicy>
+                                                            </property>
+                                                            <property name="minimumSize">
+                                                                <size>
+                                                                    <width>500</width>
+                                                                    <height>0</height>
+                                                                </size>
                                                             </property>
                                                             <property name="editTriggers">
                                                                 <set>QAbstractItemView::NoEditTriggers</set>
@@ -535,19 +542,68 @@
                                                 </layout>
                                             </widget>
                                         </widget>
-                                        <widget class="QTreeView" name="playQueueList">
-                                            <property name="sizePolicy">
-                                                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                                                    <horstretch>0</horstretch>
-                                                    <verstretch>0</verstretch>
-                                                </sizepolicy>
-                                            </property>
-                                            <property name="editTriggers">
-                                                <set>QAbstractItemView::NoEditTriggers</set>
-                                            </property>
-                                            <property name="selectionMode">
-                                                <enum>QAbstractItemView::ExtendedSelection</enum>
-                                            </property>
+                                        <widget class="QWidget" name="horizontalLayoutWidget">
+                                            <layout class="QHBoxLayout" name="playQueueListLayout">
+                                                <item>
+                                                    <widget class="QTreeView" name="playQueueList">
+                                                        <property name="sizePolicy">
+                                                            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                                                                <horstretch>0</horstretch>
+                                                                <verstretch>0</verstretch>
+                                                            </sizepolicy>
+                                                        </property>
+                                                        <property name="editTriggers">
+                                                            <set>QAbstractItemView::NoEditTriggers</set>
+                                                        </property>
+                                                        <property name="selectionMode">
+                                                            <enum>QAbstractItemView::ExtendedSelection</enum>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <layout class="QVBoxLayout" name="playQueueToolboxLayout">
+                                                        <item>
+                                                            <widget class="QToolButton"
+                                                                    name="toggleFollowPlayedTrackButton">
+                                                                <property name="toolTip">
+                                                                    <string>Toggle whether the play queue selects the
+                                                                        currently playing song.
+                                                                    </string>
+                                                                </property>
+                                                                <property name="text">
+                                                                    <string>...</string>
+                                                                </property>
+                                                                <property name="checkable">
+                                                                    <bool>true</bool>
+                                                                </property>
+                                                            </widget>
+                                                        </item>
+                                                        <item>
+                                                            <widget class="QToolButton" name="shufflePlayqueueButton">
+                                                                <property name="toolTip">
+                                                                    <string>Shuffles the play queue.</string>
+                                                                </property>
+                                                                <property name="text">
+                                                                    <string>...</string>
+                                                                </property>
+                                                            </widget>
+                                                        </item>
+                                                        <item>
+                                                            <spacer name="playQueueToolboxSpacer">
+                                                                <property name="orientation">
+                                                                    <enum>Qt::Vertical</enum>
+                                                                </property>
+                                                                <property name="sizeHint" stdset="0">
+                                                                    <size>
+                                                                        <width>20</width>
+                                                                        <height>40</height>
+                                                                    </size>
+                                                                </property>
+                                                            </spacer>
+                                                        </item>
+                                                    </layout>
+                                                </item>
+                                            </layout>
                                         </widget>
                                     </widget>
                                 </item>
@@ -622,6 +678,9 @@
                                         </item>
                                         <item>
                                             <widget class="QSlider" name="trackProgressBar">
+                                                <property name="tracking">
+                                                    <bool>false</bool>
+                                                </property>
                                                 <property name="orientation">
                                                     <enum>Qt::Horizontal</enum>
                                                 </property>

@@ -1,11 +1,15 @@
 from datetime import timedelta
 
+import keyboard
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
-	QAbstractNativeEventFilter, QAbstractEventDispatcher, Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage, QKeySequence
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu
-from pyqtkeybind import keybinder
+	Qt, QItemSelectionModel
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QStyle, QAbstractItemView
 
+try:
+	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
+except ImportError:
+	pass
 import config
 from albumArtLoader import albumArtLoader
 from networkWorker import networkWorker
@@ -17,20 +21,13 @@ class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str)
 	loadAlbumWithId = pyqtSignal(int)
 	loadAlbumArtWithId = pyqtSignal(str)
-
+	playbackControl = pyqtSignal(str)
+	getPlaylists = pyqtSignal()
+	loadPlaylistSongs = pyqtSignal(str)
 
 playIcon = QIcon('icons/baseline-play-arrow.svg')
 pauseIcon = QIcon('icons/baseline-pause.svg')
 
-
-class WinEventFilter(QAbstractNativeEventFilter):
-	def __init__(self, keybinder):
-		self.keybinder = keybinder
-		super().__init__()
-
-	def nativeEventFilter(self, eventType, message):
-		ret = self.keybinder.handler(eventType, message)
-		return ret, 0
 
 
 class MainWindow(QMainWindow):
@@ -61,6 +58,10 @@ class MainWindow(QMainWindow):
 		self.networkWorker.returnAlbumSongs.connect(self.displayLoadedSongs)
 		self.signals.loadAlbumArtWithId.connect(self.networkWorker.getAlbumArtWithId)
 		self.networkWorker.returnAlbumArtHandle.connect(self.startAlbumArtLoad)
+		self.signals.getPlaylists.connect(self.networkWorker.getPlaylists)
+		self.networkWorker.returnPlaylists.connect(self.receivePlaylists)
+		self.signals.loadPlaylistSongs.connect(self.networkWorker.getPlaylistSongs)
+		self.networkWorker.returnPlaylistSongs.connect(self.displayLoadedSongs)
 
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
@@ -85,7 +86,7 @@ class MainWindow(QMainWindow):
 
 	# should slap an error somewhere lol
 
-	def populatePlayerUI(self):
+	def populateIcons(self):
 		# Populate icons
 		self.ui.nextTrack.setIcon(QIcon('icons/baseline-skip-next.svg'))
 		self.ui.prevTrack.setIcon(QIcon('icons/baseline-skip-previous.svg'))
@@ -106,6 +107,13 @@ class MainWindow(QMainWindow):
 		self.ui.albumListViewRefresh.setText('')
 		self.ui.backHomeButton.setIcon(QIcon('icons/baseline-arrow-back.svg'))
 		self.ui.backHomeButton.setStyleSheet('QPushButton { text-align: left; }')
+		self.ui.shufflePlayqueueButton.setIcon(QIcon('icons/baseline-shuffle.svg'))
+		followPlayedTrackIcon = QIcon()
+		# followPlayedTrackIcon.addFile('icons/baseline-location-disabled.svg', mode=QIcon.Active)
+		# followPlayedTrackIcon.addFile('icons/baseline-my-location.svg', mode=QIcon.Normal)
+		self.ui.toggleFollowPlayedTrackButton.setIcon(QIcon('icons/baseline-my-location.svg'))
+
+	def populateLeftPanel(self):
 		# Populate Left Panel
 		self.albumTreeListModel = QStandardItemModel()
 		self.ui.backHomeButtonLayout.close()
@@ -113,6 +121,7 @@ class MainWindow(QMainWindow):
 		self.ui.albumTreeList.setModel(self.albumTreeListModel)
 		self.ui.albumTreeList.setHeaderHidden(False)
 		self.ui.albumTreeList.clicked[QModelIndex].connect(self.albumListClick)
+		self.ui.albumTreeList.setAlternatingRowColors(True)
 		self.albumTreeListModel.setColumnCount(2)
 
 		self.ui.albumTreeList.setUniformRowHeights(True)
@@ -121,47 +130,134 @@ class MainWindow(QMainWindow):
 		self.ui.backHomeButton.clicked.connect(self.backHome)
 		self.ui.albumListViewRefresh.clicked.connect(self.refreshAlbumListView)
 		self.backHome()
+
+	def populateRightPanel(self):
 		# populate right panel
 		self.albumTrackListModel = QStandardItemModel()
 		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
 		self.ui.albumTrackList.setModel(self.albumTrackListModel)
 
+		self.ui.albumTrackList.setAlternatingRowColors(True)
 		self.ui.albumTrackList.setItemsExpandable(False)
 		self.ui.albumTrackList.setIndentation(0)
-		self.ui.albumTrackList.doubleClicked.connect(self.albumTrackListClick)
+		self.ui.albumTrackList.doubleClicked.connect(self.albumTrackListDoubleClick)
 		self.ui.albumTrackList.setContextMenuPolicy(Qt.CustomContextMenu)
 		self.ui.albumTrackList.customContextMenuRequested.connect(self.openAlbumTrackListMenu)
 
+	def populatePlayQueue(self):
 		# populate play queue
 		self.playbackController = playbackController(self.networkWorker)
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
 		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
+		self.ui.playQueueList.setAlternatingRowColors(True)
 		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSongExplicitly)
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
+		self.ui.stop.clicked.connect(self.playbackController.stop)
+		self.signals.playbackControl.connect(self.playbackController.playbackControl)
 		self.ui.trackProgressBar.sliderMoved.connect(self.playbackController.setTrackProgress)
+		self.ui.trackProgressBar.setTracking(False)
+		self.ui.toggleFollowPlayedTrackButton.setChecked(True)
+		self.followPlayedTrack = True
+		self.ui.toggleFollowPlayedTrackButton.clicked.connect(self.updateFollowPlayedTrack)
+		self.ui.shufflePlayqueueButton.clicked.connect(self.playbackController.shufflePlayQueue)
+
+	def populateThumbnailToolbar(self):
+		self.thumbnailToolBar = QWinThumbnailToolBar(self)
+		self.thumbnailToolBar.setWindow(self.windowHandle())
+
+		self.playToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
+		self.playToolbarButton.setEnabled(True)
+		self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+		self.playToolbarButton.clicked.connect(self.playbackController.playPause)
+
+		self.prevToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
+		self.prevToolbarButton.setEnabled(True)
+		self.prevToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipBackward))
+		self.prevToolbarButton.clicked.connect(self.playbackController.playPreviousSong)
+
+		self.nextToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
+		self.nextToolbarButton.setEnabled(True)
+		self.nextToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipForward))
+		self.nextToolbarButton.clicked.connect(self.playbackController.playNextSongExplicitly)
+
+		self.thumbnailToolBar.addButton(self.prevToolbarButton)
+		self.thumbnailToolBar.addButton(self.playToolbarButton)
+		self.thumbnailToolBar.addButton(self.nextToolbarButton)
+
+	def bindMediaKeys(self):  # it's borked, capn
+		self.keyHook = keyboard.hook_key('play/pause media', self.playPause)
+		print(keyboard._hooks)
+
+	def cachePlaylists(self):
+		self.signals.getPlaylists.emit()
+
+	def populatePlayerUI(self):
+		self.populateIcons()
+
+		self.populateLeftPanel()
+
+		self.populateRightPanel()
+
+		self.populatePlayQueue()
+
+		self.populateThumbnailToolbar()
+
+		self.bindMediaKeys()
+
+		self.cachePlaylists()
 
 		# keybinding the media keys
-		keybinder.init()
-		keybinder.register_hotkey(self.winId(), QKeySequence("Media Play"), self.playbackController.playPause)
-		winEventFilter = WinEventFilter(keybinder)
-		eventDispatcher = QAbstractEventDispatcher.instance()
-		eventDispatcher.installNativeEventFilter(winEventFilter)
+		# keybinder.init()
+		# keybinder.register_hotkey(self.winId(), QKeySequence("Media Play"), self.playbackController.playPause)
+		if QWinTaskbarProgress:
+			self.taskbarButton = QWinTaskbarButton(self)
+			self.taskbarButton.setWindow(self.windowHandle())
+			self.taskbarProgress = self.taskbarButton.progress()
+		else:
+			self.taskbarProgress = None
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, type):
 		if type == 'total':
 			self.ui.trackProgressBar.setRange(0, update)
+			if self.taskbarProgress:
+				self.taskbarProgress.setMaximum(update)
 		if type == 'progress':
 			self.ui.trackProgressBar.setValue(update)
+			if self.taskbarProgress:
+				self.taskbarProgress.setValue(update)
 		if type == 'title':
 			self.ui.currentPlayingLabel.setText(update)
+		elif type == 'scrollTo':
+			if self.followPlayedTrack:
+				self.ui.playQueueList.scrollTo(update, QAbstractItemView.PositionAtTop)
+				self.ui.playQueueList.selectionModel().select(update, QItemSelectionModel.ClearAndSelect)
 		if type == 'idle':
 			if update:
 				self.ui.playPause.setIcon(playIcon)
+				if self.taskbarProgress:
+					self.taskbarProgress.setPaused(True)
+					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
 			else:
 				self.ui.playPause.setIcon(pauseIcon)
+				if self.taskbarProgress:
+					self.taskbarProgress.setPaused(False)
+					self.taskbarProgress.setVisible(True)
+					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
+
+	def updateFollowPlayedTrack(self):
+		if self.followPlayedTrack:
+			self.followPlayedTrack = False
+		# self.ui.toggleFollowPlayedTrackButton.setChecked(False)
+		else:
+			self.followPlayedTrack = True
+		# self.ui.toggleFollowPlayedTrackButton.setChecked(True)
+
+	def playPause(self):
+		print('playPause hotkey hit')
+		self.signals.playbackControl.emit('playPause')
 
 	def albumListClick(self, index):
 		item = self.albumTreeListModel.itemFromIndex(index)
@@ -169,14 +265,39 @@ class MainWindow(QMainWindow):
 		print('{} clicked, attempting load...'.format(text))
 		if self.albumListState == 'home':
 			self.loadDataforAlbumListView(text)
+		elif self.albumListState == 'playlists':
+			self.loadPlaylistSongs(item.data())
 		else:
 			if item.data():
 				data = int(item.data())
 				# print('got data {}'.format(data))
 				self.signals.loadAlbumWithId.emit(data)
 
+	def loadPlaylistSongs(self, id):
+		self.signals.loadPlaylistSongs.emit(id)
+
+	def receivePlaylists(self, playlists):
+		self.playlistCache = []
+		print(playlists)
+		if 'status' in playlists.keys() and playlists['status'] == 'ok':
+			self.playlistCache = playlists['playlists']['playlist']
+			if self.albumListState == 'playlists':
+				self.albumTreeListModel.setHorizontalHeaderLabels(["Playlist", 'Song Count'])
+				self.ui.albumTreeList.setHeaderHidden(False)
+				for playlist in playlists['playlists']['playlist']:
+					items = []
+					item = QStandardItem(playlist['name'])
+					item.setData(playlist['id'])
+					items.append(item)
+					item = QStandardItem(str(playlist['songCount']))
+					item.setData(playlist['id'])
+					items.append(item)
+					self.albumTreeListModel.appendRow(items)
+
 	def loadDataforAlbumListView(self, type):
 		type = type.lower()
+		self.changeAlbumListState(type)
+
 		if type == "random":
 			self.signals.loadAlbumsOfType.emit("random")
 		elif type == "recently added":
@@ -185,8 +306,10 @@ class MainWindow(QMainWindow):
 			self.signals.loadAlbumsOfType.emit('recentlyPlayed')
 		elif type == 'albums':
 			self.signals.loadAlbumsOfType.emit('albums')
+		elif type == 'playlists':
+			self.signals.getPlaylists.emit()
 
-	def albumTrackListClick(self, index):
+	def albumTrackListDoubleClick(self, index):
 		item = self.albumTrackListModel.itemFromIndex(index)
 		text = item.text()
 		print('{} dblclicked in track list, adding to play queue'.format(text))
@@ -212,7 +335,6 @@ class MainWindow(QMainWindow):
 	@pyqtSlot(object, str)
 	def displayLoadedAlbums(self, albums, albumType):
 		# print(albums)
-		self.changeAlbumListState(albumType)
 		self.albumTreeListModel.setHorizontalHeaderLabels(["Album", "Artists"])
 		self.ui.albumTreeList.setHeaderHidden(False)
 		for item in albums['albumList2']['album']:
@@ -225,13 +347,32 @@ class MainWindow(QMainWindow):
 			self.albumTreeListModel.appendRow(standarditem)
 		self.ui.albumTreeList.setColumnWidth(0, 250)
 
+	def playlistFromCacheById(self, id):
+		for item in self.playlistCache:
+			if item['id'] == id:
+				return item
+		return None
+
 	@pyqtSlot(object)
 	def displayLoadedSongs(self, album):
-		# print(album)
+		songs = []
+		if 'album' in album:
+			albumdeets = album['album']
+			songs = albumdeets['song']
+		elif 'playlist' in album:
+			print(album)
+			songs = album['playlist']['entry']
+			albumdeets = {}
+			albumdeets['name'] = album['playlist']['name']
+			albumdeets['artist'] = ''
+			albumdeets['songCount'] = len(songs)
+			albumdeets['duration'] = self.playlistFromCacheById(album['playlist']['id'])['duration']
+			albumdeets['coverArt'] = self.playlistFromCacheById(album['playlist']['id'])['coverArt']
+			albumdeets['song'] = songs
+
 		self.albumTrackListModel.clear()
 		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
-		albumdeets = album['album']
-		albumsongs = albumdeets['song']
+
 		try:
 			self.signals.loadAlbumArtWithId.emit(albumdeets['coverArt'])
 		except KeyError:
@@ -246,7 +387,7 @@ class MainWindow(QMainWindow):
 			self.ui.selectedAlbumReleaseYear.setText(str(albumdeets['year']))
 		except KeyError:
 			self.ui.selectedAlbumReleaseYear.setText('')
-		for song in albumsongs:
+		for song in songs:
 			items = []
 			if 'track' in song:
 				items.append(QStandardItem(str(song['track'])))

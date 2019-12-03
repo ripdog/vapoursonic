@@ -11,6 +11,8 @@ class networkWorker(QObject):
 	returnAlbumSongs = pyqtSignal(object)
 	returnSongHandle = pyqtSignal(object, object)
 	returnAlbumArtHandle = pyqtSignal(object, str)
+	returnPlaylists = pyqtSignal(object)
+	returnPlaylistSongs = pyqtSignal(object)
 
 	@pyqtSlot(str, str, str, result=bool)
 	def connectToServer(self, domain, username, password):
@@ -56,3 +58,11 @@ class networkWorker(QObject):
 	@pyqtSlot(str)
 	def getAlbumArtWithId(self, id):
 		self.returnAlbumArtHandle.emit(self.connection.getCoverArt(id, 128), id)
+
+	@pyqtSlot()
+	def getPlaylists(self):
+		self.returnPlaylists.emit(self.connection.getPlaylists())
+
+	@pyqtSlot(str)
+	def getPlaylistSongs(self, id):
+		self.returnPlaylistSongs.emit(self.connection.getPlaylist(id))

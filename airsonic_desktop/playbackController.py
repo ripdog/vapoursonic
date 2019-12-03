@@ -1,4 +1,5 @@
 import math
+import random
 import sys
 from time import sleep
 
@@ -156,6 +157,26 @@ class playbackController(QObject):
 		self.currentSong = newsong
 		if newsong:
 			self.currentSong.setIcon(QIcon('icons/baseline-play-arrow.svg'))
+			self.updatePlayerUI.emit(self.playQueueModel.indexFromItem(self.currentSong), 'scrollTo')
+
+	def stop(self):
+		self.changeCurrentSong(None)
+		self.player.command('stop')
+
+	def shufflePlayQueue(self):
+		items = []
+		currsong = self.currentSong.data()
+		for item in range(self.playQueueModel.rowCount()):
+			item = self.playQueueModel.item(item, 0).data()
+			if not item['id'] == self.currentSong.data()['id']:
+				items.append(item)
+		random.shuffle(items)
+		items.insert(0, currsong)
+		self.clearPlayQueue(clearCache=False)
+		self.addSongs(items)
+		self.changeCurrentSong(self.playQueueModel.item(0, 0))
+		self.syncMpvPlaylist()
+		self.evaluateNextSongForLoad()
 
 	def loadSongWithHandle(self, song, handle):
 		if song['id'] in self.songCache and \
@@ -207,8 +228,11 @@ class playbackController(QObject):
 			return
 		# if not self.currentSongFullyLoaded(): WORK ON THIS FURTHER?!
 		# 	self.songLoadingCancel.set()
-		if id == self.currentSong.data()['id']:
-			self.changeCurrentSong(self.getNextSong())
+		try:
+			if id == self.currentSong.data()['id']:
+				self.changeCurrentSong(self.getNextSong())
+		except AttributeError:
+			print('Song closed when currentSong is None')
 		self.evaluateNextSongForLoad()
 
 	def playNow(self, allSongs, song):
@@ -219,9 +243,10 @@ class playbackController(QObject):
 		self.changeCurrentSong(self.addSongs(allSongs, song))
 		self.beginSongLoad(song)
 
-	def clearPlayQueue(self):
+	def clearPlayQueue(self, clearCache=True):
 		self.playQueueModel.clear()
-		self.songCache = {}
+		if clearCache:
+			self.songCache = {}
 		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
 
 	def addSongs(self, songs, currentSong=None, afterCurrent=False):
@@ -236,7 +261,10 @@ class playbackController(QObject):
 		for item in songs:
 			standardItems = []
 			for key in ['title', 'artist', 'album']:
-				standardItems.append(QStandardItem(item[key]))
+				try:
+					standardItems.append(QStandardItem(item[key]))
+				except KeyError:
+					standardItems.append(QStandardItem('No {}'.format(key)))
 			for standardItem in standardItems:
 				standardItem.setData(item)
 			if row:
@@ -296,7 +324,7 @@ class playbackController(QObject):
 			self.changeCurrentSong(song)
 			self.beginSongLoad(song.data())
 		else:  # if at top of queue, restart song.
-			self.player.seek(0, 'absolute-percentage+exact')
+			self.player.seek(0, 'absolute')
 
 	@pyqtSlot(QModelIndex)
 	def playSongFromQueue(self, index):
@@ -362,12 +390,21 @@ class playbackController(QObject):
 		self.updatePlayerUI.emit(value, 'idle')
 
 	@pyqtSlot(bool)
+	@pyqtSlot()
 	def playPause(self, clicked=False):
 		if self.player['pause']:
 			self.player['pause'] = False
 		else:
 			self.player['pause'] = True
 
+	@pyqtSlot(str)
+	def playbackControl(self, type):
+		if type == 'playPause':
+			self.playPause()
+		elif type == "nextSong":
+			self.playNextSongExplicitly()
+		elif type == "prevSong":
+			self.playPreviousSong()
 
 class songLoaderSignals(QObject):
 	songChunkReturn = pyqtSignal(object, object)
