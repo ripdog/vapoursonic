@@ -1,4 +1,5 @@
 import math
+import os
 import random
 import sys
 from time import sleep
@@ -6,8 +7,8 @@ from time import sleep
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSlot, pyqtSignal, QModelIndex, QRunnable
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 
+os.environ['PATH'] = os.path.dirname(__file__) + os.pathsep + os.environ['PATH']
 import mpv
-
 
 def my_log(loglevel, component, message):
 	print('[{}] {}: {}'.format(loglevel, component, message))
@@ -16,7 +17,7 @@ def my_log(loglevel, component, message):
 class MpvStream(QObject):
 	def __init__(self, url, playbackController):
 		super(MpvStream, self).__init__()
-		self.id = str(url)[13:-1]
+		self.id = str(url)[11:]
 		print('stream object created for id {}'.format(self.id))
 		self.playbackController = playbackController
 		self.readPos = 0

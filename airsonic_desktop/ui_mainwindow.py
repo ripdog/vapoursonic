@@ -244,8 +244,14 @@ class Ui_AirsonicDesktop(object):
 		self.shufflePlayqueueButton = QtWidgets.QToolButton(self.horizontalLayoutWidget)
 		self.shufflePlayqueueButton.setObjectName("shufflePlayqueueButton")
 		self.playQueueToolboxLayout.addWidget(self.shufflePlayqueueButton)
-		spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-		self.playQueueToolboxLayout.addItem(spacerItem4)
+		self.volumeSliderLabel = QtWidgets.QLabel(self.horizontalLayoutWidget)
+		self.volumeSliderLabel.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+		self.volumeSliderLabel.setObjectName("volumeSliderLabel")
+		self.playQueueToolboxLayout.addWidget(self.volumeSliderLabel)
+		self.volumeSlider = QtWidgets.QSlider(self.horizontalLayoutWidget)
+		self.volumeSlider.setOrientation(QtCore.Qt.Vertical)
+		self.volumeSlider.setObjectName("volumeSlider")
+		self.playQueueToolboxLayout.addWidget(self.volumeSlider)
 		self.playQueueListLayout.addLayout(self.playQueueToolboxLayout)
 		self.gridLayout_3.addWidget(self.splitter_2, 0, 0, 1, 1)
 		self.nowPlayingLayout = QtWidgets.QHBoxLayout()
@@ -314,13 +320,15 @@ class Ui_AirsonicDesktop(object):
 		self.domainLabel.setText(_translate("AirsonicDesktop", "Domain"))
 		self.backHomeButton.setToolTip(_translate("AirsonicDesktop", "Return to the home screen."))
 		self.backHomeButton.setText(_translate("AirsonicDesktop", "Back"))
-		self.albumListViewPreviousPage.setToolTip(
-			_translate("AirsonicDesktop", "Return to the previous page of query results."))
+		self.albumListViewPreviousPage.setToolTip(_translate("AirsonicDesktop", "Return to the previous page of query\n"
+																				"                                                                                results.\n"
+																				"                                                                            "))
 		self.albumListViewPreviousPage.setText(_translate("AirsonicDesktop", "Prev"))
 		self.albumListViewRefresh.setToolTip(_translate("AirsonicDesktop", "Refresh the current view."))
 		self.albumListViewRefresh.setText(_translate("AirsonicDesktop", "Refresh"))
-		self.albumListViewNextPage.setToolTip(
-			_translate("AirsonicDesktop", "Advance to the next page of query results."))
+		self.albumListViewNextPage.setToolTip(_translate("AirsonicDesktop", "Advance to the next page of query\n"
+																			"                                                                                results.\n"
+																			"                                                                            "))
 		self.albumListViewNextPage.setText(_translate("AirsonicDesktop", "Next"))
 		self.selectedAlbumArt.setText(_translate("AirsonicDesktop", "Album Art"))
 		self.selectedAlbumTitle.setText(_translate("AirsonicDesktop", "Title"))
@@ -332,10 +340,13 @@ class Ui_AirsonicDesktop(object):
 		self.selectedAlbumReleaseYearIcon.setText(_translate("AirsonicDesktop", "YearIcon"))
 		self.selectedAlbumReleaseYear.setText(_translate("AirsonicDesktop", "Year"))
 		self.toggleFollowPlayedTrackButton.setToolTip(
-			_translate("AirsonicDesktop", "Toggle whether the play queue selects the currently playing song."))
+			_translate("AirsonicDesktop", "Toggle whether the play queue selects the\n"
+										  "                                                                        currently playing song.\n"
+										  "                                                                    "))
 		self.toggleFollowPlayedTrackButton.setText(_translate("AirsonicDesktop", "..."))
 		self.shufflePlayqueueButton.setToolTip(_translate("AirsonicDesktop", "Shuffles the play queue."))
 		self.shufflePlayqueueButton.setText(_translate("AirsonicDesktop", "..."))
+		self.volumeSliderLabel.setText(_translate("AirsonicDesktop", "Volume"))
 		self.prevTrack.setText(_translate("AirsonicDesktop", "..."))
 		self.playPause.setText(_translate("AirsonicDesktop", "..."))
 		self.nextTrack.setText(_translate("AirsonicDesktop", "..."))
