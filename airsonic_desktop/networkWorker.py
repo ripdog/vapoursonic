@@ -20,7 +20,7 @@ class networkWorker(QObject):
 		domain = domain.strip()
 		if not domain[0:8] == "https://" and not domain[0:7] == "http://":
 			domain = "https://" + domain
-		config['fqdn'] = domain
+		config.fqdn = domain
 		self.connection = Connection(domain, username, password, port=443, appName="airsonic-desktop",
 									 apiVersion="1.15.0")
 		ping = self.connection.ping()

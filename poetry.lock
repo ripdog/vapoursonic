@@ -35,8 +35,8 @@ description = "Read metadata from Python packages"
 marker = "python_version < \"3.8\""
 name = "importlib-metadata"
 optional = false
-python-versions = ">=2.7,!=3.0,!=3.1,!=3.2,!=3.3,!=3.4"
-version = "1.1.0"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+version = "1.2.0"
 
 [package.dependencies]
 zipp = ">=0.5"
@@ -1882,7 +1882,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "64281cae3b629e05c3fab37617e7f1b063090516c7aa6a76edbbeb0be2664f73"
+content-hash = "eaa4a8ebf3aadd114835cdc00a3fe0e11a89be951fd73d2834488b686ec7e00a"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1899,8 +1899,8 @@ colorama = [
     {file = "colorama-0.4.1.tar.gz", hash = "sha256:05eed71e2e327246ad6b38c540c4a3117230b19679b875190486ddd2d721422d"},
 ]
 importlib-metadata = [
-    {file = "importlib_metadata-1.1.0-py2.py3-none-any.whl", hash = "sha256:e6ac600a142cf2db707b1998382cc7fc3b02befb7273876e01b8ad10b9652742"},
-    {file = "importlib_metadata-1.1.0.tar.gz", hash = "sha256:b044f07694ef14a6683b097ba56bd081dbc7cdc7c7fe46011e499dfecc082f21"},
+    {file = "importlib_metadata-1.2.0-py2.py3-none-any.whl", hash = "sha256:3a8b2dfd0a2c6a3636e7c016a7e54ae04b997d30e69d5eacdca7a6c2221a1402"},
+    {file = "importlib_metadata-1.2.0.tar.gz", hash = "sha256:41e688146d000891f32b1669e8573c57e39e5060e7f5f647aa617cd9a9568278"},
 ]
 keyboard = [
     {file = "keyboard-0.13.4-py2.py3-none-any.whl", hash = "sha256:fc394b98c06f8a178918a062ef242cb73789dec4a0159ef41486ed0200dd90ca"},
@@ -2553,7 +2553,7 @@ pytest = [
     {file = "pytest-3.10.1.tar.gz", hash = "sha256:e246cf173c01169b9617fc07264b7b1316e78d7a650055235d6d897bc80d9660"},
 ]
 python-mpv = [
-    {file = "python-mpv-0.4.3.tar.gz", hash = "sha256:9324605d64fd4e35b1f63993bbbcd1d2b49dbd6640a5db050368939ed7b48d89"},
+    {file = "python-mpv-0.4.5.tar.gz", hash = "sha256:2955f054facdf9afdbc4590919fbcb11bbc55281f1168de29a30bf7773a60502"},
 ]
 python-vlc = [
     {file = "python-vlc-3.0.7110.tar.gz", hash = "sha256:821bca0dbe08fbff97a65e56ff2318ad7d499330876579c39f01f3fb38c7b679"},

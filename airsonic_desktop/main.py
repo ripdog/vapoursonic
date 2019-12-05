@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import keyboard
+from PyQt5 import QtGui
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage
@@ -10,7 +11,7 @@ try:
 	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
 except ImportError:
 	pass
-import config
+from config import config
 from albumArtLoader import albumArtLoader
 from networkWorker import networkWorker
 from playbackController import playbackController
@@ -70,15 +71,18 @@ class MainWindow(QMainWindow):
 	# options are 'home', 'albums', 'artists', 'recentlyAdded', 'recentlyPlayed', 'random', 'search', maybe folders?
 
 	def populateConnectFields(self):
-		self.ui.domainInput.setText(config.config['domain'])
-		self.ui.usernameInput.setText(config.config['username'])
-		self.ui.passwordInput.setText(config.config['password'])
+		self.ui.domainInput.setText(config.domain)
+		self.ui.usernameInput.setText(config.username)
+		self.ui.passwordInput.setText(config.password)
 
 	@pyqtSlot(bool)
 	def connectResult(self, success):
 		# print('got connect result: ')
 		# print(success)
 		if success:
+			config.domain = self.ui.domainInput.text()
+			config.username = self.ui.usernameInput.text()
+			config.password = self.ui.passwordInput.text()
 			self.ui.stackedWidget.setCurrentIndex(1)
 			self.populatePlayerUI()
 		else:
@@ -435,6 +439,10 @@ class MainWindow(QMainWindow):
 					self.playbackController.addSongs(songs, afterCurrent=True)
 				else:
 					self.playbackController.addSongs(songs, afterCurrent=False)
+
+	def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+		print('Airsonic desktop closing, saving config')
+		config.save()
 
 if __name__ == "__main__":
 	app = QApplication([])
