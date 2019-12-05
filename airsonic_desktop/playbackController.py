@@ -9,6 +9,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 
 os.environ['PATH'] = os.path.dirname(__file__) + os.pathsep + os.environ['PATH']
 import mpv
+from config import config
 
 def my_log(loglevel, component, message):
 	print('[{}] {}: {}'.format(loglevel, component, message))
@@ -326,6 +327,11 @@ class playbackController(QObject):
 			self.beginSongLoad(song.data())
 		else:  # if at top of queue, restart song.
 			self.player.seek(0, 'absolute')
+
+	@pyqtSlot(int)
+	def setVolume(self, value):
+		self.player.volume = value
+		config.volume = value
 
 	@pyqtSlot(QModelIndex)
 	def playSongFromQueue(self, index):

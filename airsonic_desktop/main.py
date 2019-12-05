@@ -116,6 +116,7 @@ class MainWindow(QMainWindow):
 		# followPlayedTrackIcon.addFile('icons/baseline-location-disabled.svg', mode=QIcon.Active)
 		# followPlayedTrackIcon.addFile('icons/baseline-my-location.svg', mode=QIcon.Normal)
 		self.ui.toggleFollowPlayedTrackButton.setIcon(QIcon('icons/baseline-my-location.svg'))
+		self.ui.volumeSliderLabel.setPixmap(QIcon('icons/baseline-volume-up.svg').pixmap(QSize(32, 32)))
 
 	def populateLeftPanel(self):
 		# Populate Left Panel
@@ -150,25 +151,33 @@ class MainWindow(QMainWindow):
 
 	def populatePlayQueue(self):
 		# populate play queue
+		# define playbackController and connect it up
 		self.playbackController = playbackController(self.networkWorker)
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
 		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
+		self.signals.playbackControl.connect(self.playbackController.playbackControl)
+
+		# connect play controls
+
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
-		self.ui.playQueueList.setAlternatingRowColors(True)
 		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSongExplicitly)
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
 		self.ui.stop.clicked.connect(self.playbackController.stop)
-		self.signals.playbackControl.connect(self.playbackController.playbackControl)
 		self.ui.trackProgressBar.valueChanged.connect(self.playbackController.setTrackProgress)
 		self.ui.trackProgressBar.sliderPressed.connect(self.trackSliderPressed)
 		self.ui.trackProgressBar.sliderReleased.connect(self.trackSliderReleased)
-		self.ui.trackProgressBar.setTracking(False)
-		self.ui.toggleFollowPlayedTrackButton.setChecked(True)
-		self.followPlayedTrack = True
+		self.sliderBeingDragged = False
+		self.ui.toggleFollowPlayedTrackButton.setChecked(config.followPlaybackInQueue)
+		self.followPlayedTrack = config.followPlaybackInQueue
 		self.ui.toggleFollowPlayedTrackButton.clicked.connect(self.updateFollowPlayedTrack)
 		self.ui.shufflePlayqueueButton.clicked.connect(self.playbackController.shufflePlayQueue)
-		self.sliderBeingDragged = False
+		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
+		self.ui.volumeSlider.setValue(config.volume)
+
+		# configure the play queue itself
+
+		self.ui.playQueueList.setAlternatingRowColors(True)
 
 	def populateThumbnailToolbar(self):
 		self.thumbnailToolBar = QWinThumbnailToolBar(self)
@@ -264,7 +273,7 @@ class MainWindow(QMainWindow):
 					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
 
 	def updateFollowPlayedTrack(self):
-		if self.followPlayedTrack:
+		if config.followPlaybackInQueue:
 			self.followPlayedTrack = False
 		# self.ui.toggleFollowPlayedTrackButton.setChecked(False)
 		else:
