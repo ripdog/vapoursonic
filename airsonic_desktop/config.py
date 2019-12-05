@@ -18,7 +18,8 @@ class configManager():
 			'username': 'yourUsername',
 			'password': 'yourPassword',
 			'volume': 100,
-			'appname': 'airsonic-desktop'
+			'appname': 'airsonic-desktop',
+			'followPlaybackInQueue': True,
 		}
 		for item in self.fallbackConfig:
 			if item in userConfig:
@@ -28,9 +29,8 @@ class configManager():
 
 	def save(self):
 		saveme = {}
-		for item in dir(self):
-			if not item.startswith('_') and item in self.fallbackConfig.keys():
-				saveme[item] = getattr(self, item)
+		for item in self.fallbackConfig.keys():
+			saveme[item] = getattr(self, item)
 		with open('config.yaml', 'w') as file:
 			file.write(yaml.safe_dump(saveme))
 

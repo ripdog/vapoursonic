@@ -160,12 +160,15 @@ class MainWindow(QMainWindow):
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
 		self.ui.stop.clicked.connect(self.playbackController.stop)
 		self.signals.playbackControl.connect(self.playbackController.playbackControl)
-		self.ui.trackProgressBar.sliderMoved.connect(self.playbackController.setTrackProgress)
+		self.ui.trackProgressBar.valueChanged.connect(self.playbackController.setTrackProgress)
+		self.ui.trackProgressBar.sliderPressed.connect(self.trackSliderPressed)
+		self.ui.trackProgressBar.sliderReleased.connect(self.trackSliderReleased)
 		self.ui.trackProgressBar.setTracking(False)
 		self.ui.toggleFollowPlayedTrackButton.setChecked(True)
 		self.followPlayedTrack = True
 		self.ui.toggleFollowPlayedTrackButton.clicked.connect(self.updateFollowPlayedTrack)
 		self.ui.shufflePlayqueueButton.clicked.connect(self.playbackController.shufflePlayQueue)
+		self.sliderBeingDragged = False
 
 	def populateThumbnailToolbar(self):
 		self.thumbnailToolBar = QWinThumbnailToolBar(self)
@@ -222,6 +225,12 @@ class MainWindow(QMainWindow):
 		else:
 			self.taskbarProgress = None
 
+	def trackSliderPressed(self):
+		self.sliderBeingDragged = True
+
+	def trackSliderReleased(self):
+		self.sliderBeingDragged = False
+
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, type):
 		if type == 'total':
@@ -229,7 +238,10 @@ class MainWindow(QMainWindow):
 			if self.taskbarProgress:
 				self.taskbarProgress.setMaximum(update)
 		if type == 'progress':
-			self.ui.trackProgressBar.setValue(update)
+			if not self.sliderBeingDragged:
+				self.ui.trackProgressBar.blockSignals(True)
+				self.ui.trackProgressBar.setValue(update)
+				self.ui.trackProgressBar.blockSignals(False)
 			if self.taskbarProgress:
 				self.taskbarProgress.setValue(update)
 		if type == 'title':
