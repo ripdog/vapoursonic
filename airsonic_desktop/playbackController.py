@@ -18,7 +18,7 @@ def my_log(loglevel, component, message):
 class MpvStream(QObject):
 	def __init__(self, url, playbackController):
 		super(MpvStream, self).__init__()
-		self.id = str(url)[11:]
+		self.id = str(url).split('.')[0][11:]
 		print('stream object created for id {}'.format(self.id))
 		self.playbackController = playbackController
 		self.readPos = 0
@@ -36,36 +36,36 @@ class MpvStream(QObject):
 				return b''
 			if len(cache) >= (size + self.readPos):
 				# enough data or more than enough is available. Provide data and advance read position.
-				print('returning full read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
-																						 len(cache)))
+				# print('returning full read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
+				# 																		 len(cache)))
 				# print('doing this because {} >= {}'.format(len(cache), size + self.readPos))
 				ret = cache[self.readPos:self.readPos + size]
-				print('data size: {}'.format(len(ret)))
+				# print('data size: {}'.format(len(ret)))
 				self.readPos += size
 				return ret
 			elif len(cache) < (size + self.readPos) \
 					and len(cache) - self.readPos > 0:
 				# insufficient cache to fufill entire request, just give the rest.
 				ret = cache[self.readPos:]
-				print('returning partial read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
-																							len(cache)))
+				# print('returning partial read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
+				# 																			len(cache)))
 				self.readPos = len(cache)
-				print('data size: {}'.format(len(ret)))
+				# print('data size: {}'.format(len(ret)))
 				return ret
 			elif self.playbackController.songCache[self.id][0] == songLoadInProgress or \
 					self.playbackController.songCache[self.id][0] == songLoadBegun:
-				print(
-					'No data available, waiting. size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
-																							len(cache)))
+				# print(
+				# 	'No data available, waiting. size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
+				# 																			len(cache)))
 				sleep(0.1)
 			else:
-				print('Returning 0 from read. size {}, readPos {}, id {}, len {}, song status: {}'.format(size,
-																										  self.readPos,
-																										  self.id,
-																										  len(cache),
-																										  self.playbackController.songCache[
-																											  self.id][
-																											  0]))
+				# print('Returning 0 from read. size {}, readPos {}, id {}, len {}, song status: {}'.format(size,
+				# 																						  self.readPos,
+				# 																						  self.id,
+				# 																						  len(cache),
+				# 																						  self.playbackController.songCache[
+				# 																							  self.id][
+				# 																							  0]))
 				return b''
 
 	def seek(self, offset):
@@ -102,7 +102,7 @@ class playbackController(QObject):
 		self.player = mpv.MPV(log_handler=my_log, loglevel='debug')
 		# self.player['prefetch-playlist'] = True
 		self.player['gapless-audio'] = True
-		self.player['demuxer-lavf-analyzeduration'] = 3
+		# self.player['demuxer-lavf-analyzeduration'] = 3
 		# self.player['demuxer-lavf-probesize'] = 10000000
 		self.player.register_stream_protocol('airsonic', self.createStreamObject)
 		self.player['cache-secs'] = 99999999.0
@@ -205,7 +205,7 @@ class playbackController(QObject):
 		print('evaluating song for load, {} id {}'.format(song['title'], song['id']))
 		if song['id'] in self.songCache.keys():
 			if self.currentSong.data()['id'] == song['id'] and \
-					self.player.path != 'airsonic://{}'.format(self.currentSong.data()['id']):
+					self.player.path != self.buildUrlForSong(self.currentSong.data()):
 				print('already loaded, playing now')
 				self.playSong(song)
 			else:
@@ -302,10 +302,15 @@ class playbackController(QObject):
 		while True:
 			song = self.playQueueModel.item(index, 0)
 			if song:
-				self.player.playlist_append('airsonic://{}'.format(song.data()['id']))
+				self.player.playlist_append(self.buildUrlForSong(song.data()))
 				index += 1
 			else:
 				break
+
+	def buildUrlForSong(self, song):
+		url = "airsonic://" + song['id']
+		suffix = song['path'].split('.')[-1]
+		return url + '.' + suffix
 
 	def playSong(self, song):
 		# self.changeCurrentSong(song)
@@ -313,7 +318,7 @@ class playbackController(QObject):
 			song = song.data()
 		except AttributeError:
 			pass
-		url = "airsonic://" + song['id']
+		url = self.buildUrlForSong(song)
 		print('playing {}'.format(url))
 		self.player.play(url)
 		self.player['pause'] = False
