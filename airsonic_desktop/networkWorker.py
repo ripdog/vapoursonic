@@ -66,3 +66,10 @@ class networkWorker(QObject):
 	@pyqtSlot(str)
 	def getPlaylistSongs(self, id):
 		self.returnPlaylistSongs.emit(self.connection.getPlaylist(id))
+
+	@pyqtSlot(str, object)
+	def addSongsToPlaylist(self, id, songs):
+		songlist = []
+		for song in songs:
+			songlist.append(song['id'])
+		self.connection.updatePlaylist(id, songIdsToAdd=songlist)

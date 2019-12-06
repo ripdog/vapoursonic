@@ -95,12 +95,15 @@ class playbackController(QObject):
 		self.songLoaderThreads = QThreadPool()
 
 		self.player = mpv.MPV(log_handler=my_log, loglevel='info')
+		self.player['prefetch-playlist'] = True
+		self.player['gapless-audio'] = True
 		self.player.register_stream_protocol('airsonic', self.createStreamObject)
-		self.player['cache-secs'] = 99999999.0
-		self.player['demuxer-max-bytes'] = 99999999999
+		# self.player['cache-secs'] = 99999999.0
+		# self.player['demuxer-max-bytes'] = 99999999999
 		self.player.observe_property('time-pos', self.updateProgressBar)
 		self.player.observe_property('media-title', self.updateSongDetails)
 		self.player.observe_property('core-idle', self.updateIdleState)
+		self.player.observe_property('audio-params', self.watchAudioParams)
 
 		self.songCache = {}
 		# the cache stores song data. The key is the id of the song, and the value is a list.
@@ -376,8 +379,30 @@ class playbackController(QObject):
 			self.updatePlayerUI.emit(math.ceil(total), 'total')
 			self.updatePlayerUI.emit(math.ceil(value), 'progress')
 
-
 	# print('mpv pos ceil\'d: {}, max: {}'.format(math.ceil(value), self.currentSong.data()['duration']))
+
+	def watchAudioParams(self, _name, params):
+		print('rebuilding audio stat line')
+		try:
+			trackList = self.player.track_list
+			trackList = trackList[0]
+			audioOutParams = self.player.audio_out_params
+		except AttributeError:
+			pass
+		except IndexError:
+			pass
+		ret = ""
+		if self.player.audio_codec_name:
+			ret += self.player.audio_codec_name + " | "
+		if trackList and 'demux-bitrate' in trackList:
+			ret += str(int(trackList['demux-bitrate'] / 1000)) + 'kbps | '
+		if trackList and 'demux-samplerate' in trackList:
+			ret += str(trackList['demux-samplerate']) + 'hz -> '
+		if audioOutParams and 'samplerate' in audioOutParams:
+			ret += str(audioOutParams['samplerate']) + 'hz | '
+		if 'hr-channels' in params:
+			ret += str(params['hr-channels']) + ' | '
+		self.updatePlayerUI.emit(ret, 'statusBar')
 
 	@pyqtSlot(int)
 	def setTrackProgress(self, position):

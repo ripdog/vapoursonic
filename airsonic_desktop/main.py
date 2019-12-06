@@ -5,7 +5,7 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QStyle, QAbstractItemView
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QStyle, QAbstractItemView, QAction
 
 try:
 	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
@@ -25,6 +25,7 @@ class MainWindowSignals(QObject):
 	playbackControl = pyqtSignal(str)
 	getPlaylists = pyqtSignal()
 	loadPlaylistSongs = pyqtSignal(str)
+	addSongsToPlaylist = pyqtSignal(str, object)
 
 playIcon = QIcon('icons/baseline-play-arrow.svg')
 pauseIcon = QIcon('icons/baseline-pause.svg')
@@ -63,6 +64,7 @@ class MainWindow(QMainWindow):
 		self.networkWorker.returnPlaylists.connect(self.receivePlaylists)
 		self.signals.loadPlaylistSongs.connect(self.networkWorker.getPlaylistSongs)
 		self.networkWorker.returnPlaylistSongs.connect(self.displayLoadedSongs)
+		self.signals.addSongsToPlaylist.connect(self.networkWorker.addSongsToPlaylist)
 
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
@@ -255,6 +257,8 @@ class MainWindow(QMainWindow):
 				self.taskbarProgress.setValue(update)
 		if type == 'title':
 			self.ui.currentPlayingLabel.setText(update)
+		elif type == 'statusBar':
+			self.statusBar().showMessage(update)
 		elif type == 'scrollTo':
 			if self.followPlayedTrack:
 				self.ui.playQueueList.scrollTo(update, QAbstractItemView.PositionAtTop)
@@ -448,18 +452,26 @@ class MainWindow(QMainWindow):
 	def openAlbumTrackListMenu(self, position):
 		if len(self.ui.albumTrackList.selectedIndexes()) > 0:
 			menu = QMenu()
-			playTracksNextAction = menu.addAction('Play Next')
-			playTracksLastAction = menu.addAction('Play Last')
+			playTracksNextAction = menu.addAction(QIcon('icons/baseline-menu-open.svg'), 'Play Next')
+			playTracksLastAction = menu.addAction(QIcon('icons/baseline-playlist-add.svg'), 'Play Last')
+			addToPlaylistAction = menu.addMenu('Add To Playlist')
+			for playlist in self.playlistCache:
+				action = QAction(playlist['name'])
+				action.setData(playlist['id'])
+				addToPlaylistAction.addAction(action)
 			action = menu.exec_(self.ui.albumTrackList.mapToGlobal(position))
+			songs = []
+			for item in self.ui.albumTrackList.selectedIndexes():
+				if item.column() == 0:
+					songs.append(self.albumTrackListModel.itemFromIndex(item).data())
 			if action == playTracksNextAction or action == playTracksLastAction:
-				songs = []
-				for item in self.ui.albumTrackList.selectedIndexes():
-					if item.column() == 0:
-						songs.append(self.albumTrackListModel.itemFromIndex(item).data())
 				if action == playTracksNextAction:
 					self.playbackController.addSongs(songs, afterCurrent=True)
 				else:
 					self.playbackController.addSongs(songs, afterCurrent=False)
+			else:
+				print('adding songs to playlist {} '.format(action.data()))
+				self.signals.addSongsToPlaylist.emit(action.data(), songs)
 
 	def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
 		print('Airsonic desktop closing, saving config')
