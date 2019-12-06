@@ -245,9 +245,11 @@ class MainWindow(QMainWindow):
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, type):
 		if type == 'total':
+			self.ui.trackProgressBar.blockSignals(True)
 			self.ui.trackProgressBar.setRange(0, update)
 			if self.taskbarProgress:
 				self.taskbarProgress.setMaximum(update)
+			self.ui.trackProgressBar.blockSignals(False)
 		if type == 'progress':
 			if not self.sliderBeingDragged:
 				self.ui.trackProgressBar.blockSignals(True)

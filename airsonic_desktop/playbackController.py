@@ -36,31 +36,36 @@ class MpvStream(QObject):
 				return b''
 			if len(cache) >= (size + self.readPos):
 				# enough data or more than enough is available. Provide data and advance read position.
-				# print('returning full read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
-				# 																		 len(cache)))
+				print('returning full read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
+																						 len(cache)))
 				# print('doing this because {} >= {}'.format(len(cache), size + self.readPos))
 				ret = cache[self.readPos:self.readPos + size]
-				# print('data size: {}'.format(len(ret)))
+				print('data size: {}'.format(len(ret)))
 				self.readPos += size
 				return ret
 			elif len(cache) < (size + self.readPos) \
 					and len(cache) - self.readPos > 0:
 				# insufficient cache to fufill entire request, just give the rest.
 				ret = cache[self.readPos:]
-				# print('returning partial read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id, len(cache)))
+				print('returning partial read of size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
+																							len(cache)))
 				self.readPos = len(cache)
-				# print('data size: {}'.format(len(ret)))
+				print('data size: {}'.format(len(ret)))
 				return ret
 			elif self.playbackController.songCache[self.id][0] == songLoadInProgress or \
 					self.playbackController.songCache[self.id][0] == songLoadBegun:
-				# print('No data available, waiting. size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id, len(cache)))
+				print(
+					'No data available, waiting. size {}, readPos {}, id {}, len {}'.format(size, self.readPos, self.id,
+																							len(cache)))
 				sleep(0.1)
 			else:
-				# print('Returning 0 from read. size {}, readPos {}, id {}, len {}, song status: {}'.format(size,
-				# 										  self.readPos,
-				# 										  self.id,
-				# 										  len(cache),
-				# 										  self.playbackController.songCache[self.id][0]))
+				print('Returning 0 from read. size {}, readPos {}, id {}, len {}, song status: {}'.format(size,
+																										  self.readPos,
+																										  self.id,
+																										  len(cache),
+																										  self.playbackController.songCache[
+																											  self.id][
+																											  0]))
 				return b''
 
 	def seek(self, offset):
@@ -94,12 +99,14 @@ class playbackController(QObject):
 		self.playQueueModel = QStandardItemModel()
 		self.songLoaderThreads = QThreadPool()
 
-		self.player = mpv.MPV(log_handler=my_log, loglevel='info')
-		self.player['prefetch-playlist'] = True
+		self.player = mpv.MPV(log_handler=my_log, loglevel='debug')
+		# self.player['prefetch-playlist'] = True
 		self.player['gapless-audio'] = True
+		self.player['demuxer-lavf-analyzeduration'] = 3
+		# self.player['demuxer-lavf-probesize'] = 10000000
 		self.player.register_stream_protocol('airsonic', self.createStreamObject)
-		# self.player['cache-secs'] = 99999999.0
-		# self.player['demuxer-max-bytes'] = 99999999999
+		self.player['cache-secs'] = 99999999.0
+		self.player['demuxer-max-bytes'] = 99999999999
 		self.player.observe_property('time-pos', self.updateProgressBar)
 		self.player.observe_property('media-title', self.updateSongDetails)
 		self.player.observe_property('core-idle', self.updateIdleState)
@@ -383,6 +390,8 @@ class playbackController(QObject):
 
 	def watchAudioParams(self, _name, params):
 		print('rebuilding audio stat line')
+		audioOutParams = {}
+		trackList = {}
 		try:
 			trackList = self.player.track_list
 			trackList = trackList[0]
@@ -400,13 +409,14 @@ class playbackController(QObject):
 			ret += str(trackList['demux-samplerate']) + 'hz -> '
 		if audioOutParams and 'samplerate' in audioOutParams:
 			ret += str(audioOutParams['samplerate']) + 'hz | '
-		if 'hr-channels' in params:
+		if params and 'hr-channels' in params:
 			ret += str(params['hr-channels']) + ' | '
 		self.updatePlayerUI.emit(ret, 'statusBar')
 
 	@pyqtSlot(int)
 	def setTrackProgress(self, position):
 		try:
+			print('seeking to {}'.format(position))
 			self.player.command('seek', position, 'absolute+exact')
 		except SystemError:
 			pass
