@@ -20,6 +20,7 @@ class configManager():
 			'volume': 100,
 			'appname': 'airsonic-desktop',
 			'followPlaybackInQueue': True,
+			'repeatList': True
 		}
 		for item in self.fallbackConfig:
 			if item in userConfig:
