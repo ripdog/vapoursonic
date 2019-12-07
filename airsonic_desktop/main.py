@@ -462,6 +462,8 @@ class MainWindow(QMainWindow):
 				action.setData(playlist['id'])
 				addToPlaylistAction.addAction(action)
 			action = menu.exec_(self.ui.albumTrackList.mapToGlobal(position))
+			if not action:
+				pass
 			songs = []
 			for item in self.ui.albumTrackList.selectedIndexes():
 				if item.column() == 0:

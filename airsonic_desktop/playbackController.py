@@ -309,7 +309,7 @@ class playbackController(QObject):
 
 	def buildUrlForSong(self, song):
 		url = "airsonic://" + song['id']
-		suffix = song['path'].split('.')[-1]
+		suffix = song['transcodedSuffix']
 		return url + '.' + suffix
 
 	def playSong(self, song):
@@ -341,7 +341,10 @@ class playbackController(QObject):
 			self.changeCurrentSong(song)
 			self.beginSongLoad(song.data())
 		else:  # if at top of queue, restart song.
-			self.player.seek(0, 'absolute')
+			try:
+				self.player.seek(0, 'absolute')
+			except SystemError:
+				print('unable to seek to 0')
 
 	@pyqtSlot(int)
 	def setVolume(self, value):
