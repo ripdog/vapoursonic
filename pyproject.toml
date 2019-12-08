@@ -14,8 +14,8 @@ python-vlc = "^3.0"
 python-mpv = "^0.4.5"
 wheel = "^0.33.6"
 keyboard = "^0.13.4"
-pyinstaller = "^3.5"
 pywin32-ctypes = "^0.2.0"
+pyinstaller = "^3.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"

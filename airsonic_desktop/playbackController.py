@@ -12,15 +12,9 @@ os.environ['PATH'] = os.path.dirname(__file__) + os.pathsep + os.environ['PATH']
 import mpv
 from config import config
 
+
 def my_log(loglevel, component, message):
 	print('[{}] {}: {}'.format(loglevel, component, message))
-
-
-
-
-songLoadBegun = 1
-songLoadInProgress = 2
-songLoadFinished = 3
 
 
 class playbackController(QObject):
@@ -176,7 +170,10 @@ class playbackController(QObject):
 		try:
 			self.player.playlist_next()
 		except SystemError:
-			self.player.command('stop')
+			if config.repeatList:
+				self.playSongFromQueue(self.playQueueModel.index(0, 0))
+			else:
+				self.player.command('stop')
 
 	# if self.getNextSong():
 	# 	song = self.getNextSong()
@@ -192,16 +189,6 @@ class playbackController(QObject):
 			self.player.playlist_prev()
 		except SystemError:
 			self.player.seek(0, 'absolute')
-
-	# if self.getPreviousSong():
-	# 	song = self.getPreviousSong()
-	# 	self.changeCurrentSong(song)
-	# 	self.beginSongLoad(song.data())
-	# else:  # if at top of queue, restart song.
-	# 	try:
-	# 		self.player.seek(0, 'absolute')
-	# 	except SystemError:
-	# 		print('unable to seek to 0')
 
 	@pyqtSlot(int)
 	def setVolume(self, value):
@@ -293,6 +280,7 @@ class playbackController(QObject):
 					return
 				try:
 					nextid = self.getNextSong().data()['id']
+
 					if id == nextid:
 						self.setCurrentSong(self.getNextSong())
 						return
@@ -307,6 +295,9 @@ class playbackController(QObject):
 					self.setCurrentSong(self.playQueueModel.item(n, 0))
 					return
 			print('unable to find song in queue :(')
+		else:
+			if config.repeatList:
+				self.playSongFromQueue(self.playQueueModel.index(0, 0))
 
 	@pyqtSlot(int)
 	def setTrackProgress(self, position):
@@ -316,8 +307,8 @@ class playbackController(QObject):
 				if position in range(math.floor(seekRange['start']), math.floor(seekRange['end'])):
 					print('seeking to {}'.format(position))
 					self.player.command('seek', position, 'absolute+exact')
-				else:
-					print('refusing to seek, file not sufficiently loaded')
+					return
+			print('refusing to seek, file not sufficiently loaded')
 		except SystemError:
 			pass
 
