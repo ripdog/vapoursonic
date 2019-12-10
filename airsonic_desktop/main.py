@@ -1,11 +1,12 @@
 from datetime import timedelta
 
 import keyboard
-from PyQt5 import QtGui
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QStyle, QAbstractItemView, QAction
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QStyle, QAbstractItemView
+
+import actions
 
 try:
 	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
@@ -20,18 +21,18 @@ from ui_mainwindow import Ui_AirsonicDesktop
 
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str)
-	loadAlbumWithId = pyqtSignal(int)
+	loadAlbumWithId = pyqtSignal(str, object)
 	loadAlbumArtWithId = pyqtSignal(str)
 	playbackControl = pyqtSignal(str)
 	getPlaylists = pyqtSignal()
-	loadPlaylistSongs = pyqtSignal(str)
+	loadPlaylistSongs = pyqtSignal(str, object)
 	addSongsToPlaylist = pyqtSignal(str, object)
 	beginSearch = pyqtSignal(str, int)
 	loadAlbumsForArtist = pyqtSignal(str, object)
 
+
 playIcon = QIcon('icons/baseline-play-arrow.svg')
 pauseIcon = QIcon('icons/baseline-pause.svg')
-
 
 
 class MainWindow(QMainWindow):
@@ -58,14 +59,14 @@ class MainWindow(QMainWindow):
 		self.networkWorker.returnAlbums.connect(self.displayLoadedAlbums)
 		self.networkWorker.connectResult.connect(self.connectResult)
 		self.signals.loadAlbumsOfType.connect(self.networkWorker.getAlbumsOfType)
-		self.signals.loadAlbumWithId.connect(self.networkWorker.getAlbumSongs)
-		self.networkWorker.returnAlbumSongs.connect(self.displayLoadedSongs)
+		self.signals.loadAlbumWithId.connect(self.networkWorker.loadAlbumWithId)
+		self.networkWorker.returnAlbumSongs.connect(self.receiveLoadedSongs)
 		self.signals.loadAlbumArtWithId.connect(self.networkWorker.getAlbumArtWithId)
 		self.networkWorker.returnAlbumArtHandle.connect(self.startAlbumArtLoad)
 		self.signals.getPlaylists.connect(self.networkWorker.getPlaylists)
 		self.networkWorker.returnPlaylists.connect(self.receivePlaylists)
 		self.signals.loadPlaylistSongs.connect(self.networkWorker.getPlaylistSongs)
-		self.networkWorker.returnPlaylistSongs.connect(self.displayLoadedSongs)
+		self.networkWorker.returnPlaylistSongs.connect(self.receiveLoadedSongs)
 		self.signals.addSongsToPlaylist.connect(self.networkWorker.addSongsToPlaylist)
 		self.signals.beginSearch.connect(self.networkWorker.beginSearch)
 		self.networkWorker.returnSearchResults.connect(self.receiveSearchResults)
@@ -121,7 +122,6 @@ class MainWindow(QMainWindow):
 		self.ui.backHomeButton.setIcon(QIcon('icons/baseline-arrow-back.svg'))
 		self.ui.backHomeButton.setStyleSheet('QPushButton { text-align: left; }')
 		self.ui.shufflePlayqueueButton.setIcon(QIcon('icons/baseline-shuffle.svg'))
-		followPlayedTrackIcon = QIcon()
 		# followPlayedTrackIcon.addFile('icons/baseline-location-disabled.svg', mode=QIcon.Active)
 		# followPlayedTrackIcon.addFile('icons/baseline-my-location.svg', mode=QIcon.Normal)
 		self.ui.toggleFollowPlayedTrackButton.setIcon(QIcon('icons/baseline-my-location.svg'))
@@ -148,6 +148,25 @@ class MainWindow(QMainWindow):
 		self.ui.albumListViewRefresh.clicked.connect(self.refreshAlbumListView)
 		self.backHome()
 
+		# actions, menu setup
+		self.ui.albumTreeList.setContextMenuPolicy(Qt.CustomContextMenu)
+		self.ui.albumTreeList.customContextMenuRequested.connect(self.albumTreeListMenu)
+
+	def refreshActions(self):
+		# stores the actions used with each type of object in this list.
+		self.albumTreeListActions = {
+			'addToQueue': [actions.playNextAction(self, self.ui.albumTreeList),
+						   actions.playLastAction(self, self.ui.albumTreeList)],
+			'addToPlaylist': [actions.addToPlaylistMenu(self, self.ui.albumTreeList)]
+			# TODO: Actions should be refreshed when a new playlist is added.
+		}
+		self.albumTrackListActions = {
+			'addToQueue': [actions.playNextAction(self, self.ui.albumTrackList),
+						   actions.playLastAction(self, self.ui.albumTrackList)],
+			'addToPlaylist': [actions.addToPlaylistMenu(self, self.ui.albumTrackList)]
+			# TODO: Actions should be refreshed when a new playlist is added.
+		}
+
 	def populateRightPanel(self):
 		# populate right panel
 		self.albumTrackListModel = QStandardItemModel()
@@ -159,7 +178,8 @@ class MainWindow(QMainWindow):
 		self.ui.albumTrackList.setIndentation(0)
 		self.ui.albumTrackList.doubleClicked.connect(self.albumTrackListDoubleClick)
 		self.ui.albumTrackList.setContextMenuPolicy(Qt.CustomContextMenu)
-		self.ui.albumTrackList.customContextMenuRequested.connect(self.openAlbumTrackListMenu)
+		self.ui.albumTrackList.customContextMenuRequested.connect(self.albumTrackListMenu)
+		self.refreshActions()
 
 	def populatePlayQueue(self):
 		# populate play queue
@@ -294,7 +314,8 @@ class MainWindow(QMainWindow):
 		# self.ui.toggleFollowPlayedTrackButton.setChecked(False)
 		else:
 			self.followPlayedTrack = True
-		# self.ui.toggleFollowPlayedTrackButton.setChecked(True)
+
+	# self.ui.toggleFollowPlayedTrackButton.setChecked(True)
 
 	def playPause(self):
 		print('playPause hotkey hit')
@@ -312,9 +333,11 @@ class MainWindow(QMainWindow):
 		elif data['type'] == 'playlist':
 			self.loadPlaylistSongs(item.data())
 		elif data['type'] == 'album':
-			data = int(item.data()['id'])
-			# print('got data {}'.format(data))
-			self.signals.loadAlbumWithId.emit(data)
+			data = item.data()['id']
+			self.signals.loadAlbumWithId.emit(data, {'display': True,
+													 'afterCurrent': False})
+
+	# don't a
 
 	def albumListDoubleClick(self, index):
 		item = self.albumTreeListModel.itemFromIndex(index)
@@ -324,8 +347,9 @@ class MainWindow(QMainWindow):
 		if data['type'] == 'song':
 			self.playbackController.addSongs([data])
 
-	def loadPlaylistSongs(self, id):
-		self.signals.loadPlaylistSongs.emit(id)
+	def loadPlaylistSongs(self, item):
+		self.signals.loadPlaylistSongs.emit(item['id'], {'display': True,
+														 'afterCurrent': False})
 
 	def receivePlaylists(self, playlists):
 		self.playlistCache = []
@@ -338,12 +362,13 @@ class MainWindow(QMainWindow):
 				for playlist in playlists['playlists']['playlist']:
 					items = []
 					item = QStandardItem(playlist['name'])
-					item.setData(playlist['id'])
+					item.setData(playlist)
 					items.append(item)
 					item = QStandardItem(str(playlist['songCount']))
-					item.setData(playlist['id'])
+					item.setData(playlist)
 					items.append(item)
 					self.albumTreeListModel.appendRow(items)
+			self.refreshActions()
 
 	def beginSearch(self):
 		query = self.ui.search.text()
@@ -406,19 +431,7 @@ class MainWindow(QMainWindow):
 			if field in song:
 				items.append(QStandardItem(str(song[field])))
 			else:
-				items.append(QStandardItem("Unk. {}}".format(field)))
-		if 'track' in song:
-			items.append(QStandardItem(str(song['track'])))
-		else:
-			items.append(QStandardItem("-"))
-		if 'title' in song:
-			items.append(QStandardItem(song['title']))
-		else:
-			items.append(QStandardItem("Unk. Title"))
-		if 'artist' in song:
-			items.append(QStandardItem(song['artist']))
-		else:
-			items.append(QStandardItem("Unk. Artist"))
+				items.append(QStandardItem("Unk. {}".format(field)))
 		for item in items:
 			item.setData(song)
 		return items
@@ -447,6 +460,7 @@ class MainWindow(QMainWindow):
 	def changeAlbumListState(self, state):
 		self.albumListState = state
 		self.albumTreeListModel.clear()
+		self.ui.albumTreeListTitle.setText('{} Page {}'.format(state.title(), self.currentPage + 1))
 		if state != 'home':
 			self.ui.backHomeButtonLayout.setHidden(False)
 		else:
@@ -478,21 +492,29 @@ class MainWindow(QMainWindow):
 				return item
 		return None
 
-	@pyqtSlot(object)
-	def displayLoadedSongs(self, album):
+	@pyqtSlot(object, object)
+	def receiveLoadedSongs(self, songContainer, addToQueue):
+		if addToQueue['display'] == False:
+			if songContainer['type'] == 'album':
+				self.playbackController.addSongs(songContainer['song'],
+												 afterCurrent=addToQueue['afterCurrent'])
+			elif songContainer['type'] == 'playlist':
+				self.playbackController.addSongs(songContainer['playlist']['entry'],
+												 afterCurrent=songContainer['afterCurrent'])
+			return
 		songs = []
-		if 'album' in album:
-			albumdeets = album['album']
+		if songContainer['type'] == 'album':
+			albumdeets = songContainer
 			songs = albumdeets['song']
-		elif 'playlist' in album:
-			print(album)
-			songs = album['playlist']['entry']
+		elif songContainer['type'] == 'playlist':
+			print(songContainer)
+			songs = songContainer['playlist']['entry']
 			albumdeets = {}
-			albumdeets['name'] = album['playlist']['name']
+			albumdeets['name'] = songContainer['playlist']['name']
 			albumdeets['artist'] = ''
 			albumdeets['songCount'] = len(songs)
-			albumdeets['duration'] = self.playlistFromCacheById(album['playlist']['id'])['duration']
-			albumdeets['coverArt'] = self.playlistFromCacheById(album['playlist']['id'])['coverArt']
+			albumdeets['duration'] = self.playlistFromCacheById(songContainer['playlist']['id'])['duration']
+			albumdeets['coverArt'] = self.playlistFromCacheById(songContainer['playlist']['id'])['coverArt']
 			albumdeets['song'] = songs
 
 		self.albumTrackListModel.clear()
@@ -533,35 +555,34 @@ class MainWindow(QMainWindow):
 	def refreshAlbumListView(self):
 		self.loadDataforAlbumListView(self.albumListState)
 
-	def openAlbumTrackListMenu(self, position):
-		if len(self.ui.albumTrackList.selectedIndexes()) > 0:
-			menu = QMenu()
-			playTracksNextAction = menu.addAction(QIcon('icons/baseline-menu-open.svg'), 'Play Next')
-			playTracksLastAction = menu.addAction(QIcon('icons/baseline-playlist-add.svg'), 'Play Last')
-			addToPlaylistAction = menu.addMenu('Add To Playlist')
-			for playlist in self.playlistCache:
-				action = QAction(playlist['name'])
-				action.setData(playlist['id'])
-				addToPlaylistAction.addAction(action)
-			action = menu.exec_(self.ui.albumTrackList.mapToGlobal(position))
-			if not action:
-				pass
-			songs = []
-			for item in self.ui.albumTrackList.selectedIndexes():
-				if item.column() == 0:
-					songs.append(self.albumTrackListModel.itemFromIndex(item).data())
-			if action == playTracksNextAction or action == playTracksLastAction:
-				if action == playTracksNextAction:
-					self.playbackController.addSongs(songs, afterCurrent=True)
-				else:
-					self.playbackController.addSongs(songs, afterCurrent=False)
-			else:
-				print('adding songs to playlist {} '.format(action.data()))
-				self.signals.addSongsToPlaylist.emit(action.data(), songs)
+	def albumTreeListMenu(self, position):
+		self.openAlbumListsMenu(position, self.ui.albumTreeList, self.albumTreeListActions)
 
-	def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
-		print('Airsonic desktop closing, saving config')
-		config.save()
+	def albumTrackListMenu(self, position):
+		self.openAlbumListsMenu(position, self.ui.albumTrackList, self.albumTrackListActions)
+
+	def openAlbumListsMenu(self, position, list, actionsDict):
+		if len(list.selectedIndexes()) > 0:
+			menu = QMenu()
+			items = actions.getItemsFromList(list)
+			queueSongsActionsAdded = False
+			playlistAddActionsAdded = False
+			for item in items:
+				if not queueSongsActionsAdded and \
+						item['type'] == 'song' or \
+						item['type'] == 'album':
+					queueSongsActionsAdded = True
+					menu.addActions(actionsDict['addToQueue'])
+				if not playlistAddActionsAdded and item['type'] == 'song':
+					playlistAddActionsAdded = True
+					menu.addMenu(actionsDict['addToPlaylist'][0])
+			menu.exec_(list.mapToGlobal(position))
+
+
+def closeEvent(self, a0):
+	print('Airsonic desktop closing, saving config')
+	config.save()
+
 
 if __name__ == "__main__":
 	app = QApplication([])

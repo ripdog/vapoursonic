@@ -26,7 +26,7 @@ class playbackController(QObject):
 		self.playQueueModel = QStandardItemModel()
 		self.songLoaderThreads = QThreadPool()
 
-		self.player = mpv.MPV(log_handler=my_log, loglevel='debug')
+		self.player = mpv.MPV(log_handler=my_log, loglevel='info')
 		self.player['prefetch-playlist'] = True
 		self.player['gapless-audio'] = True
 		self.player['force-seekable'] = True
@@ -36,7 +36,8 @@ class playbackController(QObject):
 		self.player.observe_property('time-pos', self.updateProgressBar)
 		self.player.observe_property('media-title', self.updateSongDetails)
 		self.player.observe_property('core-idle', self.updateIdleState)
-		self.player.observe_property('audio-params', self.watchAudioParams)
+		# self.player.observe_property('audio-params', self.watchAudioParams)
+		self.player.register_event_callback(self.mpvEventHandler)
 		self.player.observe_property('path', self.mpvUrlChanged)
 
 		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
@@ -243,14 +244,22 @@ class playbackController(QObject):
 
 	# print('mpv pos ceil\'d: {}, max: {}'.format(math.ceil(value), self.currentSong.data()['duration']))
 
-	def watchAudioParams(self, _name, params):
+	def mpvEventHandler(self, event):
+		if event['event_id'] == 8:  # file-loaded
+			self.rebuildAudioStats()
+		elif event['event_id'] == 7:
+			self.mpvFileEnded(event)
+
+	def rebuildAudioStats(self):
 		print('rebuilding audio stat line')
 		audioOutParams = {}
 		trackList = {}
 		try:
 			trackList = self.player.track_list
-			trackList = trackList[0]
+			if len(trackList) > 0:
+				trackList = trackList[0]
 			audioOutParams = self.player.audio_out_params
+			params = self.player.audio_params
 		except AttributeError:
 			pass
 		except IndexError:
@@ -267,6 +276,12 @@ class playbackController(QObject):
 		if params and 'hr-channels' in params:
 			ret += str(params['hr-channels']) + ' | '
 		self.updatePlayerUI.emit(ret, 'statusBar')
+
+	def mpvFileEnded(self, event):
+		print(event)
+		# restart queue only when last file ended naturally
+		if not self.getNextSong() and config.repeatList and event['event']['reason'] == 0:
+			self.playSongFromQueue(self.playQueueModel.index(0, 0))
 
 	def mpvUrlChanged(self, _name, value):
 		if value:
@@ -295,9 +310,6 @@ class playbackController(QObject):
 					self.setCurrentSong(self.playQueueModel.item(n, 0))
 					return
 			print('unable to find song in queue :(')
-		else:
-			if config.repeatList:
-				self.playSongFromQueue(self.playQueueModel.index(0, 0))
 
 	@pyqtSlot(int)
 	def setTrackProgress(self, position):

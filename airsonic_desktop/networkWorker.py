@@ -8,11 +8,11 @@ class networkWorker(QObject):
 	# whether the server could be connected to, and the error if any
 	connectResult = pyqtSignal(bool)
 	returnAlbums = pyqtSignal(object, str)
-	returnAlbumSongs = pyqtSignal(object)
+	returnAlbumSongs = pyqtSignal(object, object)
 	returnSongHandle = pyqtSignal(object, object)
 	returnAlbumArtHandle = pyqtSignal(object, str)
 	returnPlaylists = pyqtSignal(object)
-	returnPlaylistSongs = pyqtSignal(object)
+	returnPlaylistSongs = pyqtSignal(object, object)
 	returnSearchResults = pyqtSignal(object, int)
 	returnArtistAlbums = pyqtSignal(object, object)
 
@@ -46,13 +46,15 @@ class networkWorker(QObject):
 			item['type'] = 'album'
 		self.returnAlbums.emit(albums, type)
 
-	@pyqtSlot(int)
-	def getAlbumSongs(self, id):
+	@pyqtSlot(str, object)
+	def loadAlbumWithId(self, id, addToQueue):
 		print('getting songs for album {}'.format(id))
 		songs = self.connection.getAlbum(id)
 		for item in songs['album']['song']:
 			item['type'] = 'song'
-		self.returnAlbumSongs.emit(songs)
+		songs = songs['album']
+		songs['type'] = 'album'
+		self.returnAlbumSongs.emit(songs, addToQueue)
 
 	@pyqtSlot(str)
 	def getAlbumArtWithId(self, id):
@@ -60,13 +62,19 @@ class networkWorker(QObject):
 
 	@pyqtSlot()
 	def getPlaylists(self):
-		self.returnPlaylists.emit(self.connection.getPlaylists())
+		ret = self.connection.getPlaylists()
+		if ret and ret['status'] == 'ok':
+			for item in ret['playlists']['playlist']:
+				item['type'] = 'playlist'
+		self.returnPlaylists.emit(ret)
 
-	@pyqtSlot(str)
-	def getPlaylistSongs(self, id):
+	@pyqtSlot(str, object)
+	def getPlaylistSongs(self, id, addToQueue):
 		ret = self.connection.getPlaylist(id)
 		ret['type'] = 'playlist'
-		self.returnPlaylistSongs.emit(self.connection.getPlaylist(id))
+		for item in ret['playlist']['entry']:
+			item['type'] = 'song'
+		self.returnPlaylistSongs.emit(ret, addToQueue)
 
 	@pyqtSlot(str, object)
 	def addSongsToPlaylist(self, id, songs):

@@ -165,7 +165,7 @@
                                                                     <widget class="QPushButton" name="backHomeButton">
                                                                         <property name="minimumSize">
                                                                             <size>
-                                                                                <width>250</width>
+                                                                                <width>200</width>
                                                                                 <height>35</height>
                                                                             </size>
                                                                         </property>
@@ -183,6 +183,26 @@
                                                                         </property>
                                                                         <property name="flat">
                                                                             <bool>true</bool>
+                                                                        </property>
+                                                                    </widget>
+                                                                </item>
+                                                                <item>
+                                                                    <spacer name="horizontalSpacer_4">
+                                                                        <property name="orientation">
+                                                                            <enum>Qt::Horizontal</enum>
+                                                                        </property>
+                                                                        <property name="sizeHint" stdset="0">
+                                                                            <size>
+                                                                                <width>40</width>
+                                                                                <height>20</height>
+                                                                            </size>
+                                                                        </property>
+                                                                    </spacer>
+                                                                </item>
+                                                                <item>
+                                                                    <widget class="QLabel" name="albumTreeListTitle">
+                                                                        <property name="text">
+                                                                            <string>Home</string>
                                                                         </property>
                                                                     </widget>
                                                                 </item>
@@ -579,6 +599,13 @@
                                                             </widget>
                                                         </item>
                                                         <item>
+                                                            <widget class="QToolButton" name="repeatPlayQueueButton">
+                                                                <property name="text">
+                                                                    <string>...</string>
+                                                                </property>
+                                                            </widget>
+                                                        </item>
+                                                        <item>
                                                             <widget class="QToolButton" name="shufflePlayqueueButton">
                                                                 <property name="toolTip">
                                                                     <string>Shuffles the play queue.</string>
@@ -627,8 +654,17 @@
                                         </item>
                                         <item>
                                             <widget class="QToolButton" name="playPause">
+                                                <property name="minimumSize">
+                                                    <size>
+                                                        <width>25</width>
+                                                        <height>25</height>
+                                                    </size>
+                                                </property>
                                                 <property name="autoFillBackground">
                                                     <bool>false</bool>
+                                                </property>
+                                                <property name="styleSheet">
+                                                    <string notr="true">margin:0;padding:0;border:none;</string>
                                                 </property>
                                                 <property name="text">
                                                     <string>...</string>
@@ -645,6 +681,17 @@
                                         </item>
                                         <item>
                                             <widget class="QToolButton" name="nextTrack">
+                                                <property name="minimumSize">
+                                                    <size>
+                                                        <width>25</width>
+                                                        <height>25</height>
+                                                    </size>
+                                                </property>
+                                                <property name="styleSheet">
+                                                    <string notr="true">margin:0;
+                                                        padding:0;
+                                                    </string>
+                                                </property>
                                                 <property name="text">
                                                     <string>...</string>
                                                 </property>
@@ -674,11 +721,22 @@
                                             </widget>
                                         </item>
                                         <item>
-                                            <widget class="QLabel" name="currentPlayingLabel">
-                                                <property name="text">
-                                                    <string>Not Playing</string>
-                                                </property>
-                                            </widget>
+                                            <layout class="QVBoxLayout" name="verticalLayout">
+                                                <item>
+                                                    <widget class="QLabel" name="currentPlayingLabel">
+                                                        <property name="text">
+                                                            <string>Not Playing</string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <widget class="QLabel" name="trackArtistName">
+                                                        <property name="text">
+                                                            <string>TextLabel</string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                            </layout>
                                         </item>
                                         <item>
                                             <widget class="QSlider" name="trackProgressBar">
