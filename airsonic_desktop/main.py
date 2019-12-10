@@ -100,6 +100,17 @@ class MainWindow(QMainWindow):
 
 	# should slap an error somewhere lol
 
+	def setIconForRepeatButton(self):
+		if config.repeatList == "1":
+			self.ui.repeatPlayQueueButton.setIcon(QIcon('icons/baseline-repeat-one.svg'))
+			self.ui.repeatPlayQueueButton.setChecked(True)
+		elif config.repeatList == True:
+			self.ui.repeatPlayQueueButton.setIcon(QIcon('icons/baseline-repeat.svg'))
+			self.ui.repeatPlayQueueButton.setChecked(True)
+		else:
+			self.ui.repeatPlayQueueButton.setIcon(QIcon('icons/baseline-repeat.svg'))
+			self.ui.repeatPlayQueueButton.setChecked(False)
+
 	def populateIcons(self):
 		# Populate icons
 		self.ui.nextTrack.setIcon(QIcon('icons/baseline-skip-next.svg'))
@@ -126,6 +137,7 @@ class MainWindow(QMainWindow):
 		# followPlayedTrackIcon.addFile('icons/baseline-my-location.svg', mode=QIcon.Normal)
 		self.ui.toggleFollowPlayedTrackButton.setIcon(QIcon('icons/baseline-my-location.svg'))
 		self.ui.volumeSliderLabel.setPixmap(QIcon('icons/baseline-volume-up.svg').pixmap(QSize(32, 32)))
+		self.setIconForRepeatButton()
 
 	def populateLeftPanel(self):
 		# Populate Left Panel
@@ -206,6 +218,7 @@ class MainWindow(QMainWindow):
 		self.ui.shufflePlayqueueButton.clicked.connect(self.playbackController.shufflePlayQueue)
 		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
 		self.ui.volumeSlider.setValue(config.volume)
+		self.ui.repeatPlayQueueButton.clicked.connect(self.changeRepeatState)
 
 		# configure the play queue itself
 
@@ -272,6 +285,15 @@ class MainWindow(QMainWindow):
 	def trackSliderReleased(self):
 		self.sliderBeingDragged = False
 
+	def changeRepeatState(self):
+		if config.repeatList == "1":
+			config.repeatList = False
+		elif config.repeatList == False:
+			config.repeatList = True
+		elif config.repeatList == True:
+			config.repeatList = '1'
+		self.setIconForRepeatButton()
+
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, type):
 		if type == 'total':
@@ -280,22 +302,24 @@ class MainWindow(QMainWindow):
 			if self.taskbarProgress:
 				self.taskbarProgress.setMaximum(update)
 			self.ui.trackProgressBar.blockSignals(False)
-		if type == 'progress':
+		elif type == 'progress':
 			if not self.sliderBeingDragged:
 				self.ui.trackProgressBar.blockSignals(True)
 				self.ui.trackProgressBar.setValue(update)
 				self.ui.trackProgressBar.blockSignals(False)
 			if self.taskbarProgress:
 				self.taskbarProgress.setValue(update)
-		if type == 'title':
+		elif type == 'title':
 			self.ui.currentPlayingLabel.setText(update)
+		elif type == 'artist':
+			self.ui.trackArtistName.setText(update)
 		elif type == 'statusBar':
 			self.statusBar().showMessage(update)
 		elif type == 'scrollTo':
 			if self.followPlayedTrack:
 				self.ui.playQueueList.scrollTo(update, QAbstractItemView.PositionAtTop)
 				self.ui.playQueueList.selectionModel().select(update, QItemSelectionModel.ClearAndSelect)
-		if type == 'idle':
+		elif type == 'idle':
 			if update:
 				self.ui.playPause.setIcon(playIcon)
 				if self.taskbarProgress:

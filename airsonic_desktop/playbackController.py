@@ -18,7 +18,6 @@ def my_log(loglevel, component, message):
 
 
 class playbackController(QObject):
-	getSongHandle = pyqtSignal(object)
 	updatePlayerUI = pyqtSignal(object, str)
 
 	def __init__(self, networkWorker):
@@ -36,13 +35,11 @@ class playbackController(QObject):
 		self.player.observe_property('time-pos', self.updateProgressBar)
 		self.player.observe_property('media-title', self.updateSongDetails)
 		self.player.observe_property('core-idle', self.updateIdleState)
-		# self.player.observe_property('audio-params', self.watchAudioParams)
 		self.player.register_event_callback(self.mpvEventHandler)
 		self.player.observe_property('path', self.mpvUrlChanged)
 
 		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
 		self.currentSong = None
-		# signals
 
 		self.salt = md5(os.urandom(100)).hexdigest()
 		self.token = md5((config.password + self.salt).encode('utf-8')).hexdigest()
@@ -135,7 +132,8 @@ class playbackController(QObject):
 				currentSongStandardObject = standardItems[0]
 		if currentSongStandardObject:
 			self.setCurrentSong(currentSongStandardObject)
-		self.syncMpvPlaylist()
+
+	# self.syncMpvPlaylist()
 
 	def syncMpvPlaylist(self):
 		self.player.playlist_clear()
@@ -186,9 +184,10 @@ class playbackController(QObject):
 
 	@pyqtSlot()
 	def playPreviousSong(self):
-		try:
-			self.player.playlist_prev()
-		except SystemError:
+		song = self.getPreviousSong().data()
+		if song:
+			self.playSong(song)
+		else:
 			self.player.seek(0, 'absolute')
 
 	@pyqtSlot(int)
@@ -279,7 +278,10 @@ class playbackController(QObject):
 
 	def mpvFileEnded(self, event):
 		print(event)
-		# restart queue only when last file ended naturally
+		# repeat current song when on repeat 1 mode
+		if config.repeatList == '1' and event['event']['reason'] == 0:
+			self.playSong(self.currentSong.data())
+		# restart queue only when last file ended due to eof
 		if not self.getNextSong() and config.repeatList and event['event']['reason'] == 0:
 			self.playSongFromQueue(self.playQueueModel.index(0, 0))
 
@@ -327,7 +329,20 @@ class playbackController(QObject):
 	def updateSongDetails(self, _name, value):
 		# print('emitting update title')
 		value = self.player.media_title
-		self.updatePlayerUI.emit(value, 'title')
+		if value:
+			self.updatePlayerUI.emit(value, 'title')
+		else:
+			self.updatePlayerUI.emit('Not Playing', 'title')
+		try:
+			artist = self.player.filtered_metadata['Artist']
+			self.updatePlayerUI.emit(artist, 'artist')
+		except KeyError:
+			print('unable to update artist.')
+			return
+		except TypeError:
+			print('updating artist too early')
+			self.updatePlayerUI.emit('No Artist', 'artist')
+			return
 
 	def updateIdleState(self, _name, value):
 		# print('player idle state: {}'.format(value))

@@ -26,7 +26,7 @@ def addSongs(list, parent, afterCurrent):
 
 class playLastAction(QAction):
 	def __init__(self, parent, list):
-		print('init playLastAction')
+		# print('init playLastAction')
 		super(playLastAction, self).__init__(QIcon('icons/baseline-playlist-add.svg'), 'Play Last', parent)
 		self.list = list
 		self.triggered.connect(self.playLastTriggered)
@@ -37,7 +37,7 @@ class playLastAction(QAction):
 
 class playNextAction(QAction):
 	def __init__(self, parent, list):
-		print('init playNextAction')
+		# print('init playNextAction')
 		super(playNextAction, self).__init__(QIcon('icons/baseline-menu-open.svg'), 'Play Next', parent)
 		self.list = list
 		self.triggered.connect(self.playNextTriggered)
@@ -48,7 +48,7 @@ class playNextAction(QAction):
 
 class addToPlaylistAction(QAction):
 	def __init__(self, playlist, parent, list):
-		print('init addToPlaylistAction')
+		# print('init addToPlaylistAction')
 		super(addToPlaylistAction, self).__init__(playlist['name'], parent)
 		self.list = list
 		self.playlist = playlist
@@ -63,8 +63,8 @@ class addToPlaylistAction(QAction):
 
 class addToPlaylistMenu(QMenu):
 	def __init__(self, parent, list):
-		print('init addToPlaylistMenu')
-		super(addToPlaylistMenu, self).__init__(parent)
+		# print('init addToPlaylistMenu')
+		super(addToPlaylistMenu, self).__init__("Add To Playlist", parent)
 		self.list = list
 		try:
 			for playlist in self.parent().playlistCache:
