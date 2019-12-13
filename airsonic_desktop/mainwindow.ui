@@ -568,7 +568,7 @@
                                         <widget class="QWidget" name="horizontalLayoutWidget">
                                             <layout class="QHBoxLayout" name="playQueueListLayout">
                                                 <item>
-                                                    <widget class="QTreeView" name="playQueueList">
+                                                    <widget class="PlayQueueView" name="playQueueList">
                                                         <property name="sizePolicy">
                                                             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                                                                 <horstretch>0</horstretch>
@@ -814,6 +814,13 @@
             </property>
         </action>
     </widget>
+    <customwidgets>
+        <customwidget>
+            <class>PlayQueueView</class>
+            <extends>QTreeView</extends>
+            <header>playqueueview.h</header>
+        </customwidget>
+    </customwidgets>
     <resources/>
     <connections/>
 </ui>

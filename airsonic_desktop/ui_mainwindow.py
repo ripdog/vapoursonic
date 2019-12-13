@@ -231,7 +231,7 @@ class Ui_AirsonicDesktop(object):
 		self.playQueueListLayout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
 		self.playQueueListLayout.setContentsMargins(0, 0, 0, 0)
 		self.playQueueListLayout.setObjectName("playQueueListLayout")
-		self.playQueueList = QtWidgets.QTreeView(self.horizontalLayoutWidget)
+		self.playQueueList = PlayQueueView(self.horizontalLayoutWidget)
 		sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 		sizePolicy.setHorizontalStretch(0)
 		sizePolicy.setVerticalStretch(0)
@@ -388,3 +388,6 @@ class Ui_AirsonicDesktop(object):
 		self.menuFile.setTitle(_translate("AirsonicDesktop", "File"))
 		self.actionConnect.setText(_translate("AirsonicDesktop", "Disconnect"))
 		self.actionExit.setText(_translate("AirsonicDesktop", "Exit"))
+
+
+from playqueueview import PlayQueueView

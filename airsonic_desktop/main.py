@@ -44,6 +44,7 @@ class MainWindow(QMainWindow):
 		self.networkWorker.moveToThread(self.networkThread)
 		self.networkThread.start()
 		self.ui = Ui_AirsonicDesktop()
+
 		self.ui.setupUi(self)
 
 		self.populateConnectFields()
@@ -209,7 +210,6 @@ class MainWindow(QMainWindow):
 
 	# noinspection PyArgumentList
 	def populatePlayQueue(self):
-		# populate play queue
 		# define playbackController and connect it up
 		self.playbackController = playbackController(self.networkWorker)
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
@@ -234,14 +234,13 @@ class MainWindow(QMainWindow):
 		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
 		self.ui.volumeSlider.setValue(config.volume)
 		self.ui.repeatPlayQueueButton.clicked.connect(self.changeRepeatState)
-		self.ui.playQueueList.setContextMenuPolicy(Qt.CustomContextMenu)
-		self.ui.playQueueList.customContextMenuRequested.connect(self.playQueueMenu)
+
 		self.short1 = QShortcut(Qt.Key_Delete, self.ui.playQueueList, context=Qt.WidgetShortcut,
 								activated=self.playQueueActions[1].removeFromQueue)
 		self.short2 = QShortcut(Qt.Key_Enter, self.ui.playQueueList, context=Qt.WidgetShortcut,
-								activated=self.playSelectedSongFromQueue)
+								activated=self.ui.playQueueList.playSelectedSongFromQueue)
 		self.short3 = QShortcut(Qt.Key_Return, self.ui.playQueueList, context=Qt.WidgetShortcut,
-								activated=self.playSelectedSongFromQueue)
+								activated=self.ui.playQueueList.playSelectedSongFromQueue)
 		self.short4 = QShortcut(Qt.Key_Space, self.ui.playQueueList, context=Qt.ApplicationShortcut,
 								activated=self.playbackController.playPause)
 
@@ -368,17 +367,10 @@ class MainWindow(QMainWindow):
 	def updateFollowPlayedTrack(self):
 		if config.followPlaybackInQueue:
 			self.followPlayedTrack = False
-		# self.ui.toggleFollowPlayedTrackButton.setChecked(False)
 		else:
 			self.followPlayedTrack = True
 
-	# self.ui.toggleFollowPlayedTrackButton.setChecked(True)
 
-	def playSelectedSongFromQueue(self):
-		print('playing song from queue')
-		indexes = self.ui.playQueueList.selectedIndexes()
-		if len(indexes) > 0:
-			self.playbackController.playSongFromQueue(indexes[0])
 
 	def playPause(self):
 		print('playPause hotkey hit')
@@ -648,16 +640,6 @@ class MainWindow(QMainWindow):
 
 	def albumTrackListMenu(self, position):
 		self.openAlbumTreeOrListMenu(position, self.ui.albumTrackList, self.albumTrackListActions)
-
-	def playQueueMenu(self, position):
-		if len(self.ui.playQueueList.selectedIndexes()) > 0:
-			menu = QMenu()
-			for item in self.playQueueActions:
-				try:
-					menu.addAction(item)
-				except TypeError:
-					menu.addMenu(item)
-			menu.exec_(self.ui.playQueueList.mapToGlobal(position))
 
 	def openAlbumTreeOrListMenu(self, position, list, actionsDict):
 		if len(list.selectedIndexes()) > 0:
