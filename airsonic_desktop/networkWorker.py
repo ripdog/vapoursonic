@@ -15,6 +15,7 @@ class networkWorker(QObject):
 	returnPlaylistSongs = pyqtSignal(object, object)
 	returnSearchResults = pyqtSignal(object, int)
 	returnArtistAlbums = pyqtSignal(object, object)
+	returnArtists = pyqtSignal(object)
 
 	@pyqtSlot(str, str, str, result=bool)
 	def connectToServer(self, domain, username, password):
@@ -29,22 +30,22 @@ class networkWorker(QObject):
 		print(ping)
 		self.connectResult.emit(ping)
 
-	@pyqtSlot(str)
-	def getAlbumsOfType(self, type, page=0):
-		print('getting {} albums'.format(type))
-		if type == "random":
-			albums = self.connection.getAlbumList2('random', 50, page)
-		elif type == 'recentlyAdded':
-			albums = self.connection.getAlbumList2('newest', 50, page)
-		elif type == 'recentlyPlayed':
-			albums = self.connection.getAlbumList2('recent', 50, page)
-		elif type == 'albums':
-			albums = self.connection.getAlbumList2('alphabeticalByName', 50, page)
+	@pyqtSlot(str, int)
+	def getDataForAlbumTreeView(self, type, page=0):
+		print('getting {} data'.format(type))
+		if type not in ['random', 'newest', 'recent', 'frequent', 'alphabeticalByName', 'artists']:
+			raise ValueError('Incorrect data type requested')
+		if type == 'artists':
+			artists = self.connection.getArtists()
+			for index in artists['artists']['index']:
+				for artist in index['artist']:
+					artist['type'] = 'artist'
+			self.returnArtists.emit(artists)
 		else:
-			raise AttributeError('Incorrect album type requested')
-		for item in albums['albumList2']['album']:
-			item['type'] = 'album'
-		self.returnAlbums.emit(albums, type)
+			albums = self.connection.getAlbumList2(type, 50, page * 50)
+			for item in albums['albumList2']['album']:
+				item['type'] = 'album'
+			self.returnAlbums.emit(albums, type)
 
 	@pyqtSlot(str, object)
 	def loadAlbumWithId(self, id, addToQueue):

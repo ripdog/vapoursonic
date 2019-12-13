@@ -4,7 +4,7 @@ import keyboard
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QStyle, QAbstractItemView
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut
 
 import actions
 
@@ -20,7 +20,7 @@ from ui_mainwindow import Ui_AirsonicDesktop
 
 
 class MainWindowSignals(QObject):
-	loadAlbumsOfType = pyqtSignal(str)
+	loadAlbumsOfType = pyqtSignal(str, int)
 	loadAlbumWithId = pyqtSignal(str, object)
 	loadAlbumArtWithId = pyqtSignal(str)
 	playbackControl = pyqtSignal(str)
@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
 		))
 		self.networkWorker.returnAlbums.connect(self.displayLoadedAlbums)
 		self.networkWorker.connectResult.connect(self.connectResult)
-		self.signals.loadAlbumsOfType.connect(self.networkWorker.getAlbumsOfType)
+		self.signals.loadAlbumsOfType.connect(self.networkWorker.getDataForAlbumTreeView)
 		self.signals.loadAlbumWithId.connect(self.networkWorker.loadAlbumWithId)
 		self.networkWorker.returnAlbumSongs.connect(self.receiveLoadedSongs)
 		self.signals.loadAlbumArtWithId.connect(self.networkWorker.getAlbumArtWithId)
@@ -72,13 +72,22 @@ class MainWindow(QMainWindow):
 		self.networkWorker.returnSearchResults.connect(self.receiveSearchResults)
 		self.signals.loadAlbumsForArtist.connect(self.networkWorker.loadAlbumsForArtist)
 		self.networkWorker.returnArtistAlbums.connect(self.receiveArtistAlbums)
+		self.networkWorker.returnArtists.connect(self.receiveArtists)
 
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
 		self.albumListState = 'home'
+		self.possibleAlbumListStates = {  # state name and whether it's pagable
+			'home': False,
+			'alphabeticalByName': True,
+			'artists': False,
+			'frequent': True,
+			'newest': True,
+			'recent': True,
+			'random': True,
+			'search': True
+		}
 		self.currentPage = 0
-
-	# options are 'home', 'albums', 'artists', 'recentlyAdded', 'recentlyPlayed', 'random', 'search', maybe folders?
 
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.domain)
@@ -157,6 +166,8 @@ class MainWindow(QMainWindow):
 		self.ui.albumTreeList.setColumnWidth(0, 300)
 
 		self.ui.backHomeButton.clicked.connect(self.backHome)
+		self.ui.albumListViewPreviousPage.clicked.connect(self.previousPage)
+		self.ui.albumListViewNextPage.clicked.connect(self.nextPage)
 		self.ui.albumListViewRefresh.clicked.connect(self.refreshAlbumListView)
 		self.backHome()
 
@@ -178,6 +189,9 @@ class MainWindow(QMainWindow):
 			'addToPlaylist': [actions.addToPlaylistMenu(self, self.ui.albumTrackList)]
 			# TODO: Actions should be refreshed when a new playlist is added.
 		}
+		self.playQueueActions = [actions.goToAlbumAction(self, self.ui.playQueueList),
+								 actions.removeFromQueue(self, self.ui.playQueueList),
+								 actions.addToPlaylistMenu(self, self.ui.albumTrackList)]
 
 	def populateRightPanel(self):
 		# populate right panel
@@ -193,6 +207,7 @@ class MainWindow(QMainWindow):
 		self.ui.albumTrackList.customContextMenuRequested.connect(self.albumTrackListMenu)
 		self.refreshActions()
 
+	# noinspection PyArgumentList
 	def populatePlayQueue(self):
 		# populate play queue
 		# define playbackController and connect it up
@@ -219,6 +234,16 @@ class MainWindow(QMainWindow):
 		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
 		self.ui.volumeSlider.setValue(config.volume)
 		self.ui.repeatPlayQueueButton.clicked.connect(self.changeRepeatState)
+		self.ui.playQueueList.setContextMenuPolicy(Qt.CustomContextMenu)
+		self.ui.playQueueList.customContextMenuRequested.connect(self.playQueueMenu)
+		self.short1 = QShortcut(Qt.Key_Delete, self.ui.playQueueList, context=Qt.WidgetShortcut,
+								activated=self.playQueueActions[1].removeFromQueue)
+		self.short2 = QShortcut(Qt.Key_Enter, self.ui.playQueueList, context=Qt.WidgetShortcut,
+								activated=self.playSelectedSongFromQueue)
+		self.short3 = QShortcut(Qt.Key_Return, self.ui.playQueueList, context=Qt.WidgetShortcut,
+								activated=self.playSelectedSongFromQueue)
+		self.short4 = QShortcut(Qt.Key_Space, self.ui.playQueueList, context=Qt.ApplicationShortcut,
+								activated=self.playbackController.playPause)
 
 		# configure the play queue itself
 
@@ -285,6 +310,14 @@ class MainWindow(QMainWindow):
 	def trackSliderReleased(self):
 		self.sliderBeingDragged = False
 
+	def nextPage(self):
+		self.currentPage += 1
+		self.refreshAlbumListView()
+
+	def previousPage(self):
+		self.currentPage -= 1
+		self.refreshAlbumListView()
+
 	def changeRepeatState(self):
 		if config.repeatList == "1":
 			config.repeatList = False
@@ -341,6 +374,12 @@ class MainWindow(QMainWindow):
 
 	# self.ui.toggleFollowPlayedTrackButton.setChecked(True)
 
+	def playSelectedSongFromQueue(self):
+		print('playing song from queue')
+		indexes = self.ui.playQueueList.selectedIndexes()
+		if len(indexes) > 0:
+			self.playbackController.playSongFromQueue(indexes[0])
+
 	def playPause(self):
 		print('playPause hotkey hit')
 		self.signals.playbackControl.emit('playPause')
@@ -361,13 +400,11 @@ class MainWindow(QMainWindow):
 			self.signals.loadAlbumWithId.emit(data, {'display': True,
 													 'afterCurrent': False})
 
-	# don't a
-
 	def albumListDoubleClick(self, index):
 		item = self.albumTreeListModel.itemFromIndex(index)
 		text = item.text()
 		data = item.data()
-		print('{} clicked, attempting load...'.format(text))
+		print('{} dblclicked, attempting load...'.format(text))
 		if data['type'] == 'song':
 			self.playbackController.addSongs([data])
 
@@ -420,19 +457,33 @@ class MainWindow(QMainWindow):
 		if 'artist' in results:
 			artistContainer = QStandardItem('Artists')
 			for item in results['artist']:
-				album = QStandardItem(item['name'])
-				album.setData(item)
-				artistContainer.appendRow(album)
-				loadingItem = QStandardItem('Loading')
-				album.appendRow(loadingItem)
+				artistContainer.appendRow(self.buildItemForArtist(item))
 			self.albumTreeListModel.appendRow(artistContainer)
-
 		self.ui.albumTreeList.expandToDepth(0)
+
+	def buildItemForArtist(self, artist):
+		artistItem = QStandardItem(artist['name'])
+		artistItem.setData(artist)
+		loadingItem = QStandardItem('Loading')
+		artistItem.appendRow(loadingItem)
+		return artistItem
+
+	def receiveArtists(self, artists):
+		self.changeAlbumListState('artists')
+		self.ui.albumTreeList.setIndentation(15)
+		self.albumTreeListModel.setColumnCount(1)
+		self.ui.albumTreeList.setHeaderHidden(True)
+		artistIndexList = artists['artists']['index']
+		for item in artistIndexList:
+			index = QStandardItem(item['name'])
+			for artist in item['artist']:
+				index.appendRow(self.buildItemForArtist(artist))
+			self.albumTreeListModel.appendRow(index)
 
 	def handleExpandedAlbumListViewItem(self, index):
 		item = self.albumTreeListModel.itemFromIndex(index)
 		data = item.data()
-		if data and data['type'] and data['type'] == 'artist':
+		if data and 'type' in data and data['type'] == 'artist':
 			print('loading artist {}'.format(item.data()))
 			self.signals.loadAlbumsForArtist.emit(data['id'], index)
 
@@ -462,18 +513,20 @@ class MainWindow(QMainWindow):
 
 	def loadDataforAlbumListView(self, type):
 		type = type.lower()
-		self.changeAlbumListState(type)
 
-		if type == "random":
-			self.signals.loadAlbumsOfType.emit("random")
-		elif type == "recently added":
-			self.signals.loadAlbumsOfType.emit("recentlyAdded")
-		elif type == "recently played":
-			self.signals.loadAlbumsOfType.emit('recentlyPlayed')
-		elif type == 'albums':
-			self.signals.loadAlbumsOfType.emit('albums')
-		elif type == 'playlists':
+		if type == 'playlists':
 			self.signals.getPlaylists.emit()
+			return
+		if type == "recently added":
+			type = 'newest'
+		elif type == "recently played":
+			type = 'recent'
+		elif type == 'albums':
+			type = 'alphabeticalByName'
+		elif type == 'frequently played':
+			type = 'frequent'
+		self.changeAlbumListState(type)
+		self.signals.loadAlbumsOfType.emit(type, self.currentPage)
 
 	def albumTrackListDoubleClick(self, index):
 		item = self.albumTrackListModel.itemFromIndex(index)
@@ -481,10 +534,20 @@ class MainWindow(QMainWindow):
 		print('{} dblclicked in track list, adding to play queue'.format(text))
 		self.playbackController.playNow(self.currentAlbum['song'], item.data())
 
+	def setPagableState(self, state):
+		self.ui.albumListViewNextPage.setEnabled(state)
+		self.ui.albumListViewPreviousPage.setEnabled(state)
+
 	def changeAlbumListState(self, state):
+		if state not in self.possibleAlbumListStates:
+			raise ValueError('Invalid album list state selected')
 		self.albumListState = state
+		self.setPagableState(self.possibleAlbumListStates[state])
+		if self.possibleAlbumListStates[state]:
+			self.ui.albumTreeListTitle.setText('{} Page {}'.format(state.title(), self.currentPage + 1))
+		else:
+			self.ui.albumTreeListTitle.setText('{}'.format(state.title()))
 		self.albumTreeListModel.clear()
-		self.ui.albumTreeListTitle.setText('{} Page {}'.format(state.title(), self.currentPage + 1))
 		if state != 'home':
 			self.ui.backHomeButtonLayout.setHidden(False)
 		else:
@@ -497,7 +560,8 @@ class MainWindow(QMainWindow):
 		self.ui.albumTreeList.setIndentation(0)
 		self.currentPage = 0
 		self.ui.albumTreeList.setHeaderHidden(True)
-		for item in ['Playlists', 'Random', 'Recently Added', 'Recently Played', 'Artists', 'Albums', 'Folders']:
+		for item in ['Playlists', 'Random', 'Recently Added', 'Recently Played',
+					 'Frequently Played', 'Artists', 'Albums', 'Folders']:
 			standardItem = QStandardItem(item)
 			standardItem.setData({'type': 'category'})
 			self.albumTreeListModel.appendRow(standardItem)
@@ -580,12 +644,22 @@ class MainWindow(QMainWindow):
 		self.loadDataforAlbumListView(self.albumListState)
 
 	def albumTreeListMenu(self, position):
-		self.openAlbumListsMenu(position, self.ui.albumTreeList, self.albumTreeListActions)
+		self.openAlbumTreeOrListMenu(position, self.ui.albumTreeList, self.albumTreeListActions)
 
 	def albumTrackListMenu(self, position):
-		self.openAlbumListsMenu(position, self.ui.albumTrackList, self.albumTrackListActions)
+		self.openAlbumTreeOrListMenu(position, self.ui.albumTrackList, self.albumTrackListActions)
 
-	def openAlbumListsMenu(self, position, list, actionsDict):
+	def playQueueMenu(self, position):
+		if len(self.ui.playQueueList.selectedIndexes()) > 0:
+			menu = QMenu()
+			for item in self.playQueueActions:
+				try:
+					menu.addAction(item)
+				except TypeError:
+					menu.addMenu(item)
+			menu.exec_(self.ui.playQueueList.mapToGlobal(position))
+
+	def openAlbumTreeOrListMenu(self, position, list, actionsDict):
 		if len(list.selectedIndexes()) > 0:
 			menu = QMenu()
 			items = actions.getItemsFromList(list)

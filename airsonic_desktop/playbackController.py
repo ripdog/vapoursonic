@@ -132,8 +132,7 @@ class playbackController(QObject):
 				currentSongStandardObject = standardItems[0]
 		if currentSongStandardObject:
 			self.setCurrentSong(currentSongStandardObject)
-
-	# self.syncMpvPlaylist()
+		self.syncMpvPlaylist()
 
 	def syncMpvPlaylist(self):
 		self.player.playlist_clear()
@@ -340,7 +339,7 @@ class playbackController(QObject):
 			print('unable to update artist.')
 			return
 		except TypeError:
-			print('updating artist too early')
+			# print('updating artist too early')
 			self.updatePlayerUI.emit('No Artist', 'artist')
 			return
 
@@ -365,3 +364,15 @@ class playbackController(QObject):
 			self.playNextSongExplicitly()
 		elif type == "prevSong":
 			self.playPreviousSong()
+
+	def removeFromQueue(self, ids):
+		print('removing {} from play queue'.format(ids))
+		removeRowIds = []
+		for n in range(0, self.playQueueModel.rowCount()):
+			song = self.playQueueModel.item(n, 0)
+			if song and song.data()['id'] in ids:
+				removeRowIds.append(n)
+		removeRowIds.sort(reverse=True)
+		for n in removeRowIds:
+			self.playQueueModel.removeRow(n)
+		self.syncMpvPlaylist()
