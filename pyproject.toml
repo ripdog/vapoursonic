@@ -2,7 +2,7 @@
 name = "airsonic-desktop"
 version = "0.1.0"
 description = ""
-authors = ["***REMOVED*** ***REMOVED*** <***REMOVED***@***REMOVED***>"]
+authors = ["ripdog"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -13,8 +13,7 @@ pyqt5-stubs = "^5.13"
 python-mpv = "^0.4.5"
 wheel = "^0.33.6"
 keyboard = "^0.13.4"
-pywin32-ctypes = "^0.2.0"
-
+pywin32-ctypes = { version = "^0.2.0", markers = "sys_platform == 'win32'" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"

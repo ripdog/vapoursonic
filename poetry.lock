@@ -1852,19 +1852,8 @@ screenshot_raw = ["pillow"]
 
 [[package]]
 category = "main"
-description = ".Net and Mono integration for Python"
-name = "pythonnet"
-optional = false
-python-versions = "*"
-version = "2.4.1.dev0"
-
-[package.source]
-reference = "5f56ebc8f0785f6581c10d5beb9c1a8fffe6c650"
-type = "git"
-url = "https://github.com/pythonnet/pythonnet.git"
-[[package]]
-category = "main"
 description = ""
+marker = "sys_platform == \"win32\""
 name = "pywin32-ctypes"
 optional = false
 python-versions = "*"
@@ -1914,7 +1903,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "5abf836a26778d3158da72aede26e2db942f41bf26cc647521c1f60ac7f4f2c9"
+content-hash = "3740169be6075ae7a1968cca936f345ad09174c2d4e492f84fd31b9a7ce1823c"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -2594,7 +2583,6 @@ pytest = [
 python-mpv = [
     {file = "python-mpv-0.4.5.tar.gz", hash = "sha256:2955f054facdf9afdbc4590919fbcb11bbc55281f1168de29a30bf7773a60502"},
 ]
-pythonnet = []
 pywin32-ctypes = [
     {file = "pywin32-ctypes-0.2.0.tar.gz", hash = "sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942"},
     {file = "pywin32_ctypes-0.2.0-py2.py3-none-any.whl", hash = "sha256:9dc2d991b3479cc2df15930958b674a48a227d5361d413827a4cfd0b5876fc98"},

@@ -1,6 +1,6 @@
+import sys
 from datetime import timedelta
 
-import keyboard
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap, QImage
@@ -11,6 +11,7 @@ import actions
 try:
 	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
 except ImportError:
+	print('unable to import Qt Windows Extras')
 	pass
 from config import config
 from albumArtLoader import albumArtLoader
@@ -272,8 +273,19 @@ class MainWindow(QMainWindow):
 		self.thumbnailToolBar.addButton(self.nextToolbarButton)
 
 	def bindMediaKeys(self):  # it's borked, capn
-		self.keyHook = keyboard.hook_key('play/pause media', self.playPause)
-		print(keyboard._hooks)
+		if sys.platform == 'win32':
+			# try:
+			import winhotkeys
+			# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
+			# 	print('not windows, unable to bind media keys')
+			# 	return
+			self.keyHookThreadPool = QThreadPool()
+			self.keyHookThreadPool.setMaxThreadCount(1)
+			self.keyHook = winhotkeys.mediaKeysHooker(self)
+			self.keyHook.signals.playPauseSignal.connect(self.playbackController.playPause)
+			self.keyHook.signals.nextSongSignal.connect(self.playbackController.playNextSongExplicitly)
+			self.keyHook.signals.prevSongSignal.connect(self.playbackController.playPreviousSong)
+			self.keyHookThreadPool.start(self.keyHook)
 
 	def cachePlaylists(self):
 		self.signals.getPlaylists.emit()
@@ -293,9 +305,6 @@ class MainWindow(QMainWindow):
 
 		self.cachePlaylists()
 
-		# keybinding the media keys
-		# keybinder.init()
-		# keybinder.register_hotkey(self.winId(), QKeySequence("Media Play"), self.playbackController.playPause)
 		if QWinTaskbarProgress:
 			self.taskbarButton = QWinTaskbarButton(self)
 			self.taskbarButton.setWindow(self.windowHandle())
@@ -331,16 +340,20 @@ class MainWindow(QMainWindow):
 		if type == 'total':
 			self.ui.trackProgressBar.blockSignals(True)
 			self.ui.trackProgressBar.setRange(0, update)
-			if self.taskbarProgress:
+			try:
 				self.taskbarProgress.setMaximum(update)
+			except AttributeError:
+				pass
 			self.ui.trackProgressBar.blockSignals(False)
 		elif type == 'progress':
 			if not self.sliderBeingDragged:
 				self.ui.trackProgressBar.blockSignals(True)
 				self.ui.trackProgressBar.setValue(update)
 				self.ui.trackProgressBar.blockSignals(False)
-			if self.taskbarProgress:
+			try:
 				self.taskbarProgress.setValue(update)
+			except AttributeError:
+				pass
 		elif type == 'title':
 			self.ui.currentPlayingLabel.setText(update)
 		elif type == 'artist':
@@ -354,15 +367,19 @@ class MainWindow(QMainWindow):
 		elif type == 'idle':
 			if update:
 				self.ui.playPause.setIcon(playIcon)
-				if self.taskbarProgress:
+				try:
 					self.taskbarProgress.setPaused(True)
 					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+				except AttributeError:
+					pass  # not on windows, or this is not ready yet
 			else:
 				self.ui.playPause.setIcon(pauseIcon)
-				if self.taskbarProgress:
+				try:
 					self.taskbarProgress.setPaused(False)
 					self.taskbarProgress.setVisible(True)
 					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
+				except AttributeError:
+					pass  #not on windows, or this is not ready yet
 
 	def updateFollowPlayedTrack(self):
 		if config.followPlaybackInQueue:

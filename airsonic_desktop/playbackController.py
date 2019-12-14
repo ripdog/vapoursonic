@@ -44,20 +44,6 @@ class playbackController(QObject):
 		self.salt = md5(os.urandom(100)).hexdigest()
 		self.token = md5((config.password + self.salt).encode('utf-8')).hexdigest()
 
-	def currentSongFullyLoaded(self):
-
-		try:
-			id = self.currentSong.data()['id']
-			if self.songCache[id][0] == songLoadFinished:
-				return True
-			else:
-				return False
-		except KeyError:
-			return False
-		except AttributeError:
-			return False
-		except RuntimeError:
-			return False
 
 	def setCurrentSong(self, newsong):
 		if newsong == None:
@@ -164,7 +150,8 @@ class playbackController(QObject):
 
 	@pyqtSlot()
 	def playNextSongExplicitly(self):
-		print(self.player.playlist_filenames)
+		if not self.currentSong:
+			return
 		try:
 			self.player.playlist_next()
 		except SystemError:
@@ -183,6 +170,8 @@ class playbackController(QObject):
 
 	@pyqtSlot()
 	def playPreviousSong(self):
+		if not self.currentSong:
+			return
 		song = self.getPreviousSong().data()
 		if song:
 			self.playSong(song)
