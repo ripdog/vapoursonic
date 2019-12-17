@@ -1,8 +1,20 @@
 import os
+import pathlib
+import sys
 
 import yaml
 from PyQt5.QtGui import QIcon
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
+
+
+def getPath():
+	if sys.platform == 'win32':
+		path = os.path.expandvars(r'%APPDATA%\vapoursonic\config.yaml')
+	else:
+		print('unsupported OS!')
+		path = os.path.abspath('config.yaml')
+	pathlib.Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
+	return path
 
 
 class configManager():
@@ -37,7 +49,7 @@ class configManager():
 					 ]:
 			self.icons[item] = self.loadIcon(item)
 		try:
-			with open('config.yaml') as file:
+			with open(getPath()) as file:
 				userConfig = yaml.full_load(file)
 		except FileNotFoundError:
 			userConfig = {}
@@ -64,7 +76,7 @@ class configManager():
 		saveme = {}
 		for item in self.fallbackConfig.keys():
 			saveme[item] = getattr(self, item)
-		with open('config.yaml', 'w') as file:
+		with open(getPath(), 'w') as file:
 			file.write(yaml.safe_dump(saveme))
 
 	def loadIcon(self, name):

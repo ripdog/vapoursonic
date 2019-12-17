@@ -2,8 +2,5 @@
   "app_name": "vapoursonic",
   "author": "ripdog",
   "main_module": "src/main/python/main.py",
-  "version": "0.5.0",
-  "hidden_imports": [
-    "actions"
-  ]
+  "version": "0.5.0"
 }
