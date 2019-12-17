@@ -1,11 +1,13 @@
+import functools
+from urllib.error import URLError
+
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
-from libsonic import Connection
+from libsonic import Connection, CredentialError
 
 from config import config
 
 
 class networkWorker(QObject):
-	# whether the server could be connected to, and the error if any
 	connectResult = pyqtSignal(bool)
 	returnAlbums = pyqtSignal(object, str)
 	returnAlbumSongs = pyqtSignal(object, object)
@@ -16,7 +18,27 @@ class networkWorker(QObject):
 	returnSearchResults = pyqtSignal(object, int)
 	returnArtistAlbums = pyqtSignal(object, object)
 	returnArtists = pyqtSignal(object)
+	errorHandler = pyqtSignal(str)
 
+	def catchErr(self, *exceptions):
+		def decorator(func):
+			@functools.wraps(func)
+			def wrapper(*args, **kwargs):
+				try:
+					return func(*args, **kwargs)
+				except exceptions or Exception as e:
+					return self.handleErr(func, e)
+
+			return wrapper
+
+		return decorator
+
+	def handleErr(self, func, e):
+		if hasattr(e, 'reason'):
+			e = e.reason
+		self.errorHandler.emit(str(e))
+
+	@catchErr(CredentialError)
 	@pyqtSlot(str, str, str, result=bool)
 	def connectToServer(self, domain, username, password):
 		print('connecting to {}'.format(domain))
@@ -30,6 +52,7 @@ class networkWorker(QObject):
 		print(ping)
 		self.connectResult.emit(ping)
 
+	@catchErr(URLError)
 	@pyqtSlot(str, int)
 	def getDataForAlbumTreeView(self, type, page=0):
 		print('getting {} data'.format(type))
@@ -47,6 +70,7 @@ class networkWorker(QObject):
 				item['type'] = 'album'
 			self.returnAlbums.emit(albums, type)
 
+	@catchErr(URLError)
 	@pyqtSlot(str, object)
 	def loadAlbumWithId(self, id, addToQueue):
 		print('getting songs for album {}'.format(id))
@@ -57,10 +81,12 @@ class networkWorker(QObject):
 		songs['type'] = 'album'
 		self.returnAlbumSongs.emit(songs, addToQueue)
 
+	@catchErr(URLError)
 	@pyqtSlot(str)
 	def getAlbumArtWithId(self, id):
 		self.returnAlbumArtHandle.emit(self.connection.getCoverArt(id, 128), id)
 
+	@catchErr(URLError)
 	@pyqtSlot()
 	def getPlaylists(self):
 		ret = self.connection.getPlaylists()
@@ -69,6 +95,7 @@ class networkWorker(QObject):
 				item['type'] = 'playlist'
 		self.returnPlaylists.emit(ret)
 
+	@catchErr(URLError)
 	@pyqtSlot(str, object)
 	def getPlaylistSongs(self, id, addToQueue):
 		ret = self.connection.getPlaylist(id)
@@ -77,6 +104,7 @@ class networkWorker(QObject):
 			item['type'] = 'song'
 		self.returnPlaylistSongs.emit(ret, addToQueue)
 
+	@catchErr(URLError)
 	@pyqtSlot(str, object)
 	def addSongsToPlaylist(self, id, songs):
 		songlist = []
@@ -84,6 +112,7 @@ class networkWorker(QObject):
 			songlist.append(song['id'])
 		self.connection.updatePlaylist(id, songIdsToAdd=songlist)
 
+	@catchErr(URLError)
 	@pyqtSlot(str, int)
 	def beginSearch(self, query, page=0):
 		ret = self.connection.search3(query, artistOffset=page * 20, albumOffset=page * 20, songOffset=page * 20)
@@ -98,6 +127,7 @@ class networkWorker(QObject):
 				item['type'] = 'song'
 		self.returnSearchResults.emit(ret['searchResult3'], page)
 
+	@catchErr(URLError)
 	@pyqtSlot(str, object)
 	def loadAlbumsForArtist(self, id, index):
 		ret = self.connection.getArtist(id)

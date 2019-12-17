@@ -72,6 +72,7 @@ class MainWindow(QMainWindow):
 		self.signals.loadAlbumsForArtist.connect(self.networkWorker.loadAlbumsForArtist)
 		self.networkWorker.returnArtistAlbums.connect(self.receiveArtistAlbums)
 		self.networkWorker.returnArtists.connect(self.receiveArtists)
+		self.networkWorker.errorHandler.connect(self.handleError)
 
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
@@ -84,7 +85,8 @@ class MainWindow(QMainWindow):
 			'newest': True,
 			'recent': True,
 			'random': True,
-			'search': True
+			'search': True,
+			'playlists': True
 		}
 		self.currentPage = 0
 
@@ -271,7 +273,7 @@ class MainWindow(QMainWindow):
 		self.thumbnailToolBar.addButton(self.playToolbarButton)
 		self.thumbnailToolBar.addButton(self.nextToolbarButton)
 
-	def bindMediaKeys(self):  # it's borked, capn
+	def bindMediaKeys(self):
 		if sys.platform == 'win32':
 			# try:
 			import winhotkeys
@@ -284,6 +286,7 @@ class MainWindow(QMainWindow):
 			self.keyHook.signals.playPauseSignal.connect(self.playbackController.playPause)
 			self.keyHook.signals.nextSongSignal.connect(self.playbackController.playNextSongExplicitly)
 			self.keyHook.signals.prevSongSignal.connect(self.playbackController.playPreviousSong)
+			self.keyHook.signals.errSignal.connect(self.handleError)
 			self.keyHookThreadPool.start(self.keyHook)
 
 	def cachePlaylists(self):
@@ -333,6 +336,11 @@ class MainWindow(QMainWindow):
 		elif config.repeatList == True:
 			config.repeatList = '1'
 		self.setIconForRepeatButton()
+
+	def handleError(self, error):
+		print(error)
+
+	# TODO: Popup a message on error!
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, type):
@@ -524,6 +532,7 @@ class MainWindow(QMainWindow):
 
 		if type == 'playlists':
 			self.signals.getPlaylists.emit()
+			self.changeAlbumListState(type)
 			return
 		if type == "recently added":
 			type = 'newest'

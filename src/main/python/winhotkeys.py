@@ -79,6 +79,7 @@ class mediaKeysHookerSignals(QObject):
 	playPauseSignal = pyqtSignal()
 	nextSongSignal = pyqtSignal()
 	prevSongSignal = pyqtSignal()
+	errSignal = pyqtSignal(str)
 
 
 class mediaKeysHooker(QRunnable):
@@ -93,7 +94,10 @@ class mediaKeysHooker(QRunnable):
 		GlobalHotKeys.register(0xB0, 0, self.nextSong)
 		GlobalHotKeys.register(0xB1, 0, self.prevSong)
 		print('listening for keybinds')
-		GlobalHotKeys.listen()
+		try:
+			GlobalHotKeys.listen()
+		except Exception as e:
+			self.signals.errSignal.emit(str(e))
 
 	def playPause(self):
 		print('received play/pause keypress')
