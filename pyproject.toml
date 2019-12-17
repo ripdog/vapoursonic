@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "airsonic-desktop"
-version = "0.1.0"
-description = ""
+name = "vapoursonic"
+version = "0.5.0"
+description = "A simply desktop player for Airsonic servers. Uses PyQt5 and mpv."
 authors = ["ripdog"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "3.6"
 py-sonic = "^0.7.6"
 pyyaml = "^5.1"
 pyqt5 = "^5.13"
@@ -14,10 +14,13 @@ python-mpv = "^0.4.5"
 wheel = "^0.33.6"
 keyboard = "^0.13.4"
 pywin32-ctypes = { version = "^0.2.0", markers = "sys_platform == 'win32'" }
+fbs = "^0.8.4"
+
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
-pyinstaller = "^3.5"
+pefile = "^2019.4.18"
+pyinstaller = {git = "https://github.com/pyinstaller/pyinstaller.git"}
 
 [build-system]
 requires = ["poetry>=0.12"]

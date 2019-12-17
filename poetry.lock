@@ -1,5 +1,5 @@
 [[package]]
-category = "dev"
+category = "main"
 description = "Python graph (network) package"
 name = "altgraph"
 optional = false
@@ -38,6 +38,30 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "0.4.3"
 
 [[package]]
+category = "main"
+description = "Create cross-platform desktop applications with Python and Qt"
+name = "fbs"
+optional = false
+python-versions = "*"
+version = "0.8.4"
+
+[package.dependencies]
+PyInstaller = ">=3.3"
+
+[package.extras]
+licensing = ["rsa (>=3.4.2)"]
+sentry = ["sentry-sdk (>=0.6.6)"]
+upload = ["boto3"]
+
+[[package]]
+category = "main"
+description = "Clean single-source support for Python 3 and 2"
+name = "future"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+version = "0.18.2"
+
+[[package]]
 category = "dev"
 description = "Read metadata from Python packages"
 marker = "python_version < \"3.8\""
@@ -73,6 +97,17 @@ python-versions = ">=3.5"
 version = "8.0.2"
 
 [[package]]
+category = "main"
+description = "Python PE parsing module"
+name = "pefile"
+optional = false
+python-versions = "*"
+version = "2019.4.18"
+
+[package.dependencies]
+future = "*"
+
+[[package]]
 category = "dev"
 description = "plugin and hook calling mechanisms for python"
 name = "pluggy"
@@ -105,17 +140,23 @@ python-versions = ">=3"
 version = "0.7.6"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "PyInstaller bundles a Python application and all its dependencies into a single package."
-name = "pyinstaller"
+name = "PyInstaller"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "3.5"
 
 [package.dependencies]
 altgraph = "*"
+pefile = ">=2017.8.1"
+pywin32-ctypes = ">=0.2.0"
 setuptools = "*"
 
+[package.source]
+reference = "498e6ee058915e5eb5f170f7a17f918c1f4d4cce"
+type = "git"
+url = "https://github.com/pyinstaller/pyinstaller.git"
 [[package]]
 category = "main"
 description = "Python<->ObjC Interoperability Module"
@@ -1853,7 +1894,6 @@ screenshot_raw = ["pillow"]
 [[package]]
 category = "main"
 description = ""
-marker = "sys_platform == \"win32\""
 name = "pywin32-ctypes"
 optional = false
 python-versions = "*"
@@ -1903,8 +1943,8 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "3740169be6075ae7a1968cca936f345ad09174c2d4e492f84fd31b9a7ce1823c"
-python-versions = "^3.7"
+content-hash = "577a08b5affe416a4d76b4a5cb695ba3d1af55e09e98c981808656380c7dc666"
+python-versions = "3.6"
 
 [metadata.files]
 altgraph = [
@@ -1923,6 +1963,12 @@ colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
     {file = "colorama-0.4.3.tar.gz", hash = "sha256:e96da0d330793e2cb9485e9ddfd918d456036c7149416295932478192f4436a1"},
 ]
+fbs = [
+    {file = "fbs-0.8.4.zip", hash = "sha256:3c750ea270c7684bad52f08b60486396b1796d61e6ebc4c17e6f7e2fe95c30c4"},
+]
+future = [
+    {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
+]
 importlib-metadata = [
     {file = "importlib_metadata-1.3.0-py2.py3-none-any.whl", hash = "sha256:d95141fbfa7ef2ec65cfd945e2af7e5a6ddbd7c8d9a25e66ff3be8e3daf9f60f"},
     {file = "importlib_metadata-1.3.0.tar.gz", hash = "sha256:073a852570f92da5f744a3472af1b61e28e9f78ccf0c9117658dc32b15de7b45"},
@@ -1936,6 +1982,9 @@ more-itertools = [
     {file = "more-itertools-8.0.2.tar.gz", hash = "sha256:b84b238cce0d9adad5ed87e745778d20a3f8487d0f0cb8b8a586816c7496458d"},
     {file = "more_itertools-8.0.2-py3-none-any.whl", hash = "sha256:c833ef592a0324bcc6a60e48440da07645063c453880c9477ceb22490aec1564"},
 ]
+pefile = [
+    {file = "pefile-2019.4.18.tar.gz", hash = "sha256:a5d6e8305c6b210849b47a6174ddf9c452b2888340b8177874b862ba6c207645"},
+]
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
@@ -1947,9 +1996,7 @@ py = [
 py-sonic = [
     {file = "py-sonic-0.7.6.tar.gz", hash = "sha256:9c8832de66515ef2cc4a359b3ee129317cdfc511dcf04ea6fbfbb480d18de031"},
 ]
-pyinstaller = [
-    {file = "PyInstaller-3.5.tar.gz", hash = "sha256:ee7504022d1332a3324250faf2135ea56ac71fdb6309cff8cd235de26b1d0a96"},
-]
+PyInstaller = []
 pyobjc = [
     {file = "pyobjc-6.1-py3-none-any.whl", hash = "sha256:c78056797592fcd351c60604c5a65ad5d259afd908ee1e160364ac7728959e03"},
     {file = "pyobjc-6.1.tar.gz", hash = "sha256:53ae86caaedc48350c6e93d6e778a0c5044e802340b6d6a679e55014758be540"},
