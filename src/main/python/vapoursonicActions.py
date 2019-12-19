@@ -3,17 +3,17 @@ from PyQt5.QtWidgets import QAction, QMenu
 from config import config
 
 
-def getItemsFromList(list):
+def getItemsFromList(focusedList):
 	items = []
-	selectedItems = list.selectedIndexes()
+	selectedItems = focusedList.selectedIndexes()
 	for item in selectedItems:
 		if item.column() == 0:
-			items.append(list.model().itemFromIndex(item).data())
+			items.append(focusedList.model().itemFromIndex(item).data())
 	return items
 
 
-def addSongs(list, parent, afterCurrent):
-	items = getItemsFromList(list)
+def addSongs(focusedList, parent, afterCurrent):
+	items = getItemsFromList(focusedList)
 	songs = []
 	for item in items:
 		if item['type'] == 'song':
@@ -26,76 +26,76 @@ def addSongs(list, parent, afterCurrent):
 
 
 class playLastAction(QAction):
-	def __init__(self, parent, list):
+	def __init__(self, parent, focusedList):
 		# print('init playLastAction')
 		super(playLastAction, self).__init__(config.icons['baseline-queue.svg'], 'Add to Queue', parent)
-		self.list = list
+		self.focusedList = focusedList
 		self.triggered.connect(self.playLastTriggered)
 
 	def playLastTriggered(self, checked):
-		addSongs(self.list, self.parent(), False)
+		addSongs(self.focusedList, self.parent(), False)
 
 
 class playNextAction(QAction):
-	def __init__(self, parent, list):
+	def __init__(self, parent, focusedList):
 		# print('init playNextAction')
 		super(playNextAction, self).__init__(config.icons['baseline-menu-open.svg'], 'Play Next', parent)
-		self.list = list
+		self.focusedList = focusedList
 		self.triggered.connect(self.playNextTriggered)
 
 	def playNextTriggered(self, checked):
-		addSongs(self.list, self.parent(), True)
+		addSongs(self.focusedList, self.parent(), True)
 
 
 class addToPlaylistAction(QAction):
-	def __init__(self, playlist, parent, list):
+	def __init__(self, playlist, parent, focusedList):
 		# print('init addToPlaylistAction')
 		super(addToPlaylistAction, self).__init__(playlist['name'], parent)
-		self.list = list
+		self.focusedList = focusedList
 		self.playlist = playlist
 		self.triggered.connect(self.addToPlaylist)
 
 	def addToPlaylist(self):
-		items = getItemsFromList(self.list)
+		items = getItemsFromList(self.focusedList)
 		for item in items:
 			if item['type'] == 'song':
 				self.parent().signals.addSongsToPlaylist.emit(self.playlist['id'], items)
 
 
 class addToPlaylistMenu(QMenu):
-	def __init__(self, parent, list):
+	def __init__(self, parent, focusedList):
 		# print('init addToPlaylistMenu')
 		super(addToPlaylistMenu, self).__init__("Add To Playlist", parent)
 		self.setIcon(config.icons['baseline-playlist-add.svg'])
-		self.list = list
+		self.focusedList = focusedList
 		try:
 			for playlist in self.parent().playlistCache:
-				self.addAction(addToPlaylistAction(playlist, parent, list))
+				self.addAction(addToPlaylistAction(playlist, parent, focusedList))
 		except AttributeError:
 			pass
 
 
 class goToAlbumAction(QAction):
-	def __init__(self, parent, list):
+	def __init__(self, parent, focusedList):
 		super(QAction, self).__init__(config.icons['baseline-subdirectory-arrow-right.svg'], 'Go To Album', parent)
-		self.list = list
+		self.focusedList = focusedList
 		self.triggered.connect(self.goToAlbum)
 
 	def goToAlbum(self):
-		items = getItemsFromList(self.list)
+		items = getItemsFromList(self.focusedList)
 		if len(items) > 0:
 			self.parent().signals.loadAlbumWithId.emit(items[0]['albumId'], {'display': True,
 																			 'afterCurrent': False})
 
 
 class removeFromQueue(QAction):
-	def __init__(self, parent, list):
+	def __init__(self, parent, focusedList):
 		super(QAction, self).__init__(config.icons['baseline-remove-circle-outline.svg'], 'Remove From Queue', parent)
-		self.list = list
+		self.focusedList = focusedList
 		self.triggered.connect(self.removeFromQueue)
 
 	def removeFromQueue(self):
-		items = getItemsFromList(self.list)
+		items = getItemsFromList(self.focusedList)
 		ids = []
 		if len(items) > 0:
 			for item in items:

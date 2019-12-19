@@ -10,6 +10,7 @@ from fbs_runtime.application_context.PyQt5 import ApplicationContext
 import vapoursonicActions
 
 try:
+	# noinspection PyUnresolvedReferences
 	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
 except ImportError:
 	print('unable to import Qt Windows Extras')
@@ -247,7 +248,7 @@ class MainWindow(QMainWindow):
 	# noinspection PyArgumentList
 	def populatePlayQueue(self):
 		# define playbackController and connect it up
-		self.playbackController = playbackController(self.networkWorker)
+		self.playbackController = playbackController()
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
 		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
@@ -563,8 +564,8 @@ class MainWindow(QMainWindow):
 	def albumTrackListDoubleClick(self, index):
 		item = self.albumTrackListModel.itemFromIndex(index)
 		text = item.text()
-		print('{} dblclicked in track list, adding to play queue'.format(text))
-		self.playbackController.playNow(self.currentAlbum['song'], item.data())
+		print('{} dblclicked in track list, playing now'.format(text))
+		self.playbackController.addSongs(self.currentAlbum['song'], item.data())
 
 	def setPagableState(self, state):
 		self.ui.albumListViewNextPage.setEnabled(state)
@@ -617,14 +618,17 @@ class MainWindow(QMainWindow):
 		if not addToQueue['display']:
 			if songContainer['type'] == 'album':
 				if 'playNow' in addToQueue.keys() and addToQueue['playNow']:
-					self.playbackController.playNow(songContainer['song'], songContainer['song'][0])
+					self.playbackController.addSongs(songContainer['song'],
+													 songContainer['song'][0],
+													 addToQueue['afterCurrent'])
 				else:
 					self.playbackController.addSongs(songContainer['song'],
 													 afterCurrent=addToQueue['afterCurrent'])
 			elif songContainer['type'] == 'playlist':
 				if 'playNow' in addToQueue.keys() and addToQueue['playNow']:
-					self.playbackController.playNow(songContainer['playlist']['entry'],
-													songContainer['playlist']['entry'][0])
+					self.playbackController.addSongs(songContainer['playlist']['entry'],
+													 songContainer['playlist']['entry'][0],
+													 addToQueue['afterCurrent'])
 				else:
 					self.playbackController.addSongs(songContainer['playlist']['entry'],
 													 afterCurrent=songContainer['afterCurrent'])
