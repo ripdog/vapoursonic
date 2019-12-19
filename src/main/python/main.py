@@ -5,6 +5,7 @@ from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QS
 	Qt, QItemSelectionModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
+from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
 import vapoursonicActions
 
@@ -32,6 +33,39 @@ class MainWindowSignals(QObject):
 	loadAlbumsForArtist = pyqtSignal(str, object)
 
 
+def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
+	if len(focusedList.selectedIndexes()) > 0:
+		menu = QMenu()
+		items = vapoursonicActions.getItemsFromList(focusedList)
+		queueSongsActionsAdded = False
+		playlistAddActionsAdded = False
+		for item in items:
+			if not queueSongsActionsAdded and \
+					item['type'] == 'song' or \
+					item['type'] == 'album':
+				queueSongsActionsAdded = True
+				menu.addActions(actionsDict['addToQueue'])
+			if not playlistAddActionsAdded and item['type'] == 'song':
+				playlistAddActionsAdded = True
+				menu.addMenu(actionsDict['addToPlaylist'][0])
+		menu.exec_(focusedList.mapToGlobal(position))
+
+
+def buildItemForArtist(artist):
+	artistItem = QStandardItem(artist['name'])
+	artistItem.setData(artist)
+	loadingItem = QStandardItem('Loading')
+	artistItem.appendRow(loadingItem)
+	return artistItem
+
+
+def buildItemForAlbum(album):
+	itemsList = [QStandardItem(album['name']), QStandardItem(album['artist'])]
+	itemsList[0].setData(album)
+	itemsList[1].setData(album)
+	return itemsList
+
+
 class MainWindow(QMainWindow):
 
 	def __init__(self, appContext, *args, **kwargs):
@@ -55,7 +89,7 @@ class MainWindow(QMainWindow):
 			self.ui.usernameInput.text(),
 			self.ui.passwordInput.text()
 		))
-		self.networkWorker.returnAlbums.connect(self.displayLoadedAlbums)
+		self.networkWorker.returnAlbums.connect(self.receiveAlbumList)
 		self.networkWorker.connectResult.connect(self.connectResult)
 		self.signals.loadAlbumsOfType.connect(self.networkWorker.getDataForAlbumTreeView)
 		self.signals.loadAlbumWithId.connect(self.networkWorker.loadAlbumWithId)
@@ -114,7 +148,7 @@ class MainWindow(QMainWindow):
 		if config.repeatList == "1":
 			self.ui.repeatPlayQueueButton.setIcon(config.icons['baseline-repeat-one.svg'])
 			self.ui.repeatPlayQueueButton.setChecked(True)
-		elif config.repeatList == True:
+		elif config.repeatList:
 			self.ui.repeatPlayQueueButton.setIcon(config.icons['baseline-repeat.svg'])
 			self.ui.repeatPlayQueueButton.setChecked(True)
 		else:
@@ -331,9 +365,9 @@ class MainWindow(QMainWindow):
 	def changeRepeatState(self):
 		if config.repeatList == "1":
 			config.repeatList = False
-		elif config.repeatList == False:
+		elif not config.repeatList:
 			config.repeatList = True
-		elif config.repeatList == True:
+		elif config.repeatList:
 			config.repeatList = '1'
 		self.setIconForRepeatButton()
 
@@ -344,8 +378,8 @@ class MainWindow(QMainWindow):
 	# TODO: Popup a message on error!
 
 	@pyqtSlot(object, str)
-	def updatePlayerUI(self, update, type):
-		if type == 'total':
+	def updatePlayerUI(self, update, updateType):
+		if updateType == 'total':
 			self.ui.trackProgressBar.blockSignals(True)
 			self.ui.trackProgressBar.setRange(0, update)
 			try:
@@ -353,7 +387,7 @@ class MainWindow(QMainWindow):
 			except AttributeError:
 				pass
 			self.ui.trackProgressBar.blockSignals(False)
-		elif type == 'progress':
+		elif updateType == 'progress':
 			if not self.sliderBeingDragged:
 				self.ui.trackProgressBar.blockSignals(True)
 				self.ui.trackProgressBar.setValue(update)
@@ -362,19 +396,19 @@ class MainWindow(QMainWindow):
 				self.taskbarProgress.setValue(update)
 			except AttributeError:
 				pass
-		elif type == 'title':
+		elif updateType == 'title':
 			self.ui.currentPlayingLabel.setText(update)
-		elif type == 'artist':
+		elif updateType == 'artist':
 			self.ui.trackArtistName.setText(update)
-		elif type == 'statusBar':
+		elif updateType == 'statusBar':
 			self.statusBar().showMessage(update)
-		elif type == 'scrollTo':
+		elif updateType == 'scrollTo':
 			if self.followPlayedTrack:
 				self.ui.playQueueList.scrollTo(update, QAbstractItemView.PositionAtTop)
 				self.ui.playQueueList.selectionModel().select(update,
 															  QItemSelectionModel.ClearAndSelect |
 															  QItemSelectionModel.Rows)
-		elif type == 'idle':
+		elif updateType == 'idle':
 			if update:
 				self.ui.playPause.setIcon(self.playIcon)
 				try:
@@ -424,6 +458,10 @@ class MainWindow(QMainWindow):
 		print('{} dblclicked, attempting load...'.format(text))
 		if data['type'] == 'song':
 			self.playbackController.addSongs([data])
+		elif data['type'] == 'album':
+			self.signals.loadAlbumWithId.emit(data['id'], {'display': False,
+														   'afterCurrent': False,
+														   'playNow': True})
 
 	def loadPlaylistSongs(self, item):
 		self.signals.loadPlaylistSongs.emit(item['id'], {'display': True,
@@ -452,7 +490,7 @@ class MainWindow(QMainWindow):
 		query = self.ui.search.text()
 		self.signals.beginSearch.emit(query, self.currentPage)
 
-	def receiveSearchResults(self, results, page):
+	def receiveSearchResults(self, results):
 		self.changeAlbumListState('search')
 		self.ui.albumTreeList.setIndentation(15)
 		self.albumTreeListModel.setColumnCount(3)
@@ -464,26 +502,19 @@ class MainWindow(QMainWindow):
 		if 'song' in results:
 			songContainer = QStandardItem('Songs')
 			for item in results['song']:
-				songContainer.appendRow(self.buildItemForSong(item, ['title', 'album', 'artist']))
+				songContainer.appendRow(buildItemForSong(item, ['title', 'album', 'artist']))
 			self.albumTreeListModel.appendRow(songContainer)
 		if 'album' in results:
 			albumContainer = QStandardItem('Albums')
 			for item in results['album']:
-				albumContainer.appendRow(self.buildItemForAlbum(item))
+				albumContainer.appendRow(buildItemForAlbum(item))
 			self.albumTreeListModel.appendRow(albumContainer)
 		if 'artist' in results:
 			artistContainer = QStandardItem('Artists')
 			for item in results['artist']:
-				artistContainer.appendRow(self.buildItemForArtist(item))
+				artistContainer.appendRow(buildItemForArtist(item))
 			self.albumTreeListModel.appendRow(artistContainer)
 		self.ui.albumTreeList.expandToDepth(0)
-
-	def buildItemForArtist(self, artist):
-		artistItem = QStandardItem(artist['name'])
-		artistItem.setData(artist)
-		loadingItem = QStandardItem('Loading')
-		artistItem.appendRow(loadingItem)
-		return artistItem
 
 	def receiveArtists(self, artists):
 		self.changeAlbumListState('artists')
@@ -494,7 +525,7 @@ class MainWindow(QMainWindow):
 		for item in artistIndexList:
 			index = QStandardItem(item['name'])
 			for artist in item['artist']:
-				index.appendRow(self.buildItemForArtist(artist))
+				index.appendRow(buildItemForArtist(artist))
 			self.albumTreeListModel.appendRow(index)
 
 	def handleExpandedAlbumListViewItem(self, index):
@@ -504,47 +535,30 @@ class MainWindow(QMainWindow):
 			print('loading artist {}'.format(item.data()))
 			self.signals.loadAlbumsForArtist.emit(data['id'], index)
 
-	def buildItemForAlbum(self, album):
-		itemsList = [QStandardItem(album['name']), QStandardItem(album['artist'])]
-		itemsList[0].setData(album)
-		itemsList[1].setData(album)
-		return itemsList
-
 	def receiveArtistAlbums(self, albums, index):
 		insertionPoint = self.albumTreeListModel.itemFromIndex(index)
 		insertionPoint.removeRow(0)
 		if albums and albums['artist'] and albums['artist']['album']:
 			for item in albums['artist']['album']:
-				insertionPoint.appendRow(self.buildItemForAlbum(item))
+				insertionPoint.appendRow(buildItemForAlbum(item))
 
-	def buildItemForSong(self, song, fields):
-		items = []
-		for field in fields:
-			if field in song:
-				items.append(QStandardItem(str(song[field])))
-			else:
-				items.append(QStandardItem("Unk. {}".format(field)))
-		for item in items:
-			item.setData(song)
-		return items
+	def loadDataforAlbumListView(self, dataType):
+		dataType = dataType.lower()
 
-	def loadDataforAlbumListView(self, type):
-		type = type.lower()
-
-		if type == 'playlists':
+		if dataType == 'playlists':
 			self.signals.getPlaylists.emit()
-			self.changeAlbumListState(type)
+			self.changeAlbumListState(dataType)
 			return
-		if type == "recently added":
-			type = 'newest'
-		elif type == "recently played":
-			type = 'recent'
-		elif type == 'albums':
-			type = 'alphabeticalByName'
-		elif type == 'frequently played':
-			type = 'frequent'
-		self.changeAlbumListState(type)
-		self.signals.loadAlbumsOfType.emit(type, self.currentPage)
+		if dataType == "recently added":
+			dataType = 'newest'
+		elif dataType == "recently played":
+			dataType = 'recent'
+		elif dataType == 'albums':
+			dataType = 'alphabeticalByName'
+		elif dataType == 'frequently played':
+			dataType = 'frequent'
+		self.changeAlbumListState(dataType)
+		self.signals.loadAlbumsOfType.emit(dataType, self.currentPage)
 
 	def albumTrackListDoubleClick(self, index):
 		item = self.albumTrackListModel.itemFromIndex(index)
@@ -585,43 +599,50 @@ class MainWindow(QMainWindow):
 			self.albumTreeListModel.appendRow(standardItem)
 
 	@pyqtSlot(object, str)
-	def displayLoadedAlbums(self, albums, albumType):
+	def receiveAlbumList(self, albums):
 		self.albumTreeListModel.setHorizontalHeaderLabels(["Album", "Artists"])
 		self.ui.albumTreeList.setHeaderHidden(False)
 		for item in albums['albumList2']['album']:
-			self.albumTreeListModel.appendRow(self.buildItemForAlbum(item))
+			self.albumTreeListModel.appendRow(buildItemForAlbum(item))
 		self.ui.albumTreeList.setColumnWidth(0, 250)
 
-	def playlistFromCacheById(self, id):
+	def playlistFromCacheById(self, playlistId):
 		for item in self.playlistCache:
-			if item['id'] == id:
+			if item['id'] == playlistId:
 				return item
 		return None
 
 	@pyqtSlot(object, object)
 	def receiveLoadedSongs(self, songContainer, addToQueue):
-		if addToQueue['display'] == False:
+		if not addToQueue['display']:
 			if songContainer['type'] == 'album':
-				self.playbackController.addSongs(songContainer['song'],
-												 afterCurrent=addToQueue['afterCurrent'])
+				if 'playNow' in addToQueue.keys() and addToQueue['playNow']:
+					self.playbackController.playNow(songContainer['song'], songContainer['song'][0])
+				else:
+					self.playbackController.addSongs(songContainer['song'],
+													 afterCurrent=addToQueue['afterCurrent'])
 			elif songContainer['type'] == 'playlist':
-				self.playbackController.addSongs(songContainer['playlist']['entry'],
-												 afterCurrent=songContainer['afterCurrent'])
+				if 'playNow' in addToQueue.keys() and addToQueue['playNow']:
+					self.playbackController.playNow(songContainer['playlist']['entry'],
+													songContainer['playlist']['entry'][0])
+				else:
+					self.playbackController.addSongs(songContainer['playlist']['entry'],
+													 afterCurrent=songContainer['afterCurrent'])
 			return
-		songs = []
 		if songContainer['type'] == 'album':
 			albumdeets = songContainer
 			songs = albumdeets['song']
 		elif songContainer['type'] == 'playlist':
 			print(songContainer)
 			songs = songContainer['playlist']['entry']
-			albumdeets = {}
-			albumdeets['name'] = songContainer['playlist']['name']
-			albumdeets['artist'] = ''
-			albumdeets['songCount'] = len(songs)
-			albumdeets['duration'] = self.playlistFromCacheById(songContainer['playlist']['id'])['duration']
-			albumdeets['coverArt'] = self.playlistFromCacheById(songContainer['playlist']['id'])['coverArt']
-			albumdeets['song'] = songs
+			albumdeets = {'name': songContainer['playlist']['name'],
+						  'artist': '',
+						  'songCount': len(songs),
+						  'duration': self.playlistFromCacheById(songContainer['playlist']['id'])['duration'],
+						  'coverArt': self.playlistFromCacheById(songContainer['playlist']['id'])['coverArt'],
+						  'song': songs}
+		else:
+			raise Exception('incorrect songContainer type passed to receiveLoadedSongs()')
 
 		self.albumTrackListModel.clear()
 		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
@@ -641,10 +662,10 @@ class MainWindow(QMainWindow):
 		except KeyError:
 			self.ui.selectedAlbumReleaseYear.setText('')
 		for song in songs:
-			self.albumTrackListModel.appendRow(self.buildItemForSong(song,
-																	 ['track',
-																	  'title',
-																	  'artist']))
+			self.albumTrackListModel.appendRow(buildItemForSong(song,
+																['track',
+																 'title',
+																 'artist']))
 		self.currentAlbum = albumdeets
 
 	def startAlbumArtLoad(self, handle, aid):
@@ -662,34 +683,27 @@ class MainWindow(QMainWindow):
 		self.loadDataforAlbumListView(self.albumListState)
 
 	def albumTreeListMenu(self, position):
-		self.openAlbumTreeOrListMenu(position, self.ui.albumTreeList, self.albumTreeListActions)
+		openAlbumTreeOrListMenu(position, self.ui.albumTreeList, self.albumTreeListActions)
 
 	def albumTrackListMenu(self, position):
-		self.openAlbumTreeOrListMenu(position, self.ui.albumTrackList, self.albumTrackListActions)
-
-	def openAlbumTreeOrListMenu(self, position, list, actionsDict):
-		if len(list.selectedIndexes()) > 0:
-			menu = QMenu()
-			items = vapoursonicActions.getItemsFromList(list)
-			queueSongsActionsAdded = False
-			playlistAddActionsAdded = False
-			for item in items:
-				if not queueSongsActionsAdded and \
-						item['type'] == 'song' or \
-						item['type'] == 'album':
-					queueSongsActionsAdded = True
-					menu.addActions(actionsDict['addToQueue'])
-				if not playlistAddActionsAdded and item['type'] == 'song':
-					playlistAddActionsAdded = True
-					menu.addMenu(actionsDict['addToPlaylist'][0])
-			menu.exec_(list.mapToGlobal(position))
+		openAlbumTreeOrListMenu(position, self.ui.albumTrackList, self.albumTrackListActions)
 
 	def closeEvent(self, a0):
 		print('Airsonic desktop closing, saving config')
 		config.save()
 
 
-from fbs_runtime.application_context.PyQt5 import ApplicationContext
+def buildItemForSong(song, fields):
+	items = []
+	for field in fields:
+		if field in song:
+			items.append(QStandardItem(str(song[field])))
+		else:
+			items.append(QStandardItem("Unk. {}".format(field)))
+	for item in items:
+		item.setData(song)
+	return items
+
 
 if __name__ == "__main__":
 	appcontext = ApplicationContext()
