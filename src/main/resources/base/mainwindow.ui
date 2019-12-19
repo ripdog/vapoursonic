@@ -647,6 +647,60 @@
                                 <item row="1" column="0">
                                     <layout class="QHBoxLayout" name="nowPlayingLayout">
                                         <item>
+                                            <widget class="QLabel" name="playingAlbumArt">
+                                                <property name="sizePolicy">
+                                                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                                                        <horstretch>0</horstretch>
+                                                        <verstretch>0</verstretch>
+                                                    </sizepolicy>
+                                                </property>
+                                                <property name="maximumSize">
+                                                    <size>
+                                                        <width>30</width>
+                                                        <height>30</height>
+                                                    </size>
+                                                </property>
+                                                <property name="text">
+                                                    <string>playingAlbumArt</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <layout class="QVBoxLayout" name="verticalLayout">
+                                                <item>
+                                                    <widget class="QLabel" name="currentPlayingLabel">
+                                                        <property name="text">
+                                                            <string>Not Playing</string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                                <item>
+                                                    <widget class="QLabel" name="trackArtistName">
+                                                        <property name="text">
+                                                            <string>No Artist</string>
+                                                        </property>
+                                                    </widget>
+                                                </item>
+                                            </layout>
+                                        </item>
+                                        <item>
+                                            <widget class="QSlider" name="trackProgressBar">
+                                                <property name="tracking">
+                                                    <bool>false</bool>
+                                                </property>
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QLabel" name="trackProgressIndicator">
+                                                <property name="text">
+                                                    <string>00:00/00:00</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
                                             <widget class="QToolButton" name="prevTrack">
                                                 <property name="minimumSize">
                                                     <size>
@@ -745,34 +799,6 @@
                                                 </property>
                                                 <property name="arrowType">
                                                     <enum>Qt::NoArrow</enum>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <layout class="QVBoxLayout" name="verticalLayout">
-                                                <item>
-                                                    <widget class="QLabel" name="currentPlayingLabel">
-                                                        <property name="text">
-                                                            <string>Not Playing</string>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                                <item>
-                                                    <widget class="QLabel" name="trackArtistName">
-                                                        <property name="text">
-                                                            <string>No Artist</string>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                            </layout>
-                                        </item>
-                                        <item>
-                                            <widget class="QSlider" name="trackProgressBar">
-                                                <property name="tracking">
-                                                    <bool>false</bool>
-                                                </property>
-                                                <property name="orientation">
-                                                    <enum>Qt::Horizontal</enum>
                                                 </property>
                                             </widget>
                                         </item>

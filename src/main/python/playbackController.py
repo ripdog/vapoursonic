@@ -4,8 +4,9 @@ import random
 import re
 import sys
 from _md5 import md5
+from datetime import timedelta
 
-from PyQt5.QtCore import QObject, QThreadPool, pyqtSlot, pyqtSignal, QModelIndex
+from PyQt5.QtCore import QObject, QThreadPool, pyqtSlot, pyqtSignal, QModelIndex, QTimer
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
@@ -55,7 +56,6 @@ class playbackController(QObject):
 		self.player['demuxer-max-back-bytes'] = 999999999
 		self.player['cache-secs'] = 99999999.0
 		self.player['demuxer-max-bytes'] = 99999999999
-		self.player.observe_property('time-pos', self.updateProgressBar)
 		self.player.observe_property('core-idle', self.updateIdleState)
 		self.player.register_event_callback(self.mpvEventHandler)
 
@@ -64,6 +64,24 @@ class playbackController(QObject):
 
 		self.salt = md5(os.urandom(100)).hexdigest()
 		self.token = md5((config.password + self.salt).encode('utf-8')).hexdigest()
+		# create timer for 1-per-second playback status update
+		self.secondTimer = QTimer()
+		self.secondTimer.timeout.connect(self.everySecond)
+		self.secondTimer.start(1000)
+
+	def everySecond(self):
+		if self.currentSong and not self.player.core_idle:
+			self.updatePlaybackProgressText()
+			self.updateAudioStatLine()
+			self.updateProgressBar()
+
+	def updatePlaybackProgressText(self):
+		if self.currentSong and self.player.time_pos:
+			current = str(timedelta(seconds=int(self.player.time_pos)))
+			total = str(timedelta(seconds=int(self.currentSong.data()['duration'])))
+			self.updatePlayerUI.emit(current + "/" + total, 'progressText')
+		else:
+			self.updatePlayerUI.emit('00:00/00:00', 'progressText')
 
 	def setCurrentSong(self, newsong):
 		if newsong is None:
@@ -75,6 +93,7 @@ class playbackController(QObject):
 				pass
 		self.currentSong = newsong
 		if newsong:
+			self.updatePlaybackProgressText()
 			self.currentSong.setIcon(config.icons['baseline-play-arrow.svg'])
 			self.updatePlayerUI.emit(self.playQueueModel.indexFromItem(self.currentSong), 'scrollTo')
 
@@ -231,7 +250,7 @@ class playbackController(QObject):
 			print('Unable to get index for next song')
 			return None
 
-	def updateProgressBar(self, _name, value):
+	def updateProgressBar(self):
 		try:
 			total = self.currentSong.data()['duration']
 		except RuntimeError:
@@ -241,7 +260,7 @@ class playbackController(QObject):
 			print('updateProgressBar here: no currentsong!')
 			return
 		duration = self.player.duration
-
+		value = self.player.time_pos
 		# print("progress: {}, percent: {}".format(value, percent))
 		if value and duration:
 			self.updatePlayerUI.emit(math.ceil(total), 'total')
@@ -249,8 +268,8 @@ class playbackController(QObject):
 
 	def mpvEventHandler(self, event):
 		if event['event_id'] == 8:  # file-loaded
-			self.rebuildAudioStats()
-
+			self.updateAudioStatLine()
+			self.updateProgressBar()
 			if self.player.path:
 				print('song loaded, path {}'.format(self.player.path))
 				songId = re.search(r'&id=(?P<songId>\d+)$', self.player.path).group('songId')
@@ -262,11 +281,11 @@ class playbackController(QObject):
 				else:
 					self.updatePlayerUI.emit('Not Playing', 'title')
 					self.updatePlayerUI.emit('No Artist', 'artist')
+			self.updatePlaybackProgressText()
 		elif event['event_id'] == 7:
 			self.mpvFileEnded(event)
 
-	def rebuildAudioStats(self):
-		print('rebuilding audio stat line')
+	def updateAudioStatLine(self):
 		audioOutParams = {}
 		trackList = {}
 		try:
@@ -282,8 +301,11 @@ class playbackController(QObject):
 			ret += self.player.audio_codec_name + " | "
 		if trackList and 'demux-bitrate' in trackList:
 			ret += str(int(trackList['demux-bitrate'] / 1000)) + 'kbps | '
+		elif self.player.audio_bitrate:
+			ret += '~' + str(int(self.player.audio_bitrate / 1000)) + 'kbps | '
 		if trackList and 'demux-samplerate' in trackList:
 			ret += str(trackList['demux-samplerate']) + 'hz -> '
+
 		if audioOutParams and 'samplerate' in audioOutParams:
 			ret += str(audioOutParams['samplerate']) + 'hz | '
 		if params and 'hr-channels' in params:
@@ -328,12 +350,6 @@ class playbackController(QObject):
 				self.setCurrentSong(self.playQueueModel.item(n, 0))
 				return
 		print('unable to find song in queue :(')
-
-	def mpvUrlChanged(self, _name, value):
-		if value:
-			print('MPV song changed. mpv path:')
-			print(value)
-
 
 	@pyqtSlot(int)
 	def setTrackProgress(self, position):

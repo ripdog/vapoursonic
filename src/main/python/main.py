@@ -280,9 +280,7 @@ class MainWindow(QMainWindow):
 								activated=self.ui.playQueueList.playSelectedSongFromQueue)
 		self.short4 = QShortcut(Qt.Key_Space, self.ui.playQueueList, context=Qt.ApplicationShortcut,
 								activated=self.playbackController.playPause)
-
 		# configure the play queue itself
-
 		self.ui.playQueueList.setAlternatingRowColors(True)
 
 	def populateThumbnailToolbar(self):
@@ -376,7 +374,7 @@ class MainWindow(QMainWindow):
 		QMessageBox.information(self, 'Error', error)
 		print(error)
 
-	# TODO: Popup a message on error!
+
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, updateType):
@@ -388,6 +386,8 @@ class MainWindow(QMainWindow):
 			except AttributeError:
 				pass
 			self.ui.trackProgressBar.blockSignals(False)
+		elif updateType == "progressText":
+			self.ui.trackProgressIndicator.setText(update)
 		elif updateType == 'progress':
 			if not self.sliderBeingDragged:
 				self.ui.trackProgressBar.blockSignals(True)
