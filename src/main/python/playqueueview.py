@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTreeView, QMenu, QAbstractItemView
+from PyQt5.QtWidgets import QTreeView, QMenu
 
 
 class PlayQueueView(QTreeView):
@@ -9,14 +9,15 @@ class PlayQueueView(QTreeView):
 
 		self.setContextMenuPolicy(Qt.CustomContextMenu)
 		self.customContextMenuRequested.connect(self.playQueueMenu)
-		# self.setDragEnabled(True)
-		# self.setAcceptDrops(True)
-		self.viewport().setAcceptDrops(True)
-		self.setDragDropOverwriteMode(False)
-		self.setDropIndicatorShown(True)
-		self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-		self.setSelectionBehavior(QAbstractItemView.SelectRows)
-		self.setDragDropMode(QAbstractItemView.InternalMove)
+
+	# self.setDragEnabled(True)
+	# self.setAcceptDrops(True)
+	# self.viewport().setAcceptDrops(True)
+	# self.setDragDropOverwriteMode(False)
+	# self.setDropIndicatorShown(True)
+	# self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+	# self.setSelectionBehavior(QAbstractItemView.SelectRows)
+	# self.setDragDropMode(QAbstractItemView.InternalMove)
 
 	# def dropEvent(self, event: QDropEvent):
 	# 	ret = super(QTreeView, self).dropEvent(event)

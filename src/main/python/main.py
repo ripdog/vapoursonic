@@ -4,7 +4,7 @@ from datetime import timedelta
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage
-from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut
+from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
 
 import vapoursonicActions
 
@@ -338,6 +338,7 @@ class MainWindow(QMainWindow):
 		self.setIconForRepeatButton()
 
 	def handleError(self, error):
+		QMessageBox.information(self, 'Error', error)
 		print(error)
 
 	# TODO: Popup a message on error!
