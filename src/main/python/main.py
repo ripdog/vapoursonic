@@ -19,7 +19,7 @@ from config import config
 from albumArtLoader import albumArtLoader
 from networkWorker import networkWorker
 from playbackController import playbackController
-from ui_mainwindow import Ui_AirsonicDesktop
+from ui_mainwindow import Ui_vapoursonic
 
 
 class MainWindowSignals(QObject):
@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
 		self.networkWorker = networkWorker()
 		self.networkWorker.moveToThread(self.networkThread)
 		self.networkThread.start()
-		self.ui = Ui_AirsonicDesktop()
+		self.ui = Ui_vapoursonic()
 
 		self.ui.setupUi(self)
 
@@ -693,7 +693,7 @@ class MainWindow(QMainWindow):
 		openAlbumTreeOrListMenu(position, self.ui.albumTrackList, self.albumTrackListActions)
 
 	def closeEvent(self, a0):
-		print('Airsonic desktop closing, saving config')
+		print('vapoursonic closing, saving config')
 		config.save()
 
 

@@ -62,7 +62,7 @@ class configManager():
 			'username': 'yourUsername',
 			'password': 'yourPassword',
 			'volume': 100,
-			'appname': 'airsonic-desktop',
+			'appname': 'vapoursonic',
 			'followPlaybackInQueue': True,
 			'repeatList': True,  # can also be "1"
 		}

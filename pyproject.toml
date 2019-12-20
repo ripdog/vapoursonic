@@ -5,7 +5,7 @@ description = "A simple desktop player for Airsonic servers. Uses PyQt5 and mpv.
 authors = ["ripdog"]
 
 [tool.poetry.dependencies]
-python = "3.6"
+python = "3.6.8"
 py-sonic = "^0.7.6"
 pyyaml = "^5.1"
 pyqt5 = "^5.9.2"

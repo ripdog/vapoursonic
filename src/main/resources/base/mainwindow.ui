@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
-    <class>AirsonicDesktop</class>
-    <widget class="QMainWindow" name="AirsonicDesktop">
+    <class>vapoursonic</class>
+    <widget class="QMainWindow" name="vapoursonic">
         <property name="geometry">
             <rect>
                 <x>0</x>
@@ -11,7 +11,7 @@
             </rect>
         </property>
         <property name="windowTitle">
-            <string>Airsonic Desktop</string>
+            <string>vapoursonic</string>
         </property>
         <widget class="QWidget" name="centralwidget">
             <layout class="QGridLayout" name="gridLayout">
