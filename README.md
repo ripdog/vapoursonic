@@ -10,6 +10,14 @@ The app is still rather incomplete. The code is a bit of a mess, and error handl
 
 FAQ:
 --
+_What platforms does it run on?_
+
+All the technologies I've built on are cross-platform, across at least Windows, Linux, and MacOS. Thus it should work on all of those. However, Windows is my primary development platform and so integration with it is my first priority.
+
+I am planning full Linux support, but that will come afterwards. It should work now, but I haven't tried. It does not have linux global keybinding nor MPRIS integration.
+
+MacOS? Again, should work. I don't have a mac though, so no integration nor builds will be happening.
+
 _Why isn't gapless playback working for me?_
 
 vapoursonic uses mpv to play your music. mpv uses ffmpeg in turn, which errs on the side of 'working right' rather than 'working fast'.
