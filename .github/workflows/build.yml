@@ -31,4 +31,4 @@ jobs:
       run: |
         (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
     - name: Install dependencies
-      run: poetry install
+      run: .$env:USERPROFILE\.poetry\bin\poetry.bat install
