@@ -157,6 +157,7 @@ setuptools = "*"
 reference = "498e6ee058915e5eb5f170f7a17f918c1f4d4cce"
 type = "git"
 url = "https://github.com/pyinstaller/pyinstaller.git"
+
 [[package]]
 category = "main"
 description = "Python<->ObjC Interoperability Module"
@@ -1893,6 +1894,14 @@ screenshot_raw = ["pillow"]
 
 [[package]]
 category = "main"
+description = ".Net and Mono integration for Python"
+name = "pythonnet"
+optional = false
+python-versions = "*"
+version = "2.4.0"
+
+[[package]]
+category = "main"
 description = ""
 name = "pywin32-ctypes"
 optional = false
@@ -1943,8 +1952,8 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "3037ded65d83579457e44c1ae11b6336e1e48807f79b32713ab65bea0a0dd547"
-python-versions = "3.6"
+content-hash = "2b86deb27b6a9a9ca49e1bc4d69531b1d413edafaad4d902923642b58dac29a4"
+python-versions = "3.6.8"
 
 [metadata.files]
 altgraph = [
@@ -2629,6 +2638,17 @@ pytest = [
 ]
 python-mpv = [
     {file = "python-mpv-0.4.5.tar.gz", hash = "sha256:2955f054facdf9afdbc4590919fbcb11bbc55281f1168de29a30bf7773a60502"},
+]
+pythonnet = [
+    {file = "pythonnet-2.4.0-cp27-cp27m-win32.whl", hash = "sha256:878e27a1a34ebf6b7a160abd1269d75a4fbebf5323e02679ed8226c0ad5fbf10"},
+    {file = "pythonnet-2.4.0-cp27-cp27m-win_amd64.whl", hash = "sha256:1e380e7735b047258da469e36e122d1e0a13f79b4b4902b852a0dc626c0ceb0a"},
+    {file = "pythonnet-2.4.0-cp35-cp35m-win32.whl", hash = "sha256:7be226daafc2d40b30cb80a16e298460bd68f3484d8c7fce1ff82f4f35cda321"},
+    {file = "pythonnet-2.4.0-cp35-cp35m-win_amd64.whl", hash = "sha256:f16af543895fbaadfc593b9c436bf1a2c0e32329f80401aefc316a52e8f9bd18"},
+    {file = "pythonnet-2.4.0-cp36-cp36m-win32.whl", hash = "sha256:38fdb7f5f2e1889175b7d88c64adc902e537d7d646cdc88ee7c0389bb1fdfd34"},
+    {file = "pythonnet-2.4.0-cp36-cp36m-win_amd64.whl", hash = "sha256:0bc4dfe352ab97ee6f00f13ff5b70ce5ba67576913a523cc4ec6e3fdaadf83fd"},
+    {file = "pythonnet-2.4.0-cp37-cp37m-win32.whl", hash = "sha256:e1b3f5d87996302557d876c582590438f71ffe6b7076e79865c6afd57adf476c"},
+    {file = "pythonnet-2.4.0-cp37-cp37m-win_amd64.whl", hash = "sha256:6483dba7db4053da0cb4fdfa3580fed34623ac9100c3d0ce90e7688dc5d3ac47"},
+    {file = "pythonnet-2.4.0.tar.gz", hash = "sha256:a3a38e67fdfcda94df51c805343150016097f284771156f76839a9c3a24c90a9"},
 ]
 pywin32-ctypes = [
     {file = "pywin32-ctypes-0.2.0.tar.gz", hash = "sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942"},

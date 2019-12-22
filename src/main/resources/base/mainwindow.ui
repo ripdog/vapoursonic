@@ -451,6 +451,11 @@
                                                                                             <height>24</height>
                                                                                         </size>
                                                                                     </property>
+                                                                                    <property name="toolTip">
+                                                                                        <string>The total number of
+                                                                                            songs in this album.
+                                                                                        </string>
+                                                                                    </property>
                                                                                     <property name="text">
                                                                                         <string>CounIcon</string>
                                                                                     </property>
@@ -473,6 +478,11 @@
                                                                                             <height>24</height>
                                                                                         </size>
                                                                                     </property>
+                                                                                    <property name="toolTip">
+                                                                                        <string>The total number of
+                                                                                            songs in this album.
+                                                                                        </string>
+                                                                                    </property>
                                                                                     <property name="text">
                                                                                         <string>Count</string>
                                                                                     </property>
@@ -486,6 +496,11 @@
                                                                                             <width>24</width>
                                                                                             <height>24</height>
                                                                                         </size>
+                                                                                    </property>
+                                                                                    <property name="toolTip">
+                                                                                        <string>The total length of this
+                                                                                            album.
+                                                                                        </string>
                                                                                     </property>
                                                                                     <property name="text">
                                                                                         <string>LengthIcon</string>
@@ -501,6 +516,11 @@
                                                                                             <height>24</height>
                                                                                         </size>
                                                                                     </property>
+                                                                                    <property name="toolTip">
+                                                                                        <string>The total length of this
+                                                                                            album.
+                                                                                        </string>
+                                                                                    </property>
                                                                                     <property name="text">
                                                                                         <string>Length</string>
                                                                                     </property>
@@ -515,6 +535,11 @@
                                                                                             <height>24</height>
                                                                                         </size>
                                                                                     </property>
+                                                                                    <property name="toolTip">
+                                                                                        <string>The year this album was
+                                                                                            released.
+                                                                                        </string>
+                                                                                    </property>
                                                                                     <property name="text">
                                                                                         <string>YearIcon</string>
                                                                                     </property>
@@ -528,6 +553,11 @@
                                                                                             <width>16777215</width>
                                                                                             <height>24</height>
                                                                                         </size>
+                                                                                    </property>
+                                                                                    <property name="toolTip">
+                                                                                        <string>The year this album was
+                                                                                            released.
+                                                                                        </string>
                                                                                     </property>
                                                                                     <property name="text">
                                                                                         <string>Year</string>
@@ -646,6 +676,9 @@
                                 </item>
                                 <item row="1" column="0">
                                     <layout class="QHBoxLayout" name="nowPlayingLayout">
+                                        <property name="spacing">
+                                            <number>0</number>
+                                        </property>
                                         <item>
                                             <widget class="QLabel" name="playingAlbumArt">
                                                 <property name="sizePolicy">
@@ -654,10 +687,16 @@
                                                         <verstretch>0</verstretch>
                                                     </sizepolicy>
                                                 </property>
+                                                <property name="minimumSize">
+                                                    <size>
+                                                        <width>60</width>
+                                                        <height>60</height>
+                                                    </size>
+                                                </property>
                                                 <property name="maximumSize">
                                                     <size>
-                                                        <width>30</width>
-                                                        <height>30</height>
+                                                        <width>60</width>
+                                                        <height>60</height>
                                                     </size>
                                                 </property>
                                                 <property name="text">
@@ -669,6 +708,17 @@
                                             <layout class="QVBoxLayout" name="verticalLayout">
                                                 <item>
                                                     <widget class="QLabel" name="currentPlayingLabel">
+                                                        <property name="maximumSize">
+                                                            <size>
+                                                                <width>300</width>
+                                                                <height>16777215</height>
+                                                            </size>
+                                                        </property>
+                                                        <property name="font">
+                                                            <font>
+                                                                <pointsize>12</pointsize>
+                                                            </font>
+                                                        </property>
                                                         <property name="text">
                                                             <string>Not Playing</string>
                                                         </property>
@@ -676,6 +726,12 @@
                                                 </item>
                                                 <item>
                                                     <widget class="QLabel" name="trackArtistName">
+                                                        <property name="maximumSize">
+                                                            <size>
+                                                                <width>300</width>
+                                                                <height>16777215</height>
+                                                            </size>
+                                                        </property>
                                                         <property name="text">
                                                             <string>No Artist</string>
                                                         </property>
@@ -847,6 +903,29 @@
             <header>playqueueview.h</header>
         </customwidget>
     </customwidgets>
+    <tabstops>
+        <tabstop>domainInput</tabstop>
+        <tabstop>usernameInput</tabstop>
+        <tabstop>passwordInput</tabstop>
+        <tabstop>connectButton</tabstop>
+        <tabstop>search</tabstop>
+        <tabstop>backHomeButton</tabstop>
+        <tabstop>albumListViewPreviousPage</tabstop>
+        <tabstop>albumListViewRefresh</tabstop>
+        <tabstop>albumListViewNextPage</tabstop>
+        <tabstop>albumTreeList</tabstop>
+        <tabstop>albumTrackList</tabstop>
+        <tabstop>playQueueList</tabstop>
+        <tabstop>toggleFollowPlayedTrackButton</tabstop>
+        <tabstop>repeatPlayQueueButton</tabstop>
+        <tabstop>shufflePlayqueueButton</tabstop>
+        <tabstop>volumeSlider</tabstop>
+        <tabstop>trackProgressBar</tabstop>
+        <tabstop>prevTrack</tabstop>
+        <tabstop>playPause</tabstop>
+        <tabstop>nextTrack</tabstop>
+        <tabstop>stop</tabstop>
+    </tabstops>
     <resources/>
     <connections/>
 </ui>

@@ -29,6 +29,7 @@
         <list>
           <option value="ui_mainwindow.Ui_AirsonicDesktop" />
           <option value="PyQt5.QtCore.pyqtBoundSignal.*" />
+          <option value="windowsIntegration.Windows" />
         </list>
       </option>
     </inspection_tool>

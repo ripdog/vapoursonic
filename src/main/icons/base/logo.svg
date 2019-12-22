@@ -6,13 +6,16 @@
         xmlns="http://www.w3.org/2000/svg"
         xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
         xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+        inkscape:export-ydpi="18.75"
+        inkscape:export-xdpi="18.75"
+        inkscape:export-filename="C:\Users\ripdog\PycharmProjects\vapoursonic\src\main\icons\mac\128.png"
         sodipodi:docname="logo.svg"
         inkscape:version="1.0beta2 (ea6f13d, 2019-12-16)"
         id="svg8"
         version="1.1"
-        viewBox="0 0 133.84439 173.39421"
+        viewBox="0 0 173.39421 173.39421"
         height="173.39421mm"
-        width="133.84439mm">
+        width="173.39421mm">
     <defs
             id="defs2"/>
     <sodipodi:namedview
@@ -21,18 +24,18 @@
             fit-margin-left="2"
             fit-margin-top="2"
             lock-margins="true"
-            inkscape:window-maximized="1"
-            inkscape:window-y="22"
-            inkscape:window-x="213"
+            inkscape:window-maximized="0"
+            inkscape:window-y="-31967"
+            inkscape:window-x="-32000"
             inkscape:window-height="2126"
             inkscape:window-width="3616"
             showgrid="false"
             inkscape:document-rotation="0"
             inkscape:current-layer="layer1"
             inkscape:document-units="mm"
-            inkscape:cy="145.74635"
-            inkscape:cx="182.61864"
-            inkscape:zoom="4"
+            inkscape:cy="320.96984"
+            inkscape:cx="9.8526165"
+            inkscape:zoom="2"
             inkscape:pageshadow="2"
             inkscape:pageopacity="0.0"
             borderopacity="1.0"
@@ -57,7 +60,7 @@
             inkscape:groupmode="layer"
             inkscape:label="Layer 1">
         <g
-                transform="translate(-39.662798,-59.868374)"
+                transform="translate(-18.760715,-59.339207)"
                 id="g1427">
             <rect
                     style="fill:#2f7bd9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.0490725;stroke-opacity:1"

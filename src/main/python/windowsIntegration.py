@@ -4,6 +4,13 @@ import ctypes.wintypes
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
 
 
+# import clr
+# sys.path.append(r'C:\Windows\System32')
+# Win = clr.AddReference("Windows")
+# WinMedia = clr.AddReference("Windows.Media")
+# from Windows.Media import SystemMediaTransportControls
+
+
 # thanks to https://gist.github.com/mdavey/6d40a89dbc15aefcc8cd
 
 class GlobalHotKeys(QObject):
@@ -110,3 +117,7 @@ class mediaKeysHooker(QRunnable):
 	def prevSong(self):
 		print('received prev song keypress')
 		self.signals.prevSongSignal.emit()
+
+# class systemMediaTransportControls(object):
+# 	def __init__(self):
+# 		self.controls = SystemMediaTransportControls.GetForCurrentView()

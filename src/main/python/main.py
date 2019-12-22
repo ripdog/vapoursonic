@@ -7,8 +7,6 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
-import vapoursonicActions
-
 try:
 	# noinspection PyUnresolvedReferences
 	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
@@ -20,12 +18,13 @@ from albumArtLoader import albumArtLoader
 from networkWorker import networkWorker
 from playbackController import playbackController
 from ui_mainwindow import Ui_vapoursonic
+import vapoursonicActions
 
 
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str, int)
 	loadAlbumWithId = pyqtSignal(str, object)
-	loadAlbumArtWithId = pyqtSignal(str)
+	loadAlbumArtWithId = pyqtSignal(str, str)
 	playbackControl = pyqtSignal(str)
 	getPlaylists = pyqtSignal()
 	loadPlaylistSongs = pyqtSignal(str, object)
@@ -124,6 +123,7 @@ class MainWindow(QMainWindow):
 			'playlists': True
 		}
 		self.currentPage = 0
+		self.albumArtCache = {}
 
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.domain)
@@ -306,21 +306,23 @@ class MainWindow(QMainWindow):
 		self.thumbnailToolBar.addButton(self.playToolbarButton)
 		self.thumbnailToolBar.addButton(self.nextToolbarButton)
 
-	def bindMediaKeys(self):
+	def initializeWindowsIntegration(self):
 		if sys.platform == 'win32':
 			# try:
-			import winhotkeys
+			import windowsIntegration
 			# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
 			# 	print('not windows, unable to bind media keys')
 			# 	return
 			self.keyHookThreadPool = QThreadPool()
 			self.keyHookThreadPool.setMaxThreadCount(1)
-			self.keyHook = winhotkeys.mediaKeysHooker(self)
+			self.keyHook = windowsIntegration.mediaKeysHooker(self)
 			self.keyHook.signals.playPauseSignal.connect(self.playbackController.playPause)
 			self.keyHook.signals.nextSongSignal.connect(self.playbackController.playNextSongExplicitly)
 			self.keyHook.signals.prevSongSignal.connect(self.playbackController.playPreviousSong)
 			self.keyHook.signals.errSignal.connect(self.handleError)
 			self.keyHookThreadPool.start(self.keyHook)
+
+		# self.mediaTransportControls = windowsIntegration.systemMediaTransportControls()
 
 	def cachePlaylists(self):
 		self.signals.getPlaylists.emit()
@@ -336,7 +338,8 @@ class MainWindow(QMainWindow):
 
 		self.populateThumbnailToolbar()
 
-		self.bindMediaKeys()
+		if sys.platform == 'win32':
+			self.initializeWindowsIntegration()
 
 		self.cachePlaylists()
 
@@ -397,6 +400,8 @@ class MainWindow(QMainWindow):
 				self.taskbarProgress.setValue(update)
 			except AttributeError:
 				pass
+		elif updateType == 'playingAlbumArt':
+			self.beginDisplayAlbumArt(update, 'currentlyPlaying')
 		elif updateType == 'title':
 			self.ui.currentPlayingLabel.setText(update)
 		elif updateType == 'artist':
@@ -652,7 +657,7 @@ class MainWindow(QMainWindow):
 		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
 
 		try:
-			self.signals.loadAlbumArtWithId.emit(albumdeets['coverArt'])
+			self.beginDisplayAlbumArt(albumdeets['coverArt'], 'album')
 		except KeyError:
 			print('no cover art :(')
 			self.ui.selectedAlbumArt.setText("No Art")
@@ -672,17 +677,6 @@ class MainWindow(QMainWindow):
 																 'artist']))
 		self.currentAlbum = albumdeets
 
-	def startAlbumArtLoad(self, handle, aid):
-		loader = albumArtLoader(handle, aid)
-		loader.signals.albumArtLoaded.connect(self.displayAlbumArt)
-		self.albumArtLoaderThreads.start(loader)
-
-	def displayAlbumArt(self, art, aid):
-		if aid == self.currentAlbum['coverArt']:
-			image = QImage()
-			image.loadFromData(art)
-			self.ui.selectedAlbumArt.setPixmap(QPixmap.fromImage(image))
-
 	def refreshAlbumListView(self):
 		self.loadDataforAlbumListView(self.albumListState)
 
@@ -695,6 +689,36 @@ class MainWindow(QMainWindow):
 	def closeEvent(self, a0):
 		print('vapoursonic closing, saving config')
 		config.save()
+
+	def startAlbumArtLoad(self, handle, aid, type):
+		loader = albumArtLoader(handle, aid, type)
+		loader.signals.albumArtLoaded.connect(self.receiveAlbumArt)
+		self.albumArtLoaderThreads.start(loader)
+
+	def receiveAlbumArt(self, art, aid, type):
+		image = QImage()
+		image.loadFromData(art)
+		self.albumArtCache[aid] = QPixmap.fromImage(image)
+		self.displayAlbumArt(aid, type)
+
+	def beginDisplayAlbumArt(self, artId, type):
+		try:
+			self.displayAlbumArt(self.albumArtCache[artId], type)
+		except KeyError:
+			self.signals.loadAlbumArtWithId.emit(artId, type)
+
+	def displayAlbumArt(self, aid, type):
+		if type == 'album' and aid == self.currentAlbum['coverArt']:
+			self.ui.selectedAlbumArt.setPixmap(self.albumArtCache[aid].
+											   scaled(self.ui.selectedAlbumArt.size(),
+													  Qt.KeepAspectRatio,
+													  Qt.SmoothTransformation))
+		elif type == 'currentlyPlaying' and self.playbackController.currentSong and \
+				aid == self.playbackController.currentSong.data()['coverArt']:
+			self.ui.playingAlbumArt.setPixmap(self.albumArtCache[aid].
+											  scaled(self.ui.playingAlbumArt.size(),
+													 Qt.KeepAspectRatio,
+													 Qt.SmoothTransformation))
 
 
 def buildItemForSong(song, fields):

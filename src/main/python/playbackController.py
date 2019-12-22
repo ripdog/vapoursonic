@@ -278,6 +278,7 @@ class playbackController(QObject):
 				if self.currentSong:
 					self.updatePlayerUI.emit(self.currentSong.data()['title'], 'title')
 					self.updatePlayerUI.emit(self.currentSong.data()['artist'], 'artist')
+					self.updatePlayerUI.emit(self.currentSong.data()['coverArt'], 'playingAlbumArt')
 				else:
 					self.updatePlayerUI.emit('Not Playing', 'title')
 					self.updatePlayerUI.emit('No Artist', 'artist')

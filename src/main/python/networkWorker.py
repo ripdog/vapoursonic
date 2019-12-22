@@ -11,7 +11,7 @@ class networkWorker(QObject):
 	returnAlbums = pyqtSignal(object, str)
 	returnAlbumSongs = pyqtSignal(object, object)
 	returnSongHandle = pyqtSignal(object, object)
-	returnAlbumArtHandle = pyqtSignal(object, str)
+	returnAlbumArtHandle = pyqtSignal(object, str, str)
 	returnPlaylists = pyqtSignal(object)
 	returnPlaylistSongs = pyqtSignal(object, object)
 	returnSearchResults = pyqtSignal(object, int)
@@ -73,10 +73,10 @@ class networkWorker(QObject):
 		except URLError as e:
 			self.handleErr(e)
 
-	@pyqtSlot(str)
-	def getAlbumArtWithId(self, id):
+	@pyqtSlot(str, str)
+	def getAlbumArtWithId(self, id, type):
 		try:
-			self.returnAlbumArtHandle.emit(self.connection.getCoverArt(id, 128), id)
+			self.returnAlbumArtHandle.emit(self.connection.getCoverArt(id, 128), id, type)
 		except URLError as e:
 			self.handleErr(e)
 
