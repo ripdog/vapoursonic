@@ -16,7 +16,7 @@ fbs = "^0.8.4"
 pythonnet = "^2.4.0"
 requests = "^2.22.0"
 PyQt5 = "5.9.2"
-sip = '4.19.8'
+sip = "4.19.8"
 
 
 [tool.poetry.dev-dependencies]
