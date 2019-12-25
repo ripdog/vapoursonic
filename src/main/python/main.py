@@ -244,6 +244,7 @@ class MainWindow(QMainWindow):
 		self.ui.albumTrackList.doubleClicked.connect(self.albumTrackListDoubleClick)
 		self.ui.albumTrackList.setContextMenuPolicy(Qt.CustomContextMenu)
 		self.ui.albumTrackList.customContextMenuRequested.connect(self.albumTrackListMenu)
+		self.ui.selectedAlbumArt.mouseReleaseEvent = self.displayFullAlbumArtForBrowsing
 		self.refreshActions()
 
 	# noinspection PyArgumentList
@@ -272,7 +273,7 @@ class MainWindow(QMainWindow):
 		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
 		self.ui.volumeSlider.setValue(config.volume)
 		self.ui.repeatPlayQueueButton.clicked.connect(self.changeRepeatState)
-		self.ui.playingAlbumArt.mouseReleaseEvent = self.displayFullAlbumArt
+		self.ui.playingAlbumArt.mouseReleaseEvent = self.displayFullAlbumArtForPlaying
 
 		self.short1 = QShortcut(Qt.Key_Delete, self.ui.playQueueList, context=Qt.WidgetShortcut,
 								activated=self.playQueueActions[1].removeFromQueue)
@@ -408,7 +409,11 @@ class MainWindow(QMainWindow):
 			except AttributeError:
 				pass
 		elif updateType == 'playingAlbumArt':
-			self.beginDisplayAlbumArt(update, 'currentlyPlaying')
+			if update:
+				self.ui.playingAlbumArt.setCursor(Qt.PointingHandCursor)
+				self.beginDisplayAlbumArt(update, 'currentlyPlaying')
+			else:
+				self.ui.playingAlbumArt.setCursor(Qt.ArrowCursor)
 		elif updateType == 'title':
 			self.ui.currentPlayingLabel.setText(update)
 		elif updateType == 'artist':
@@ -665,9 +670,10 @@ class MainWindow(QMainWindow):
 
 		try:
 			self.beginDisplayAlbumArt(albumdeets['coverArt'], 'album')
+			self.ui.selectedAlbumArt.setCursor(Qt.PointingHandCursor)
 		except KeyError:
-			print('no cover art :(')
 			self.ui.selectedAlbumArt.setText("No Art")
+			self.ui.selectedAlbumArt.setCursor(Qt.ArrowCursor)
 			pass
 		self.ui.selectedAlbumTitle.setText(albumdeets['name'])
 		self.ui.selectedAlbumArtist.setText(albumdeets['artist'])
@@ -715,22 +721,34 @@ class MainWindow(QMainWindow):
 		except KeyError:
 			self.startAlbumArtLoad(artId, type)
 
-	def displayAlbumArt(self, aid, type):
-		if type == 'album' and aid == self.currentAlbum['coverArt']:
+	def displayAlbumArt(self, aid, artType):
+		if artType == 'album' and aid == self.currentAlbum['coverArt']:
 			self.ui.selectedAlbumArt.setPixmap(self.albumArtCache[aid].
 											   scaled(self.ui.selectedAlbumArt.size(),
 													  Qt.KeepAspectRatio,
 													  Qt.SmoothTransformation))
-		elif type == 'currentlyPlaying' and self.playbackController.currentSong and \
+		elif artType == 'currentlyPlaying' and self.playbackController.currentSong and \
 				aid == self.playbackController.currentSong.data()['coverArt']:
 			self.ui.playingAlbumArt.setPixmap(self.albumArtCache[aid].
 											  scaled(self.ui.playingAlbumArt.size(),
 													 Qt.KeepAspectRatio,
 													 Qt.SmoothTransformation))
 
-	def displayFullAlbumArt(self, event):
-		if self.playbackController.currentSong:
+	def displayFullAlbumArtForPlaying(self, event):
+		self.displayFullAlbumArt('currentlyPlaying')
+
+	def displayFullAlbumArtForBrowsing(self, event):
+		self.displayFullAlbumArt('currentlyBrowsing')
+
+	def displayFullAlbumArt(self, artType):
+		if artType == 'currentlyPlaying' and self.playbackController.currentSong:
 			dialog = albumArtViewer(self, self.playbackController.currentSong.data()['coverArt'],
+									self.networkWorker)
+			dialog.show()
+			dialog.raise_()
+			dialog.activateWindow()
+		elif artType == 'currentlyBrowsing' and self.currentAlbum:
+			dialog = albumArtViewer(self, self.currentAlbum['coverArt'],
 									self.networkWorker)
 			dialog.show()
 			dialog.raise_()
