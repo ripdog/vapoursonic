@@ -22,6 +22,7 @@ class configManager():
 		super(configManager, self).__init__()
 		self.appContext = ApplicationContext()
 		self.icons = {}
+
 		for item in ['baseline-play-arrow.svg',
 					 'baseline-pause.svg',
 					 'baseline-skip-next.svg',

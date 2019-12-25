@@ -3,7 +3,6 @@ import os
 import random
 import re
 import sys
-from _md5 import md5
 from datetime import timedelta
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSlot, pyqtSignal, QModelIndex, QTimer
@@ -62,8 +61,7 @@ class playbackController(QObject):
 		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
 		self.currentSong = None
 
-		self.salt = md5(os.urandom(100)).hexdigest()
-		self.token = md5((config.password + self.salt).encode('utf-8')).hexdigest()
+
 		# create timer for 1-per-second playback status update
 		self.secondTimer = QTimer()
 		self.secondTimer.timeout.connect(self.everySecond)
@@ -176,9 +174,9 @@ class playbackController(QObject):
 				break
 
 	def buildUrlForSong(self, song):
-		return config.fqdn + '/rest/stream.view?f=json&v=1.15.0&c=' + \
-			   config.appname + '&u=' + config.username + '&s=' + self.salt + \
-			   '&t=' + self.token + '&id=' + song['id']
+		return config.fqdn + '/rest/stream?f=json&v=1.15.0&c=' + \
+			   config.appname + '&u=' + config.username + '&s=' + config.salt + \
+			   '&t=' + config.token + '&id=' + song['id']
 
 	def playSong(self, song):
 		url = self.buildUrlForSong(song)

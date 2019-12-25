@@ -16,6 +16,7 @@ keyboard = "^0.13.4"
 pywin32-ctypes = { version = "^0.2.0", markers = "sys_platform == 'win32'" }
 fbs = "^0.8.4"
 pythonnet = "^2.4.0"
+requests = "^2.22.0"
 
 
 [tool.poetry.dev-dependencies]

@@ -1,4 +1,6 @@
+import os
 import sys
+from _md5 import md5
 from datetime import timedelta
 
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
@@ -6,6 +8,8 @@ from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QS
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
+
+from albumArtViewer import albumArtViewer
 
 try:
 	# noinspection PyUnresolvedReferences
@@ -24,7 +28,6 @@ import vapoursonicActions
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str, int)
 	loadAlbumWithId = pyqtSignal(str, object)
-	loadAlbumArtWithId = pyqtSignal(str, str)
 	playbackControl = pyqtSignal(str)
 	getPlaylists = pyqtSignal()
 	loadPlaylistSongs = pyqtSignal(str, object)
@@ -94,8 +97,6 @@ class MainWindow(QMainWindow):
 		self.signals.loadAlbumsOfType.connect(self.networkWorker.getDataForAlbumTreeView)
 		self.signals.loadAlbumWithId.connect(self.networkWorker.loadAlbumWithId)
 		self.networkWorker.returnAlbumSongs.connect(self.receiveLoadedSongs)
-		self.signals.loadAlbumArtWithId.connect(self.networkWorker.getAlbumArtWithId)
-		self.networkWorker.returnAlbumArtHandle.connect(self.startAlbumArtLoad)
 		self.signals.getPlaylists.connect(self.networkWorker.getPlaylists)
 		self.networkWorker.returnPlaylists.connect(self.receivePlaylists)
 		self.signals.loadPlaylistSongs.connect(self.networkWorker.getPlaylistSongs)
@@ -271,6 +272,7 @@ class MainWindow(QMainWindow):
 		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
 		self.ui.volumeSlider.setValue(config.volume)
 		self.ui.repeatPlayQueueButton.clicked.connect(self.changeRepeatState)
+		self.ui.playingAlbumArt.mouseReleaseEvent = self.displayFullAlbumArt
 
 		self.short1 = QShortcut(Qt.Key_Delete, self.ui.playQueueList, context=Qt.WidgetShortcut,
 								activated=self.playQueueActions[1].removeFromQueue)
@@ -322,12 +324,25 @@ class MainWindow(QMainWindow):
 			self.keyHook.signals.errSignal.connect(self.handleError)
 			self.keyHookThreadPool.start(self.keyHook)
 
-		# self.mediaTransportControls = windowsIntegration.systemMediaTransportControls()
+			if QWinTaskbarProgress:
+				self.taskbarButton = QWinTaskbarButton(self)
+				self.taskbarButton.setWindow(self.windowHandle())
+				self.taskbarProgress = self.taskbarButton.progress()
+			else:
+				self.taskbarProgress = None
+
+	# self.mediaTransportControls = windowsIntegration.systemMediaTransportControls()
 
 	def cachePlaylists(self):
 		self.signals.getPlaylists.emit()
 
+	def initConnectionParams(self):
+		config.salt = md5(os.urandom(100)).hexdigest()
+		config.token = md5((config.password + config.salt).encode('utf-8')).hexdigest()
+
 	def populatePlayerUI(self):
+		self.initConnectionParams()
+
 		self.populateIcons()
 
 		self.populateLeftPanel()
@@ -343,12 +358,6 @@ class MainWindow(QMainWindow):
 
 		self.cachePlaylists()
 
-		if QWinTaskbarProgress:
-			self.taskbarButton = QWinTaskbarButton(self)
-			self.taskbarButton.setWindow(self.windowHandle())
-			self.taskbarProgress = self.taskbarButton.progress()
-		else:
-			self.taskbarProgress = None
 
 	def trackSliderPressed(self):
 		self.sliderBeingDragged = True
@@ -376,8 +385,6 @@ class MainWindow(QMainWindow):
 	def handleError(self, error):
 		QMessageBox.information(self, 'Error', error)
 		print(error)
-
-
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, updateType):
@@ -690,9 +697,10 @@ class MainWindow(QMainWindow):
 		print('vapoursonic closing, saving config')
 		config.save()
 
-	def startAlbumArtLoad(self, handle, aid, type):
-		loader = albumArtLoader(handle, aid, type)
+	def startAlbumArtLoad(self, aid, type):
+		loader = albumArtLoader(aid, type)
 		loader.signals.albumArtLoaded.connect(self.receiveAlbumArt)
+		loader.signals.errorHandler.connect(self.handleError)
 		self.albumArtLoaderThreads.start(loader)
 
 	def receiveAlbumArt(self, art, aid, type):
@@ -705,7 +713,7 @@ class MainWindow(QMainWindow):
 		try:
 			self.displayAlbumArt(self.albumArtCache[artId], type)
 		except KeyError:
-			self.signals.loadAlbumArtWithId.emit(artId, type)
+			self.startAlbumArtLoad(artId, type)
 
 	def displayAlbumArt(self, aid, type):
 		if type == 'album' and aid == self.currentAlbum['coverArt']:
@@ -719,6 +727,14 @@ class MainWindow(QMainWindow):
 											  scaled(self.ui.playingAlbumArt.size(),
 													 Qt.KeepAspectRatio,
 													 Qt.SmoothTransformation))
+
+	def displayFullAlbumArt(self, event):
+		if self.playbackController.currentSong:
+			dialog = albumArtViewer(self, self.playbackController.currentSong.data()['coverArt'],
+									self.networkWorker)
+			dialog.show()
+			dialog.raise_()
+			dialog.activateWindow()
 
 
 def buildItemForSong(song, fields):
