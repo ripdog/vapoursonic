@@ -30,11 +30,9 @@ jobs:
       - name: Install poetry
         run: |
           (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
-      - name: Disable virtualenv
-        run: .$env:USERPROFILE\.poetry\bin\poetry.bat env use system
       - name: Install dependencies
         run: .$env:USERPROFILE\.poetry\bin\poetry.bat install
       - name: Build app
-        run: python -m fbs freeze
-#      - name: B app
-#        run: python -m fbs freeze
+        run: .(get-item $env:LOCALAPPDATA\pypoetry\Cache\virtualenvs\vapoursonic-*-py3.6\Scripts\python.exe).FullName -m fbs freeze
+      - name: Download+Install NSIS, making installer
+        run: .(get-item '.github\nsis.ps1').FullName
