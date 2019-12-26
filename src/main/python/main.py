@@ -22,7 +22,7 @@ from .albumArtLoader import albumArtLoader
 from .networkWorker import networkWorker
 from .playbackController import playbackController
 from .ui_mainwindow import Ui_vapoursonic
-import vapoursonicActions
+from . import vapoursonicActions
 
 
 class MainWindowSignals(QObject):
@@ -312,7 +312,7 @@ class MainWindow(QMainWindow):
 	def initializeWindowsIntegration(self):
 		if sys.platform == 'win32':
 			# try:
-			import windowsIntegration
+			from . import windowsIntegration
 			# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
 			# 	print('not windows, unable to bind media keys')
 			# 	return
