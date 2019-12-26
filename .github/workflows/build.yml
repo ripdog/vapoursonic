@@ -28,7 +28,7 @@ jobs:
       - name: Activate venv
         run: .$env:USERPROFILE\.poetry\bin\poetry.bat shell
       - name: Build app
-        run: .(get-item $env:LOCALAPPDATA\pypoetry\Cache\virtualenvs\vapoursonic-*-py3.6\Scripts\python.exe).FullName -m fbs freeze -debug
+        run: .(get-item $env:LOCALAPPDATA\pypoetry\Cache\virtualenvs\vapoursonic-*-py3.6\Scripts\python.exe).FullName -m fbs freeze --debug
       - name: Download+Install NSIS, make installer
         run: .(get-item '.github\nsis.ps1').FullName
       - name: Archive Installer artifact
