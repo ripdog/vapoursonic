@@ -25,12 +25,14 @@ jobs:
           (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
       - name: Install dependencies
         run: .$env:USERPROFILE\.poetry\bin\poetry.bat install
+      - name: Activate venv
+        run: .$env:USERPROFILE\.poetry\bin\poetry.bat shell
       - name: Build app
-        run: .(get-item $env:LOCALAPPDATA\pypoetry\Cache\virtualenvs\vapoursonic-*-py3.6\Scripts\python.exe).FullName -m fbs freeze
+        run: .(get-item $env:LOCALAPPDATA\pypoetry\Cache\virtualenvs\vapoursonic-*-py3.6\Scripts\python.exe).FullName -m fbs freeze -debug
       - name: Download+Install NSIS, make installer
         run: .(get-item '.github\nsis.ps1').FullName
       - name: Archive Installer artifact
         uses: actions/upload-artifact@v1
         with:
           name: installer
-          path: target\vapoursonicSetup.exe
+          path: target
