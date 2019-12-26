@@ -274,7 +274,7 @@ class playbackController(QObject):
 				print('found songId {}'.format(songId))
 				self.setCurrentSongFromId(songId)
 				if self.currentSong:
-					self.updatePlayerUI.emit(self.currentSong.data()['title'], 'title')
+					self.updatePlayerUI.emit(self.currentSong.data(), 'newCurrentSong')
 					self.updatePlayerUI.emit(self.currentSong.data()['artist'], 'artist')
 					self.updatePlayerUI.emit(self.currentSong.data()['coverArt'], 'playingAlbumArt')
 				else:

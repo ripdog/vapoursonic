@@ -399,6 +399,22 @@ class MainWindow(QMainWindow):
 			self.ui.trackProgressBar.blockSignals(False)
 		elif updateType == "progressText":
 			self.ui.trackProgressIndicator.setText(update)
+		elif updateType == "newCurrentSong":
+			if update:
+				self.ui.currentPlayingLabel.setText(update['title'])
+				self.ui.trackArtistName.setText(update['artist'])
+
+				self.setWindowTitle("{} by {} - {}".format(update['title'] if 'title' in update else 'Unk. Title',
+														   update['artist'] if 'artist' in update else 'Unk. Artist',
+														   config.appname))
+				if 'coverArt' in update:
+					self.beginDisplayAlbumArt(update['coverArt'], 'currentlyPlaying')
+				else:
+					self.clearAlbumArt('currentlyPlaying')
+			else:
+				self.ui.currentPlayingLabel.setText('Not Playing')
+				self.ui.trackArtistName.setText('No Artist')
+				self.setWindowTitle('Not Playing - {}'.format(config.appname))
 		elif updateType == 'progress':
 			if not self.sliderBeingDragged:
 				self.ui.trackProgressBar.blockSignals(True)
@@ -408,16 +424,6 @@ class MainWindow(QMainWindow):
 				self.taskbarProgress.setValue(update)
 			except AttributeError:
 				pass
-		elif updateType == 'playingAlbumArt':
-			if update:
-				self.ui.playingAlbumArt.setCursor(Qt.PointingHandCursor)
-				self.beginDisplayAlbumArt(update, 'currentlyPlaying')
-			else:
-				self.ui.playingAlbumArt.setCursor(Qt.ArrowCursor)
-		elif updateType == 'title':
-			self.ui.currentPlayingLabel.setText(update)
-		elif updateType == 'artist':
-			self.ui.trackArtistName.setText(update)
 		elif updateType == 'statusBar':
 			self.statusBar().showMessage(update)
 		elif updateType == 'scrollTo':
@@ -670,11 +676,8 @@ class MainWindow(QMainWindow):
 
 		try:
 			self.beginDisplayAlbumArt(albumdeets['coverArt'], 'album')
-			self.ui.selectedAlbumArt.setCursor(Qt.PointingHandCursor)
 		except KeyError:
-			self.ui.selectedAlbumArt.setText("No Art")
-			self.ui.selectedAlbumArt.setCursor(Qt.ArrowCursor)
-			pass
+			self.clearAlbumArt('album')
 		self.ui.selectedAlbumTitle.setText(albumdeets['name'])
 		self.ui.selectedAlbumArtist.setText(albumdeets['artist'])
 		self.ui.selectedAlbumTrackCount.setText(str(albumdeets['songCount']))
@@ -703,32 +706,42 @@ class MainWindow(QMainWindow):
 		print('vapoursonic closing, saving config')
 		config.save()
 
-	def startAlbumArtLoad(self, aid, type):
-		loader = albumArtLoader(aid, type)
+	def startAlbumArtLoad(self, aid, artType):
+		loader = albumArtLoader(aid, artType)
 		loader.signals.albumArtLoaded.connect(self.receiveAlbumArt)
 		loader.signals.errorHandler.connect(self.handleError)
 		self.albumArtLoaderThreads.start(loader)
 
-	def receiveAlbumArt(self, art, aid, type):
+	def receiveAlbumArt(self, art, aid, artType):
 		image = QImage()
 		image.loadFromData(art)
 		self.albumArtCache[aid] = QPixmap.fromImage(image)
-		self.displayAlbumArt(aid, type)
+		self.displayAlbumArt(aid, artType)
 
-	def beginDisplayAlbumArt(self, artId, type):
+	def beginDisplayAlbumArt(self, artId, artType):
 		try:
-			self.displayAlbumArt(self.albumArtCache[artId], type)
+			self.displayAlbumArt(self.albumArtCache[artId], artType)
 		except KeyError:
-			self.startAlbumArtLoad(artId, type)
+			self.startAlbumArtLoad(artId, artType)
+
+	def clearAlbumArt(self, artType):
+		if artType == 'album':
+			self.ui.selectedAlbumArt.setText('No Art')
+			self.ui.selectedAlbumArt.setCursor(Qt.ArrowCursor)
+		elif artType == 'currentlyPlaying':
+			self.ui.playingAlbumArt.setPixmap(QPixmap())
+			self.ui.playingAlbumArt.setCursor(Qt.ArrowCursor)
 
 	def displayAlbumArt(self, aid, artType):
 		if artType == 'album' and aid == self.currentAlbum['coverArt']:
+			self.ui.selectedAlbumArt.setCursor(Qt.PointingHandCursor)
 			self.ui.selectedAlbumArt.setPixmap(self.albumArtCache[aid].
 											   scaled(self.ui.selectedAlbumArt.size(),
 													  Qt.KeepAspectRatio,
 													  Qt.SmoothTransformation))
 		elif artType == 'currentlyPlaying' and self.playbackController.currentSong and \
 				aid == self.playbackController.currentSong.data()['coverArt']:
+			self.ui.playingAlbumArt.setCursor(Qt.PointingHandCursor)
 			self.ui.playingAlbumArt.setPixmap(self.albumArtCache[aid].
 											  scaled(self.ui.playingAlbumArt.size(),
 													 Qt.KeepAspectRatio,

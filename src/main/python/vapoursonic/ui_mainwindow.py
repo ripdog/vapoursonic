@@ -380,7 +380,7 @@ class Ui_vapoursonic(object):
 
     def retranslateUi(self, vapoursonic):
         _translate = QtCore.QCoreApplication.translate
-        vapoursonic.setWindowTitle(_translate("vapoursonic", "vapoursonic"))
+        vapoursonic.setWindowTitle(_translate("vapoursonic", "Not Playing - vapoursonic"))
         self.passwordLabel.setText(_translate("vapoursonic", "Password"))
         self.connectButton.setText(_translate("vapoursonic", "Connect"))
         self.usernameLabel.setText(_translate("vapoursonic", "Username"))
