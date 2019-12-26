@@ -1,931 +1,907 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
-    <class>vapoursonic</class>
-    <widget class="QMainWindow" name="vapoursonic">
-        <property name="geometry">
-            <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>1500</width>
-                <height>1200</height>
-            </rect>
-        </property>
-        <property name="windowTitle">
-            <string>vapoursonic</string>
-        </property>
-        <widget class="QWidget" name="centralwidget">
-            <layout class="QGridLayout" name="gridLayout">
-                <item row="0" column="0">
-                    <widget class="QStackedWidget" name="stackedWidget">
-                        <property name="sizePolicy">
-                            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                                <horstretch>0</horstretch>
-                                <verstretch>0</verstretch>
-                            </sizepolicy>
-                        </property>
-                        <property name="styleSheet">
-                            <string notr="true"/>
-                        </property>
-                        <property name="currentIndex">
-                            <number>1</number>
-                        </property>
-                        <widget class="QWidget" name="connectionSetup">
-                            <layout class="QGridLayout" name="gridLayout_2">
-                                <item row="0" column="0">
-                                    <layout class="QHBoxLayout" name="horizontalLayout">
-                                        <item>
-                                            <spacer name="horizontalSpacer">
-                                                <property name="orientation">
-                                                    <enum>Qt::Horizontal</enum>
-                                                </property>
-                                                <property name="sizeType">
-                                                    <enum>QSizePolicy::Fixed</enum>
-                                                </property>
-                                                <property name="sizeHint" stdset="0">
-                                                    <size>
-                                                        <width>250</width>
-                                                        <height>20</height>
-                                                    </size>
-                                                </property>
-                                            </spacer>
-                                        </item>
-                                        <item>
-                                            <layout class="QFormLayout" name="formLayout">
-                                                <item row="3" column="1">
-                                                    <widget class="QLineEdit" name="passwordInput"/>
-                                                </item>
-                                                <item row="3" column="0">
-                                                    <widget class="QLabel" name="passwordLabel">
-                                                        <property name="text">
-                                                            <string>Password</string>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                                <item row="4" column="0" colspan="2">
-                                                    <widget class="QPushButton" name="connectButton">
-                                                        <property name="text">
-                                                            <string>Connect</string>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                                <item row="2" column="1">
-                                                    <widget class="QLineEdit" name="usernameInput"/>
-                                                </item>
-                                                <item row="1" column="1">
-                                                    <widget class="QLineEdit" name="domainInput"/>
-                                                </item>
-                                                <item row="2" column="0">
-                                                    <widget class="QLabel" name="usernameLabel">
-                                                        <property name="text">
-                                                            <string>Username</string>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                                <item row="1" column="0">
-                                                    <widget class="QLabel" name="domainLabel">
-                                                        <property name="text">
-                                                            <string>Domain</string>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                                <item row="0" column="1">
-                                                    <spacer name="verticalSpacer">
-                                                        <property name="orientation">
-                                                            <enum>Qt::Vertical</enum>
-                                                        </property>
-                                                        <property name="sizeHint" stdset="0">
-                                                            <size>
-                                                                <width>20</width>
-                                                                <height>200</height>
-                                                            </size>
-                                                        </property>
-                                                    </spacer>
-                                                </item>
-                                            </layout>
-                                        </item>
-                                        <item>
-                                            <spacer name="horizontalSpacer_2">
-                                                <property name="orientation">
-                                                    <enum>Qt::Horizontal</enum>
-                                                </property>
-                                                <property name="sizeType">
-                                                    <enum>QSizePolicy::Preferred</enum>
-                                                </property>
-                                                <property name="sizeHint" stdset="0">
-                                                    <size>
-                                                        <width>250</width>
-                                                        <height>20</height>
-                                                    </size>
-                                                </property>
-                                            </spacer>
-                                        </item>
-                                    </layout>
-                                </item>
-                            </layout>
-                        </widget>
-                        <widget class="QWidget" name="mainPage">
-                            <layout class="QGridLayout" name="gridLayout_3">
-                                <item row="0" column="0">
-                                    <widget class="QSplitter" name="splitter_2">
-                                        <property name="orientation">
-                                            <enum>Qt::Vertical</enum>
-                                        </property>
-                                        <property name="childrenCollapsible">
-                                            <bool>false</bool>
-                                        </property>
-                                        <widget class="QSplitter" name="splitter">
-                                            <property name="orientation">
-                                                <enum>Qt::Horizontal</enum>
-                                            </property>
-                                            <property name="childrenCollapsible">
-                                                <bool>false</bool>
-                                            </property>
-                                            <widget class="QWidget" name="verticalLayoutWidget_3">
-                                                <layout class="QVBoxLayout" name="albumTreeListSearch">
-                                                    <item>
-                                                        <widget class="QLineEdit" name="search"/>
-                                                    </item>
-                                                    <item>
-                                                        <widget class="QWidget" name="backHomeButtonLayout"
-                                                                native="true">
-                                                            <property name="enabled">
-                                                                <bool>true</bool>
-                                                            </property>
-                                                            <property name="minimumSize">
-                                                                <size>
-                                                                    <width>0</width>
-                                                                    <height>50</height>
-                                                                </size>
-                                                            </property>
-                                                            <property name="maximumSize">
-                                                                <size>
-                                                                    <width>16777215</width>
-                                                                    <height>35</height>
-                                                                </size>
-                                                            </property>
-                                                            <layout class="QHBoxLayout" name="horizontalLayout_2">
-                                                                <item>
-                                                                    <widget class="QPushButton" name="backHomeButton">
-                                                                        <property name="minimumSize">
-                                                                            <size>
-                                                                                <width>200</width>
-                                                                                <height>35</height>
-                                                                            </size>
-                                                                        </property>
-                                                                        <property name="toolTip">
-                                                                            <string>Return to the home screen.</string>
-                                                                        </property>
-                                                                        <property name="text">
-                                                                            <string>Back</string>
-                                                                        </property>
-                                                                        <property name="iconSize">
-                                                                            <size>
-                                                                                <width>36</width>
-                                                                                <height>36</height>
-                                                                            </size>
-                                                                        </property>
-                                                                        <property name="flat">
-                                                                            <bool>true</bool>
-                                                                        </property>
-                                                                    </widget>
-                                                                </item>
-                                                                <item>
-                                                                    <spacer name="horizontalSpacer_4">
-                                                                        <property name="orientation">
-                                                                            <enum>Qt::Horizontal</enum>
-                                                                        </property>
-                                                                        <property name="sizeHint" stdset="0">
-                                                                            <size>
-                                                                                <width>40</width>
-                                                                                <height>20</height>
-                                                                            </size>
-                                                                        </property>
-                                                                    </spacer>
-                                                                </item>
-                                                                <item>
-                                                                    <widget class="QLabel" name="albumTreeListTitle">
-                                                                        <property name="text">
-                                                                            <string>Home</string>
-                                                                        </property>
-                                                                    </widget>
-                                                                </item>
-                                                                <item>
-                                                                    <spacer name="horizontalSpacer_3">
-                                                                        <property name="orientation">
-                                                                            <enum>Qt::Horizontal</enum>
-                                                                        </property>
-                                                                        <property name="sizeHint" stdset="0">
-                                                                            <size>
-                                                                                <width>40</width>
-                                                                                <height>20</height>
-                                                                            </size>
-                                                                        </property>
-                                                                    </spacer>
-                                                                </item>
-                                                                <item>
-                                                                    <widget class="QPushButton"
-                                                                            name="albumListViewPreviousPage">
-                                                                        <property name="sizePolicy">
-                                                                            <sizepolicy hsizetype="Fixed"
-                                                                                        vsizetype="Fixed">
-                                                                                <horstretch>0</horstretch>
-                                                                                <verstretch>0</verstretch>
-                                                                            </sizepolicy>
-                                                                        </property>
-                                                                        <property name="minimumSize">
-                                                                            <size>
-                                                                                <width>35</width>
-                                                                                <height>35</height>
-                                                                            </size>
-                                                                        </property>
-                                                                        <property name="maximumSize">
-                                                                            <size>
-                                                                                <width>35</width>
-                                                                                <height>35</height>
-                                                                            </size>
-                                                                        </property>
-                                                                        <property name="toolTip">
-                                                                            <string>Return to the previous page of query
+ <class>vapoursonic</class>
+ <widget class="QMainWindow" name="vapoursonic">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1500</width>
+    <height>1200</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>vapoursonic</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="connectionSetup">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>250</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QFormLayout" name="formLayout">
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="passwordInput"/>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="passwordLabel">
+              <property name="text">
+               <string>Password</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0" colspan="2">
+             <widget class="QPushButton" name="connectButton">
+              <property name="text">
+               <string>Connect</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="usernameInput"/>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="domainInput"/>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="usernameLabel">
+              <property name="text">
+               <string>Username</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="domainLabel">
+              <property name="text">
+               <string>Domain</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>200</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Preferred</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>250</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="mainPage">
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="0">
+         <widget class="QSplitter" name="splitter_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="childrenCollapsible">
+           <bool>false</bool>
+          </property>
+          <widget class="QSplitter" name="splitter">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="childrenCollapsible">
+            <bool>false</bool>
+           </property>
+           <widget class="QWidget" name="verticalLayoutWidget_3">
+            <layout class="QVBoxLayout" name="albumTreeListSearch">
+             <item>
+              <widget class="QLineEdit" name="search"/>
+             </item>
+             <item>
+              <widget class="QWidget" name="backHomeButtonLayout" native="true">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>50</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>35</height>
+                </size>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_2">
+                <item>
+                 <widget class="QPushButton" name="backHomeButton">
+                  <property name="minimumSize">
+                   <size>
+                    <width>200</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Return to the home screen.</string>
+                  </property>
+                  <property name="text">
+                   <string>Back</string>
+                  </property>
+                  <property name="iconSize">
+                   <size>
+                    <width>36</width>
+                    <height>36</height>
+                   </size>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_4">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QLabel" name="albumTreeListTitle">
+                  <property name="text">
+                   <string>Home</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="albumListViewPreviousPage">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>35</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>35</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Return to the previous page of query
                                                                                 results.
                                                                             </string>
-                                                                        </property>
-                                                                        <property name="text">
-                                                                            <string>Prev</string>
-                                                                        </property>
-                                                                        <property name="flat">
-                                                                            <bool>true</bool>
-                                                                        </property>
-                                                                    </widget>
-                                                                </item>
-                                                                <item>
-                                                                    <widget class="QPushButton"
-                                                                            name="albumListViewRefresh">
-                                                                        <property name="minimumSize">
-                                                                            <size>
-                                                                                <width>35</width>
-                                                                                <height>35</height>
-                                                                            </size>
-                                                                        </property>
-                                                                        <property name="maximumSize">
-                                                                            <size>
-                                                                                <width>35</width>
-                                                                                <height>35</height>
-                                                                            </size>
-                                                                        </property>
-                                                                        <property name="toolTip">
-                                                                            <string>Refresh the current view.</string>
-                                                                        </property>
-                                                                        <property name="text">
-                                                                            <string>Refresh</string>
-                                                                        </property>
-                                                                        <property name="flat">
-                                                                            <bool>true</bool>
-                                                                        </property>
-                                                                    </widget>
-                                                                </item>
-                                                                <item>
-                                                                    <widget class="QPushButton"
-                                                                            name="albumListViewNextPage">
-                                                                        <property name="minimumSize">
-                                                                            <size>
-                                                                                <width>35</width>
-                                                                                <height>35</height>
-                                                                            </size>
-                                                                        </property>
-                                                                        <property name="maximumSize">
-                                                                            <size>
-                                                                                <width>35</width>
-                                                                                <height>35</height>
-                                                                            </size>
-                                                                        </property>
-                                                                        <property name="toolTip">
-                                                                            <string>Advance to the next page of query
+                  </property>
+                  <property name="text">
+                   <string>Prev</string>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="albumListViewRefresh">
+                  <property name="minimumSize">
+                   <size>
+                    <width>35</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>35</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Refresh the current view.</string>
+                  </property>
+                  <property name="text">
+                   <string>Refresh</string>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="albumListViewNextPage">
+                  <property name="minimumSize">
+                   <size>
+                    <width>35</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>35</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Advance to the next page of query
                                                                                 results.
                                                                             </string>
-                                                                        </property>
-                                                                        <property name="text">
-                                                                            <string>Next</string>
-                                                                        </property>
-                                                                        <property name="flat">
-                                                                            <bool>true</bool>
-                                                                        </property>
-                                                                    </widget>
-                                                                </item>
-                                                            </layout>
-                                                        </widget>
-                                                    </item>
-                                                    <item>
-                                                        <widget class="QTreeView" name="albumTreeList">
-                                                            <property name="minimumSize">
-                                                                <size>
-                                                                    <width>500</width>
-                                                                    <height>0</height>
-                                                                </size>
-                                                            </property>
-                                                            <property name="editTriggers">
-                                                                <set>QAbstractItemView::NoEditTriggers</set>
-                                                            </property>
-                                                            <property name="selectionMode">
-                                                                <enum>QAbstractItemView::ExtendedSelection</enum>
-                                                            </property>
-                                                            <attribute name="headerDefaultSectionSize">
-                                                                <number>17</number>
-                                                            </attribute>
-                                                        </widget>
-                                                    </item>
-                                                </layout>
-                                            </widget>
-                                            <widget class="QWidget" name="verticalLayoutWidget_2">
-                                                <layout class="QVBoxLayout" name="selectAlbumDetailsAndListLayout">
-                                                    <property name="sizeConstraint">
-                                                        <enum>QLayout::SetDefaultConstraint</enum>
-                                                    </property>
-                                                    <item>
-                                                        <layout class="QHBoxLayout" name="selectedAlbumDetails">
-                                                            <item>
-                                                                <widget class="QLabel" name="selectedAlbumArt">
-                                                                    <property name="sizePolicy">
-                                                                        <sizepolicy hsizetype="Preferred"
-                                                                                    vsizetype="Preferred">
-                                                                            <horstretch>0</horstretch>
-                                                                            <verstretch>0</verstretch>
-                                                                        </sizepolicy>
-                                                                    </property>
-                                                                    <property name="minimumSize">
-                                                                        <size>
-                                                                            <width>128</width>
-                                                                            <height>128</height>
-                                                                        </size>
-                                                                    </property>
-                                                                    <property name="maximumSize">
-                                                                        <size>
-                                                                            <width>128</width>
-                                                                            <height>128</height>
-                                                                        </size>
-                                                                    </property>
-                                                                    <property name="text">
-                                                                        <string>Album Art</string>
-                                                                    </property>
-                                                                    <property name="textInteractionFlags">
-                                                                        <set>Qt::NoTextInteraction</set>
-                                                                    </property>
-                                                                </widget>
-                                                            </item>
-                                                            <item>
-                                                                <layout class="QVBoxLayout"
-                                                                        name="selectedAlbumTextDetails">
-                                                                    <item>
-                                                                        <widget class="QLabel"
-                                                                                name="selectedAlbumTitle">
-                                                                            <property name="minimumSize">
-                                                                                <size>
-                                                                                    <width>0</width>
-                                                                                    <height>64</height>
-                                                                                </size>
-                                                                            </property>
-                                                                            <property name="maximumSize">
-                                                                                <size>
-                                                                                    <width>600</width>
-                                                                                    <height>128</height>
-                                                                                </size>
-                                                                            </property>
-                                                                            <property name="font">
-                                                                                <font>
-                                                                                    <pointsize>20</pointsize>
-                                                                                    <weight>75</weight>
-                                                                                    <bold>true</bold>
-                                                                                </font>
-                                                                            </property>
-                                                                            <property name="text">
-                                                                                <string>Title</string>
-                                                                            </property>
-                                                                            <property name="textInteractionFlags">
-                                                                                <set>Qt::NoTextInteraction</set>
-                                                                            </property>
-                                                                        </widget>
-                                                                    </item>
-                                                                    <item>
-                                                                        <widget class="QLabel"
-                                                                                name="selectedAlbumArtist">
-                                                                            <property name="maximumSize">
-                                                                                <size>
-                                                                                    <width>600</width>
-                                                                                    <height>48</height>
-                                                                                </size>
-                                                                            </property>
-                                                                            <property name="font">
-                                                                                <font>
-                                                                                    <pointsize>14</pointsize>
-                                                                                </font>
-                                                                            </property>
-                                                                            <property name="text">
-                                                                                <string>Artist</string>
-                                                                            </property>
-                                                                            <property name="textInteractionFlags">
-                                                                                <set>Qt::NoTextInteraction</set>
-                                                                            </property>
-                                                                        </widget>
-                                                                    </item>
-                                                                    <item>
-                                                                        <layout class="QHBoxLayout"
-                                                                                name="selectedAlbumTextDetailsMinor">
-                                                                            <item>
-                                                                                <widget class="QLabel"
-                                                                                        name="selectedAlbumTrackCountIcon">
-                                                                                    <property name="sizePolicy">
-                                                                                        <sizepolicy hsizetype="Fixed"
-                                                                                                    vsizetype="Preferred">
-                                                                                            <horstretch>0</horstretch>
-                                                                                            <verstretch>0</verstretch>
-                                                                                        </sizepolicy>
-                                                                                    </property>
-                                                                                    <property name="minimumSize">
-                                                                                        <size>
-                                                                                            <width>24</width>
-                                                                                            <height>0</height>
-                                                                                        </size>
-                                                                                    </property>
-                                                                                    <property name="maximumSize">
-                                                                                        <size>
-                                                                                            <width>24</width>
-                                                                                            <height>24</height>
-                                                                                        </size>
-                                                                                    </property>
-                                                                                    <property name="toolTip">
-                                                                                        <string>The total number of
+                  </property>
+                  <property name="text">
+                   <string>Next</string>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTreeView" name="albumTreeList">
+               <property name="minimumSize">
+                <size>
+                 <width>500</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="editTriggers">
+                <set>QAbstractItemView::NoEditTriggers</set>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+               <attribute name="headerDefaultSectionSize">
+                <number>17</number>
+               </attribute>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="verticalLayoutWidget_2">
+            <layout class="QVBoxLayout" name="selectAlbumDetailsAndListLayout">
+             <property name="sizeConstraint">
+              <enum>QLayout::SetDefaultConstraint</enum>
+             </property>
+             <item>
+              <layout class="QHBoxLayout" name="selectedAlbumDetails">
+               <item>
+                <widget class="QLabel" name="selectedAlbumArt">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>128</width>
+                   <height>128</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>128</width>
+                   <height>128</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Album Art</string>
+                 </property>
+                 <property name="textInteractionFlags">
+                  <set>Qt::NoTextInteraction</set>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="selectedAlbumTextDetails">
+                 <item>
+                  <widget class="QLabel" name="selectedAlbumTitle">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>64</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>600</width>
+                     <height>128</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>20</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Title</string>
+                   </property>
+                   <property name="textInteractionFlags">
+                    <set>Qt::NoTextInteraction</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="selectedAlbumArtist">
+                   <property name="maximumSize">
+                    <size>
+                     <width>600</width>
+                     <height>48</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>14</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Artist</string>
+                   </property>
+                   <property name="textInteractionFlags">
+                    <set>Qt::NoTextInteraction</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="selectedAlbumTextDetailsMinor">
+                   <item>
+                    <widget class="QLabel" name="selectedAlbumTrackCountIcon">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>24</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>24</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>The total number of
                                                                                             songs in this album.
                                                                                         </string>
-                                                                                    </property>
-                                                                                    <property name="text">
-                                                                                        <string>CounIcon</string>
-                                                                                    </property>
-                                                                                </widget>
-                                                                            </item>
-                                                                            <item>
-                                                                                <widget class="QLabel"
-                                                                                        name="selectedAlbumTrackCount">
-                                                                                    <property name="sizePolicy">
-                                                                                        <sizepolicy
-                                                                                                hsizetype="Preferred"
-                                                                                                vsizetype="Minimum">
-                                                                                            <horstretch>0</horstretch>
-                                                                                            <verstretch>0</verstretch>
-                                                                                        </sizepolicy>
-                                                                                    </property>
-                                                                                    <property name="maximumSize">
-                                                                                        <size>
-                                                                                            <width>16777215</width>
-                                                                                            <height>24</height>
-                                                                                        </size>
-                                                                                    </property>
-                                                                                    <property name="toolTip">
-                                                                                        <string>The total number of
+                     </property>
+                     <property name="text">
+                      <string>CounIcon</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="selectedAlbumTrackCount">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>The total number of
                                                                                             songs in this album.
                                                                                         </string>
-                                                                                    </property>
-                                                                                    <property name="text">
-                                                                                        <string>Count</string>
-                                                                                    </property>
-                                                                                </widget>
-                                                                            </item>
-                                                                            <item>
-                                                                                <widget class="QLabel"
-                                                                                        name="selectedAlbumTotalLengthIcon">
-                                                                                    <property name="maximumSize">
-                                                                                        <size>
-                                                                                            <width>24</width>
-                                                                                            <height>24</height>
-                                                                                        </size>
-                                                                                    </property>
-                                                                                    <property name="toolTip">
-                                                                                        <string>The total length of this
+                     </property>
+                     <property name="text">
+                      <string>Count</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="selectedAlbumTotalLengthIcon">
+                     <property name="maximumSize">
+                      <size>
+                       <width>24</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>The total length of this
                                                                                             album.
                                                                                         </string>
-                                                                                    </property>
-                                                                                    <property name="text">
-                                                                                        <string>LengthIcon</string>
-                                                                                    </property>
-                                                                                </widget>
-                                                                            </item>
-                                                                            <item>
-                                                                                <widget class="QLabel"
-                                                                                        name="selectedAlbumTotalLength">
-                                                                                    <property name="maximumSize">
-                                                                                        <size>
-                                                                                            <width>16777215</width>
-                                                                                            <height>24</height>
-                                                                                        </size>
-                                                                                    </property>
-                                                                                    <property name="toolTip">
-                                                                                        <string>The total length of this
+                     </property>
+                     <property name="text">
+                      <string>LengthIcon</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="selectedAlbumTotalLength">
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>The total length of this
                                                                                             album.
                                                                                         </string>
-                                                                                    </property>
-                                                                                    <property name="text">
-                                                                                        <string>Length</string>
-                                                                                    </property>
-                                                                                </widget>
-                                                                            </item>
-                                                                            <item>
-                                                                                <widget class="QLabel"
-                                                                                        name="selectedAlbumReleaseYearIcon">
-                                                                                    <property name="maximumSize">
-                                                                                        <size>
-                                                                                            <width>24</width>
-                                                                                            <height>24</height>
-                                                                                        </size>
-                                                                                    </property>
-                                                                                    <property name="toolTip">
-                                                                                        <string>The year this album was
+                     </property>
+                     <property name="text">
+                      <string>Length</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="selectedAlbumReleaseYearIcon">
+                     <property name="maximumSize">
+                      <size>
+                       <width>24</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>The year this album was
                                                                                             released.
                                                                                         </string>
-                                                                                    </property>
-                                                                                    <property name="text">
-                                                                                        <string>YearIcon</string>
-                                                                                    </property>
-                                                                                </widget>
-                                                                            </item>
-                                                                            <item>
-                                                                                <widget class="QLabel"
-                                                                                        name="selectedAlbumReleaseYear">
-                                                                                    <property name="maximumSize">
-                                                                                        <size>
-                                                                                            <width>16777215</width>
-                                                                                            <height>24</height>
-                                                                                        </size>
-                                                                                    </property>
-                                                                                    <property name="toolTip">
-                                                                                        <string>The year this album was
+                     </property>
+                     <property name="text">
+                      <string>YearIcon</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="selectedAlbumReleaseYear">
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>The year this album was
                                                                                             released.
                                                                                         </string>
-                                                                                    </property>
-                                                                                    <property name="text">
-                                                                                        <string>Year</string>
-                                                                                    </property>
-                                                                                </widget>
-                                                                            </item>
-                                                                        </layout>
-                                                                    </item>
-                                                                </layout>
-                                                            </item>
-                                                        </layout>
-                                                    </item>
-                                                    <item>
-                                                        <widget class="QTreeView" name="albumTrackList">
-                                                            <property name="sizePolicy">
-                                                                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                                                                    <horstretch>0</horstretch>
-                                                                    <verstretch>0</verstretch>
-                                                                </sizepolicy>
-                                                            </property>
-                                                            <property name="minimumSize">
-                                                                <size>
-                                                                    <width>500</width>
-                                                                    <height>0</height>
-                                                                </size>
-                                                            </property>
-                                                            <property name="editTriggers">
-                                                                <set>QAbstractItemView::NoEditTriggers</set>
-                                                            </property>
-                                                            <property name="selectionMode">
-                                                                <enum>QAbstractItemView::ExtendedSelection</enum>
-                                                            </property>
-                                                        </widget>
-                                                    </item>
-                                                </layout>
-                                            </widget>
-                                        </widget>
-                                        <widget class="QWidget" name="horizontalLayoutWidget">
-                                            <layout class="QHBoxLayout" name="playQueueListLayout">
-                                                <item>
-                                                    <widget class="PlayQueueView" name="playQueueList">
-                                                        <property name="sizePolicy">
-                                                            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                                                                <horstretch>0</horstretch>
-                                                                <verstretch>0</verstretch>
-                                                            </sizepolicy>
-                                                        </property>
-                                                        <property name="editTriggers">
-                                                            <set>QAbstractItemView::NoEditTriggers</set>
-                                                        </property>
-                                                        <property name="selectionMode">
-                                                            <enum>QAbstractItemView::ExtendedSelection</enum>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                                <item>
-                                                    <layout class="QVBoxLayout" name="playQueueToolboxLayout">
-                                                        <item>
-                                                            <widget class="QToolButton"
-                                                                    name="toggleFollowPlayedTrackButton">
-                                                                <property name="toolTip">
-                                                                    <string>Toggle whether the play queue selects the
+                     </property>
+                     <property name="text">
+                      <string>Year</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QTreeView" name="albumTrackList">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>500</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="editTriggers">
+                <set>QAbstractItemView::NoEditTriggers</set>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="horizontalLayoutWidget">
+           <layout class="QHBoxLayout" name="playQueueListLayout">
+            <item>
+             <widget class="PlayQueueView" name="playQueueList">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="editTriggers">
+               <set>QAbstractItemView::NoEditTriggers</set>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::ExtendedSelection</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="playQueueToolboxLayout">
+              <item>
+               <widget class="QToolButton" name="toggleFollowPlayedTrackButton">
+                <property name="toolTip">
+                 <string>Toggle whether the play queue selects the
                                                                         currently playing song.
                                                                     </string>
-                                                                </property>
-                                                                <property name="text">
-                                                                    <string>...</string>
-                                                                </property>
-                                                                <property name="checkable">
-                                                                    <bool>true</bool>
-                                                                </property>
-                                                            </widget>
-                                                        </item>
-                                                        <item>
-                                                            <widget class="QToolButton" name="repeatPlayQueueButton">
-                                                                <property name="text">
-                                                                    <string>...</string>
-                                                                </property>
-                                                                <property name="checkable">
-                                                                    <bool>true</bool>
-                                                                </property>
-                                                            </widget>
-                                                        </item>
-                                                        <item>
-                                                            <widget class="QToolButton" name="shufflePlayqueueButton">
-                                                                <property name="toolTip">
-                                                                    <string>Shuffles the play queue.</string>
-                                                                </property>
-                                                                <property name="text">
-                                                                    <string>...</string>
-                                                                </property>
-                                                            </widget>
-                                                        </item>
-                                                        <item>
-                                                            <widget class="QLabel" name="volumeSliderLabel">
-                                                                <property name="text">
-                                                                    <string>Volume</string>
-                                                                </property>
-                                                                <property name="textInteractionFlags">
-                                                                    <set>Qt::NoTextInteraction</set>
-                                                                </property>
-                                                            </widget>
-                                                        </item>
-                                                        <item>
-                                                            <widget class="QSlider" name="volumeSlider">
-                                                                <property name="orientation">
-                                                                    <enum>Qt::Vertical</enum>
-                                                                </property>
-                                                            </widget>
-                                                        </item>
-                                                    </layout>
-                                                </item>
-                                            </layout>
-                                        </widget>
-                                    </widget>
-                                </item>
-                                <item row="1" column="0">
-                                    <layout class="QHBoxLayout" name="nowPlayingLayout">
-                                        <property name="spacing">
-                                            <number>0</number>
-                                        </property>
-                                        <item>
-                                            <widget class="QLabel" name="playingAlbumArt">
-                                                <property name="sizePolicy">
-                                                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                                                        <horstretch>0</horstretch>
-                                                        <verstretch>0</verstretch>
-                                                    </sizepolicy>
-                                                </property>
-                                                <property name="minimumSize">
-                                                    <size>
-                                                        <width>60</width>
-                                                        <height>60</height>
-                                                    </size>
-                                                </property>
-                                                <property name="maximumSize">
-                                                    <size>
-                                                        <width>60</width>
-                                                        <height>60</height>
-                                                    </size>
-                                                </property>
-                                                <property name="text">
-                                                    <string>playingAlbumArt</string>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <layout class="QVBoxLayout" name="verticalLayout">
-                                                <item>
-                                                    <widget class="QLabel" name="currentPlayingLabel">
-                                                        <property name="maximumSize">
-                                                            <size>
-                                                                <width>300</width>
-                                                                <height>16777215</height>
-                                                            </size>
-                                                        </property>
-                                                        <property name="font">
-                                                            <font>
-                                                                <pointsize>12</pointsize>
-                                                            </font>
-                                                        </property>
-                                                        <property name="text">
-                                                            <string>Not Playing</string>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                                <item>
-                                                    <widget class="QLabel" name="trackArtistName">
-                                                        <property name="maximumSize">
-                                                            <size>
-                                                                <width>300</width>
-                                                                <height>16777215</height>
-                                                            </size>
-                                                        </property>
-                                                        <property name="text">
-                                                            <string>No Artist</string>
-                                                        </property>
-                                                    </widget>
-                                                </item>
-                                            </layout>
-                                        </item>
-                                        <item>
-                                            <widget class="QSlider" name="trackProgressBar">
-                                                <property name="tracking">
-                                                    <bool>false</bool>
-                                                </property>
-                                                <property name="orientation">
-                                                    <enum>Qt::Horizontal</enum>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QLabel" name="trackProgressIndicator">
-                                                <property name="text">
-                                                    <string>00:00/00:00</string>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QToolButton" name="prevTrack">
-                                                <property name="minimumSize">
-                                                    <size>
-                                                        <width>30</width>
-                                                        <height>30</height>
-                                                    </size>
-                                                </property>
-                                                <property name="styleSheet">
-                                                    <string notr="true">margin:0;
-                                                        padding:0;
-                                                    </string>
-                                                </property>
-                                                <property name="text">
-                                                    <string>...</string>
-                                                </property>
-                                                <property name="icon">
-                                                    <iconset>
-                                                        <normaloff>.</normaloff>.
-                                                    </iconset>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QToolButton" name="playPause">
-                                                <property name="minimumSize">
-                                                    <size>
-                                                        <width>30</width>
-                                                        <height>30</height>
-                                                    </size>
-                                                </property>
-                                                <property name="autoFillBackground">
-                                                    <bool>false</bool>
-                                                </property>
-                                                <property name="styleSheet">
-                                                    <string notr="true">margin:0;padding:0</string>
-                                                </property>
-                                                <property name="text">
-                                                    <string>...</string>
-                                                </property>
-                                                <property name="icon">
-                                                    <iconset>
-                                                        <normaloff>.</normaloff>.
-                                                    </iconset>
-                                                </property>
-                                                <property name="arrowType">
-                                                    <enum>Qt::NoArrow</enum>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QToolButton" name="nextTrack">
-                                                <property name="minimumSize">
-                                                    <size>
-                                                        <width>30</width>
-                                                        <height>30</height>
-                                                    </size>
-                                                </property>
-                                                <property name="styleSheet">
-                                                    <string notr="true">margin:0;
-                                                        padding:0;
-                                                    </string>
-                                                </property>
-                                                <property name="text">
-                                                    <string>...</string>
-                                                </property>
-                                                <property name="icon">
-                                                    <iconset>
-                                                        <normaloff>.</normaloff>.
-                                                    </iconset>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QToolButton" name="stop">
-                                                <property name="minimumSize">
-                                                    <size>
-                                                        <width>30</width>
-                                                        <height>30</height>
-                                                    </size>
-                                                </property>
-                                                <property name="styleSheet">
-                                                    <string notr="true">margin:0;
-                                                        padding:0;
-                                                    </string>
-                                                </property>
-                                                <property name="text">
-                                                    <string>...</string>
-                                                </property>
-                                                <property name="icon">
-                                                    <iconset>
-                                                        <normaloff>.</normaloff>.
-                                                    </iconset>
-                                                </property>
-                                                <property name="toolButtonStyle">
-                                                    <enum>Qt::ToolButtonIconOnly</enum>
-                                                </property>
-                                                <property name="arrowType">
-                                                    <enum>Qt::NoArrow</enum>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                    </layout>
-                                </item>
-                            </layout>
-                        </widget>
-                    </widget>
-                </item>
-            </layout>
-        </widget>
-        <widget class="QMenuBar" name="menubar">
-            <property name="geometry">
-                <rect>
-                    <x>0</x>
-                    <y>0</y>
-                    <width>1500</width>
-                    <height>17</height>
-                </rect>
-            </property>
-            <widget class="QMenu" name="menuFile">
-                <property name="title">
-                    <string>File</string>
                 </property>
-                <addaction name="actionConnect"/>
-                <addaction name="actionExit"/>
-            </widget>
-            <addaction name="menuFile"/>
-        </widget>
-        <widget class="QStatusBar" name="statusbar"/>
-        <action name="actionConnect">
-            <property name="text">
-                <string>Disconnect</string>
+                <property name="text">
+                 <string>...</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="repeatPlayQueueButton">
+                <property name="text">
+                 <string>...</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="shufflePlayqueueButton">
+                <property name="toolTip">
+                 <string>Shuffles the play queue.</string>
+                </property>
+                <property name="text">
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="volumeSliderLabel">
+                <property name="text">
+                 <string>Volume</string>
+                </property>
+                <property name="textInteractionFlags">
+                 <set>Qt::NoTextInteraction</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSlider" name="volumeSlider">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="nowPlayingLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="playingAlbumArt">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
-        </action>
-        <action name="actionExit">
-            <property name="text">
-                <string>Exit</string>
+            <property name="minimumSize">
+             <size>
+              <width>60</width>
+              <height>60</height>
+             </size>
             </property>
-        </action>
-    </widget>
-    <customwidgets>
-        <customwidget>
-            <class>PlayQueueView</class>
-            <extends>QTreeView</extends>
-            <header>playqueueview.h</header>
-        </customwidget>
-    </customwidgets>
-    <tabstops>
-        <tabstop>domainInput</tabstop>
-        <tabstop>usernameInput</tabstop>
-        <tabstop>passwordInput</tabstop>
-        <tabstop>connectButton</tabstop>
-        <tabstop>search</tabstop>
-        <tabstop>backHomeButton</tabstop>
-        <tabstop>albumListViewPreviousPage</tabstop>
-        <tabstop>albumListViewRefresh</tabstop>
-        <tabstop>albumListViewNextPage</tabstop>
-        <tabstop>albumTreeList</tabstop>
-        <tabstop>albumTrackList</tabstop>
-        <tabstop>playQueueList</tabstop>
-        <tabstop>toggleFollowPlayedTrackButton</tabstop>
-        <tabstop>repeatPlayQueueButton</tabstop>
-        <tabstop>shufflePlayqueueButton</tabstop>
-        <tabstop>volumeSlider</tabstop>
-        <tabstop>trackProgressBar</tabstop>
-        <tabstop>prevTrack</tabstop>
-        <tabstop>playPause</tabstop>
-        <tabstop>nextTrack</tabstop>
-        <tabstop>stop</tabstop>
-    </tabstops>
-    <resources/>
-    <connections/>
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>60</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>playingAlbumArt</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <widget class="QLabel" name="currentPlayingLabel">
+              <property name="maximumSize">
+               <size>
+                <width>300</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Not Playing</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="trackArtistName">
+              <property name="maximumSize">
+               <size>
+                <width>300</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>No Artist</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QSlider" name="trackProgressBar">
+            <property name="tracking">
+             <bool>false</bool>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="trackProgressIndicator">
+            <property name="text">
+             <string>00:00/00:00</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="prevTrack">
+            <property name="minimumSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">margin:0;
+                                                        padding:0;
+                                                    </string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>.</normaloff>.</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="playPause">
+            <property name="minimumSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="autoFillBackground">
+             <bool>false</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">margin:0;padding:0</string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>.</normaloff>.</iconset>
+            </property>
+            <property name="arrowType">
+             <enum>Qt::NoArrow</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="nextTrack">
+            <property name="minimumSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">margin:0;
+                                                        padding:0;
+                                                    </string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>.</normaloff>.</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="stop">
+            <property name="minimumSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">margin:0;
+                                                        padding:0;
+                                                    </string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>.</normaloff>.</iconset>
+            </property>
+            <property name="toolButtonStyle">
+             <enum>Qt::ToolButtonIconOnly</enum>
+            </property>
+            <property name="arrowType">
+             <enum>Qt::NoArrow</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1500</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionConnect"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionConnect">
+   <property name="text">
+    <string>Disconnect</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlayQueueView</class>
+   <extends>QTreeView</extends>
+   <header>vapoursonic/playqueueview.h</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>domainInput</tabstop>
+  <tabstop>usernameInput</tabstop>
+  <tabstop>passwordInput</tabstop>
+  <tabstop>connectButton</tabstop>
+  <tabstop>search</tabstop>
+  <tabstop>backHomeButton</tabstop>
+  <tabstop>albumListViewPreviousPage</tabstop>
+  <tabstop>albumListViewRefresh</tabstop>
+  <tabstop>albumListViewNextPage</tabstop>
+  <tabstop>albumTreeList</tabstop>
+  <tabstop>albumTrackList</tabstop>
+  <tabstop>playQueueList</tabstop>
+  <tabstop>toggleFollowPlayedTrackButton</tabstop>
+  <tabstop>repeatPlayQueueButton</tabstop>
+  <tabstop>shufflePlayqueueButton</tabstop>
+  <tabstop>volumeSlider</tabstop>
+  <tabstop>trackProgressBar</tabstop>
+  <tabstop>prevTrack</tabstop>
+  <tabstop>playPause</tabstop>
+  <tabstop>nextTrack</tabstop>
+  <tabstop>stop</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
 </ui>

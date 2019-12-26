@@ -9,7 +9,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
-from .albumArtViewer import albumArtViewer
+from vapoursonic.albumArtViewer import albumArtViewer
 
 try:
 	# noinspection PyUnresolvedReferences
@@ -17,12 +17,12 @@ try:
 except ImportError:
 	print('unable to import Qt Windows Extras')
 	pass
-from .config import config
-from .albumArtLoader import albumArtLoader
-from .networkWorker import networkWorker
-from .playbackController import playbackController
-from .ui_mainwindow import Ui_vapoursonic
-from . import vapoursonicActions
+from vapoursonic.config import config
+from vapoursonic.albumArtLoader import albumArtLoader
+from vapoursonic.networkWorker import networkWorker
+from vapoursonic.playbackController import playbackController
+from vapoursonic.ui_mainwindow import Ui_vapoursonic
+from vapoursonic import vapoursonicActions
 
 
 class MainWindowSignals(QObject):
@@ -312,7 +312,7 @@ class MainWindow(QMainWindow):
 	def initializeWindowsIntegration(self):
 		if sys.platform == 'win32':
 			# try:
-			from . import windowsIntegration
+			from vapoursonic import windowsIntegration
 			# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
 			# 	print('not windows, unable to bind media keys')
 			# 	return

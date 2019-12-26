@@ -1,6 +1,6 @@
 {
   "app_name": "vapoursonic",
   "author": "ripdog",
-  "main_module": "src/main/python/main.py",
+  "main_module": "src/main/python/vapoursonic/main.py",
   "version": "0.5.0"
 }

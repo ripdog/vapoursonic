@@ -3,7 +3,7 @@ from urllib.error import URLError
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from libsonic import Connection
 
-from config import config
+from vapoursonic.config import config
 
 
 class networkWorker(QObject):

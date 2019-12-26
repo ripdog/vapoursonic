@@ -16,7 +16,7 @@ except FileNotFoundError:
 	print('unable to find mpv dll. Only a problem on windows.')
 
 import mpv
-from config import config
+from vapoursonic.config import config
 
 
 def my_log(loglevel, component, message):
