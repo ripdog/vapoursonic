@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'resources\base\mainwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.0
+# Created by: PyQt5 UI code generator 5.13.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -254,6 +254,10 @@ class Ui_vapoursonic(object):
         self.shufflePlayqueueButton = QtWidgets.QToolButton(self.horizontalLayoutWidget)
         self.shufflePlayqueueButton.setObjectName("shufflePlayqueueButton")
         self.playQueueToolboxLayout.addWidget(self.shufflePlayqueueButton)
+        self.clearPlaylistButton = QtWidgets.QToolButton(self.horizontalLayoutWidget)
+        self.clearPlaylistButton.setStatusTip("")
+        self.clearPlaylistButton.setObjectName("clearPlaylistButton")
+        self.playQueueToolboxLayout.addWidget(self.clearPlaylistButton)
         self.volumeSliderLabel = QtWidgets.QLabel(self.horizontalLayoutWidget)
         self.volumeSliderLabel.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.volumeSliderLabel.setObjectName("volumeSliderLabel")
@@ -265,7 +269,7 @@ class Ui_vapoursonic(object):
         self.playQueueListLayout.addLayout(self.playQueueToolboxLayout)
         self.gridLayout_3.addWidget(self.splitter_2, 0, 0, 1, 1)
         self.nowPlayingLayout = QtWidgets.QHBoxLayout()
-        self.nowPlayingLayout.setSpacing(0)
+        self.nowPlayingLayout.setSpacing(1)
         self.nowPlayingLayout.setObjectName("nowPlayingLayout")
         self.playingAlbumArt = QtWidgets.QLabel(self.mainPage)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -325,16 +329,6 @@ class Ui_vapoursonic(object):
         self.nextTrack.setIcon(icon)
         self.nextTrack.setObjectName("nextTrack")
         self.nowPlayingLayout.addWidget(self.nextTrack)
-        self.stop = QtWidgets.QToolButton(self.mainPage)
-        self.stop.setMinimumSize(QtCore.QSize(30, 30))
-        self.stop.setStyleSheet("margin:0;\n"
-"                                                        padding:0;\n"
-"                                                    ")
-        self.stop.setIcon(icon)
-        self.stop.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.stop.setArrowType(QtCore.Qt.NoArrow)
-        self.stop.setObjectName("stop")
-        self.nowPlayingLayout.addWidget(self.stop)
         self.gridLayout_3.addLayout(self.nowPlayingLayout, 1, 0, 1, 1)
         self.stackedWidget.addWidget(self.mainPage)
         self.gridLayout.addWidget(self.stackedWidget, 0, 0, 1, 1)
@@ -378,7 +372,6 @@ class Ui_vapoursonic(object):
         vapoursonic.setTabOrder(self.trackProgressBar, self.prevTrack)
         vapoursonic.setTabOrder(self.prevTrack, self.playPause)
         vapoursonic.setTabOrder(self.playPause, self.nextTrack)
-        vapoursonic.setTabOrder(self.nextTrack, self.stop)
 
     def retranslateUi(self, vapoursonic):
         _translate = QtCore.QCoreApplication.translate
@@ -427,13 +420,14 @@ class Ui_vapoursonic(object):
 "                                                                                            released.\n"
 "                                                                                        "))
         self.selectedAlbumReleaseYear.setText(_translate("vapoursonic", "Year"))
-        self.toggleFollowPlayedTrackButton.setToolTip(_translate("vapoursonic", "Toggle whether the play queue selects the\n"
-"                                                                        currently playing song.\n"
-"                                                                    "))
+        self.toggleFollowPlayedTrackButton.setToolTip(_translate("vapoursonic", "<html><head/><body><p>Toggle whether the play queue selects the currently playing song.</p></body></html>"))
         self.toggleFollowPlayedTrackButton.setText(_translate("vapoursonic", "..."))
+        self.repeatPlayQueueButton.setToolTip(_translate("vapoursonic", "Toggle whether to loop the entire play queue, loop a single song, or cease playing at the end of the queue."))
         self.repeatPlayQueueButton.setText(_translate("vapoursonic", "..."))
         self.shufflePlayqueueButton.setToolTip(_translate("vapoursonic", "Shuffles the play queue."))
         self.shufflePlayqueueButton.setText(_translate("vapoursonic", "..."))
+        self.clearPlaylistButton.setToolTip(_translate("vapoursonic", "Clear the play queue."))
+        self.clearPlaylistButton.setText(_translate("vapoursonic", "..."))
         self.volumeSliderLabel.setText(_translate("vapoursonic", "Volume"))
         self.playingAlbumArt.setText(_translate("vapoursonic", "playingAlbumArt"))
         self.currentPlayingLabel.setText(_translate("vapoursonic", "Not Playing"))
@@ -442,7 +436,6 @@ class Ui_vapoursonic(object):
         self.prevTrack.setText(_translate("vapoursonic", "..."))
         self.playPause.setText(_translate("vapoursonic", "..."))
         self.nextTrack.setText(_translate("vapoursonic", "..."))
-        self.stop.setText(_translate("vapoursonic", "..."))
         self.menuFile.setTitle(_translate("vapoursonic", "File"))
         self.actionConnect.setText(_translate("vapoursonic", "Disconnect"))
         self.actionExit.setText(_translate("vapoursonic", "Exit"))

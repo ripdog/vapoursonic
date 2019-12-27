@@ -46,7 +46,7 @@ class configManager():
 					 'baseline-playlist-add.svg',
 					 'baseline-subdirectory-arrow-right.svg',
 					 'baseline-remove-circle-outline.svg',
-
+					 'baseline-delete-outline.svg',
 					 ]:
 			self.icons[item] = self.loadIcon(item)
 		try:
@@ -84,7 +84,8 @@ class configManager():
 			saveme[item] = getattr(self, item)
 
 		index = playbackController.playQueueModel.indexFromItem(playbackController.currentSong).row()
-		queue = [playbackController.playQueueModel.item(i, 0).data() for i in range(0, playbackController.playQueueModel.rowCount())]
+		queue = [playbackController.playQueueModel.item(i, 0).data() for i in
+				 range(0, playbackController.playQueueModel.rowCount())]
 		saveme['playQueueState'] = {
 			'currentIndex': index,
 			'queueServer': self.username + '@' + self.domain,

@@ -599,9 +599,7 @@
               <item>
                <widget class="QToolButton" name="toggleFollowPlayedTrackButton">
                 <property name="toolTip">
-                 <string>Toggle whether the play queue selects the
-                                                                        currently playing song.
-                                                                    </string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Toggle whether the play queue selects the currently playing song.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>...</string>
@@ -613,6 +611,9 @@
               </item>
               <item>
                <widget class="QToolButton" name="repeatPlayQueueButton">
+                <property name="toolTip">
+                 <string>Toggle whether to loop the entire play queue, loop a single song, or cease playing at the end of the queue.</string>
+                </property>
                 <property name="text">
                  <string>...</string>
                 </property>
@@ -625,6 +626,19 @@
                <widget class="QToolButton" name="shufflePlayqueueButton">
                 <property name="toolTip">
                  <string>Shuffles the play queue.</string>
+                </property>
+                <property name="text">
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="clearPlaylistButton">
+                <property name="toolTip">
+                 <string>Clear the play queue.</string>
+                </property>
+                <property name="statusTip">
+                 <string/>
                 </property>
                 <property name="text">
                  <string>...</string>
@@ -657,7 +671,7 @@
         <item row="1" column="0">
          <layout class="QHBoxLayout" name="nowPlayingLayout">
           <property name="spacing">
-           <number>0</number>
+           <number>1</number>
           </property>
           <item>
            <widget class="QLabel" name="playingAlbumArt">
@@ -806,34 +820,6 @@
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QToolButton" name="stop">
-            <property name="minimumSize">
-             <size>
-              <width>30</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">margin:0;
-                                                        padding:0;
-                                                    </string>
-            </property>
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>.</normaloff>.</iconset>
-            </property>
-            <property name="toolButtonStyle">
-             <enum>Qt::ToolButtonIconOnly</enum>
-            </property>
-            <property name="arrowType">
-             <enum>Qt::NoArrow</enum>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
        </layout>
@@ -900,7 +886,6 @@
   <tabstop>prevTrack</tabstop>
   <tabstop>playPause</tabstop>
   <tabstop>nextTrack</tabstop>
-  <tabstop>stop</tabstop>
  </tabstops>
  <resources/>
  <connections/>

@@ -164,7 +164,6 @@ class MainWindow(QMainWindow):
 		self.ui.nextTrack.setIcon(config.icons['baseline-skip-next.svg'])
 		self.ui.prevTrack.setIcon(config.icons['baseline-skip-previous.svg'])
 		self.ui.playPause.setIcon(self.playIcon)
-		self.ui.stop.setIcon(config.icons['baseline-stop.svg'])
 		self.ui.search.setClearButtonEnabled(True)
 		countIconPixmap = config.icons['audio-spectrum.svg'].pixmap(QSize(24, 24))
 		lengthIconPixmap = config.icons['baseline-access-time.svg'].pixmap(QSize(24, 24))
@@ -185,6 +184,7 @@ class MainWindow(QMainWindow):
 		# followPlayedTrackIcon.addFile('icons' + os.path.sep + 'baseline-my-location.svg', mode=QIcon.Normal)
 		self.ui.toggleFollowPlayedTrackButton.setIcon(config.icons['baseline-my-location.svg'])
 		self.ui.volumeSliderLabel.setPixmap(config.icons['baseline-volume-up.svg'].pixmap(QSize(32, 32)))
+		self.ui.clearPlaylistButton.setIcon(config.icons['baseline-delete-outline.svg'])
 		self.setIconForRepeatButton()
 
 	def populateLeftPanel(self):
@@ -261,7 +261,6 @@ class MainWindow(QMainWindow):
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
 		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSongExplicitly)
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
-		self.ui.stop.clicked.connect(self.playbackController.stop)
 		self.ui.trackProgressBar.valueChanged.connect(self.playbackController.setTrackProgress)
 		self.ui.trackProgressBar.sliderPressed.connect(self.trackSliderPressed)
 		self.ui.trackProgressBar.sliderReleased.connect(self.trackSliderReleased)
@@ -273,6 +272,7 @@ class MainWindow(QMainWindow):
 		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
 		self.ui.volumeSlider.setValue(config.volume)
 		self.ui.repeatPlayQueueButton.clicked.connect(self.changeRepeatState)
+		self.ui.clearPlaylistButton.clicked.connect(self.playbackController.clearPlayQueue)
 		self.ui.playingAlbumArt.mouseReleaseEvent = self.displayFullAlbumArtForPlaying
 
 		self.short1 = QShortcut(Qt.Key_Delete, self.ui.playQueueList, context=Qt.WidgetShortcut,
