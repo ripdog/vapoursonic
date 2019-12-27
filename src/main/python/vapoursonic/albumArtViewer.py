@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QThreadPool
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtCore import QThreadPool, QPoint, QRect
+from PyQt5.QtGui import QImage, QPixmap, QGuiApplication
 from PyQt5.QtWidgets import QDialog, QGridLayout, QLabel
 
 from vapoursonic.albumArtLoader import albumArtLoader
@@ -26,3 +26,9 @@ class albumArtViewer(QDialog):
 		image.loadFromData(art)
 		self.setFixedSize(image.size())
 		self.albumArtLabel.setPixmap(QPixmap.fromImage(image))
+		#center the dialog
+		rec = QGuiApplication.screenAt(self.pos()).geometry()
+		size = image.size()
+		topLeft = QPoint((rec.width() / 2) - (size.width() / 2), (rec.height() / 2) - (size.height() / 2))
+		self.setGeometry(QRect(topLeft, size))
+

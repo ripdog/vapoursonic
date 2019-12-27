@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
@@ -768,15 +768,15 @@ class MainWindow(QMainWindow):
 		if artType == 'currentlyPlaying' and self.playbackController.currentSong:
 			dialog = albumArtViewer(self, self.playbackController.currentSong.data()['coverArt'],
 									self.networkWorker)
-			dialog.show()
-			dialog.raise_()
-			dialog.activateWindow()
 		elif artType == 'currentlyBrowsing' and self.currentAlbum:
 			dialog = albumArtViewer(self, self.currentAlbum['coverArt'],
 									self.networkWorker)
-			dialog.show()
-			dialog.raise_()
-			dialog.activateWindow()
+		else:
+			raise ValueError('Incorrect artType passed to displayFullAlbumArt')
+
+		dialog.show()
+		dialog.raise_()
+		dialog.activateWindow()
 
 
 def buildItemForSong(song, fields):

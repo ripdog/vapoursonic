@@ -75,15 +75,13 @@ class playbackController(QObject):
 			self.updateProgressBar()
 
 	def updatePlaybackProgressText(self):
-		try:
-			if self.currentSongData and self.player.time_pos:
-				current = str(timedelta(seconds=int(self.player.time_pos)))
-				total = str(timedelta(seconds=int(self.currentSongData['duration'])))
-				self.updatePlayerUI.emit(current + "/" + total, 'progressText')
-			else:
-				self.updatePlayerUI.emit('00:00/00:00', 'progressText')
-		except RuntimeError:
+		if self.currentSongData and self.player.time_pos:
+			current = str(timedelta(seconds=int(self.player.time_pos)))
+			total = str(timedelta(seconds=int(self.currentSongData['duration'])))
+			self.updatePlayerUI.emit(current + "/" + total, 'progressText')
+		else:
 			self.updatePlayerUI.emit('00:00/00:00', 'progressText')
+
 
 
 	def setCurrentSong(self, newsong):
