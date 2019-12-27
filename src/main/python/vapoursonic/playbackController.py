@@ -222,7 +222,7 @@ class playbackController(QObject):
 
 	@pyqtSlot(QModelIndex)
 	def playSongFromQueue(self, index):
-		index = index.sibling(index.row(), 0)
+		index = index.siblingAtColumn(0)
 		song = self.playQueueModel.itemFromIndex(index)
 		print('playing {} from queue click'.format(song.data()['title']))
 		self.setCurrentSong(song)

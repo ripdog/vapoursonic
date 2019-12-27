@@ -795,4 +795,4 @@ if __name__ == "__main__":
 	appcontext = ApplicationContext()
 	window = MainWindow(appcontext)
 	window.show()
-	appcontext.app.exec_()
+	sys.exit(appcontext.app.exec_())

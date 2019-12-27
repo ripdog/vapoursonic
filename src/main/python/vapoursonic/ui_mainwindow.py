@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file 'resources\base\mainwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.14.0
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_vapoursonic(object):
     def setupUi(self, vapoursonic):
@@ -303,7 +305,7 @@ class Ui_vapoursonic(object):
 "                                                        padding:0;\n"
 "                                                    ")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("."), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("resources\\base\\."), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.prevTrack.setIcon(icon)
         self.prevTrack.setObjectName("prevTrack")
         self.nowPlayingLayout.addWidget(self.prevTrack)
@@ -444,5 +446,4 @@ class Ui_vapoursonic(object):
         self.menuFile.setTitle(_translate("vapoursonic", "File"))
         self.actionConnect.setText(_translate("vapoursonic", "Disconnect"))
         self.actionExit.setText(_translate("vapoursonic", "Exit"))
-
 from vapoursonic.playqueueview import PlayQueueView
