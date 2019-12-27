@@ -684,7 +684,7 @@ class MainWindow(QMainWindow):
 
 		self.albumTrackListModel.clear()
 		self.albumTrackListModel.setHorizontalHeaderLabels(['Track No.', 'Title', 'Artist'])
-
+		self.currentAlbum = albumdeets
 		try:
 			self.beginDisplayAlbumArt(albumdeets['coverArt'], 'album')
 		except KeyError:
@@ -702,7 +702,7 @@ class MainWindow(QMainWindow):
 																['track',
 																 'title',
 																 'artist']))
-		self.currentAlbum = albumdeets
+
 
 	def refreshAlbumListView(self):
 		self.loadDataforAlbumListView(self.albumListState)
@@ -731,7 +731,7 @@ class MainWindow(QMainWindow):
 
 	def beginDisplayAlbumArt(self, artId, artType):
 		try:
-			self.displayAlbumArt(self.albumArtCache[artId], artType)
+			self.displayAlbumArt(artId, artType)
 		except KeyError:
 			self.startAlbumArtLoad(artId, artType)
 
