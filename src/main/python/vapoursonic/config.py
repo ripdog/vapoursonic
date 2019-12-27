@@ -66,6 +66,11 @@ class configManager():
 			'appname': 'vapoursonic',
 			'followPlaybackInQueue': True,
 			'repeatList': True,  # can also be "1"
+			'playQueueState': {'currentIndex': 0,
+							   'queueServer': None,  # format: username@domain
+							   'queue': []
+							   },
+
 		}
 		for item in self.fallbackConfig:
 			if item in userConfig:
@@ -73,12 +78,21 @@ class configManager():
 			else:
 				setattr(self, item, self.fallbackConfig[item])
 
-	def save(self):
+	def save(self, playbackController):
 		saveme = {}
 		for item in self.fallbackConfig.keys():
 			saveme[item] = getattr(self, item)
+
+		index = playbackController.playQueueModel.indexFromItem(playbackController.currentSong).row()
+		queue = [playbackController.playQueueModel.item(i, 0).data() for i in range(0, playbackController.playQueueModel.rowCount())]
+		saveme['playQueueState'] = {
+			'currentIndex': index,
+			'queueServer': self.username + '@' + self.domain,
+			'queue': queue
+		}
+		writeme = yaml.safe_dump(saveme)
 		with open(getPath(), 'w') as file:
-			file.write(yaml.safe_dump(saveme))
+			file.write(writeme)
 
 	def loadIcon(self, name):
 		return QIcon(self.appContext.get_resource('icons' + os.path.sep + name))

@@ -341,6 +341,13 @@ class MainWindow(QMainWindow):
 		config.salt = md5(os.urandom(100)).hexdigest()
 		config.token = md5((config.password + config.salt).encode('utf-8')).hexdigest()
 
+	def loadPlayQueue(self):
+		if config.playQueueState['queueServer'] and \
+			config.playQueueState['queueServer'] == config.username + "@" + config.domain:
+			queue = config.playQueueState['queue']
+			self.playbackController.addSongs(queue, queue[config.playQueueState['currentIndex']])
+			self.playbackController.playPause()
+
 	def populatePlayerUI(self):
 		self.initConnectionParams()
 
@@ -358,6 +365,10 @@ class MainWindow(QMainWindow):
 			self.initializeWindowsIntegration()
 
 		self.cachePlaylists()
+
+		self.loadPlayQueue()
+
+
 
 
 	def trackSliderPressed(self):
@@ -704,7 +715,7 @@ class MainWindow(QMainWindow):
 
 	def closeEvent(self, a0):
 		print('vapoursonic closing, saving config')
-		config.save()
+		config.save(self.playbackController)
 
 	def startAlbumArtLoad(self, aid, artType):
 		loader = albumArtLoader(aid, artType)
