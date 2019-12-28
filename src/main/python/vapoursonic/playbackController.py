@@ -48,7 +48,7 @@ class playbackController(QObject):
 		self.playQueueModel = playQueueModel(self)
 		self.songLoaderThreads = QThreadPool()
 
-		self.player = mpv.MPV(log_handler=my_log, loglevel='debug')
+		self.player = mpv.MPV(log_handler=my_log, loglevel='warn')
 		self.player['prefetch-playlist'] = True
 		self.player['gapless-audio'] = True
 		self.player['force-seekable'] = True

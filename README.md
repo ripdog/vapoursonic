@@ -43,7 +43,7 @@ vapoursonic uses [Poetry](https://python-poetry.org) to manage dependencies and 
 
 You must use Python 3.6.8.
 
-To set up a dev environment, install poetry, clone this repo, and run `poetry install` in it. Then you should be able to run `poetry shell` and then `fbs run` to run it. 
+To set up a dev environment, install poetry, clone this repo, use `poetry env use python3.6` to inform poetry about your python version, and run `poetry install` in the repo. Then you should be able to run `poetry shell` and then `fbs run` to run it. 
 
 To build, run `fbs freeze` then `fbs installer`. On windows you need [nsis](https://nsis.sourceforge.io/Download) installed to make an installer. 
 
