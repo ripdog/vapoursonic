@@ -10,6 +10,8 @@ from fbs_runtime.application_context.PyQt5 import ApplicationContext
 def getPath():
 	if sys.platform == 'win32':
 		path = os.path.expandvars(r'%APPDATA%\vapoursonic\config.yaml')
+	elif sys.platform == 'linux':
+		path = os.path.expanduser(r'~/.config/vapoursonic/config.yaml')
 	else:
 		print('unsupported OS!')
 		path = os.path.abspath('config.yaml')

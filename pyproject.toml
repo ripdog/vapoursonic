@@ -5,15 +5,15 @@ description = "A simple desktop player for Airsonic servers. Uses PyQt5 and mpv.
 authors = ["ripdog"]
 
 [tool.poetry.dependencies]
-python = "3.6.8"
+python = "^3.6"
 py-sonic = "^0.7.6"
 pyyaml = "^5.1"
 python-mpv = "^0.4.5"
 wheel = "^0.33.6"
-keyboard = "^0.13.4"
+keyboard = { version = "^0.13.4", markers = "sys_platform == 'linux'" }
 pywin32-ctypes = { version = "^0.2.0", markers = "sys_platform == 'win32'" }
 fbs = "^0.8.4"
-pythonnet = "^2.4.0"
+pythonnet = { version = "^2.4.0", markers = "sys_platform == 'win32'" }
 requests = "^2.22.0"
 PyQt5 = "5.13.2"
 
