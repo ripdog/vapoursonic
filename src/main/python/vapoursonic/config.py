@@ -70,7 +70,7 @@ class configManager():
 							   'queueServer': None,  # format: username@domain
 							   'queue': []
 							   },
-
+			'autoConnect': False
 		}
 		for item in self.fallbackConfig:
 			if item in userConfig:

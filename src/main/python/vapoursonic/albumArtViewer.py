@@ -16,6 +16,7 @@ class albumArtViewer(QDialog):
 		self.gridLayout = QGridLayout(self)
 		self.albumArtLabel = QLabel('Loading...')
 		self.gridLayout.addWidget(self.albumArtLabel)
+		#Download art
 		self.albumArtLoader = albumArtLoader(self.artId, 'full')
 		self.albumArtLoader.signals.albumArtLoaded.connect(self.displayAlbumArt)
 		self.albumArtLoader.signals.errorHandler.connect(parent.handleError)
@@ -24,7 +25,7 @@ class albumArtViewer(QDialog):
 	def displayAlbumArt(self, art, _albumId, _type):
 		image = QImage()
 		image.loadFromData(art)
-		self.setFixedSize(image.size())
+		self.setFixedSize(image.size())#FIXME: This is too small, make it bigger
 		self.albumArtLabel.setPixmap(QPixmap.fromImage(image))
 		#center the dialog
 		rec = QGuiApplication.screenAt(self.pos()).geometry()

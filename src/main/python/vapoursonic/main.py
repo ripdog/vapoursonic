@@ -4,7 +4,7 @@ from _md5 import md5
 from datetime import timedelta
 
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
-	Qt, QItemSelectionModel
+	Qt, QItemSelectionModel, QTimer
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
@@ -14,8 +14,9 @@ from vapoursonic.albumArtViewer import albumArtViewer
 try:
 	# noinspection PyUnresolvedReferences
 	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
-except ImportError:
+except ImportError as e:
 	print('unable to import Qt Windows Extras')
+	print(e)
 	pass
 from vapoursonic.config import config
 from vapoursonic.albumArtLoader import albumArtLoader
@@ -23,6 +24,7 @@ from vapoursonic.networkWorker import networkWorker
 from vapoursonic.playbackController import playbackController
 from vapoursonic.ui_mainwindow import Ui_vapoursonic
 from vapoursonic import vapoursonicActions
+from vapoursonic import settingsPanel
 
 
 class MainWindowSignals(QObject):
@@ -92,6 +94,8 @@ class MainWindow(QMainWindow):
 			self.ui.usernameInput.text(),
 			self.ui.passwordInput.text()
 		))
+		self.ui.actionSettings.triggered.connect(self.showSettings)
+		self.ui.autoConnectCheckBox.stateChanged.connect(settingsPanel.setAutoConnectState)
 		self.networkWorker.returnAlbums.connect(self.receiveAlbumList)
 		self.networkWorker.connectResult.connect(self.connectResult)
 		self.signals.loadAlbumsOfType.connect(self.networkWorker.getDataForAlbumTreeView)
@@ -108,7 +112,6 @@ class MainWindow(QMainWindow):
 		self.networkWorker.returnArtistAlbums.connect(self.receiveArtistAlbums)
 		self.networkWorker.returnArtists.connect(self.receiveArtists)
 		self.networkWorker.errorHandler.connect(self.handleError)
-
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
 		self.albumListState = 'home'
@@ -125,11 +128,17 @@ class MainWindow(QMainWindow):
 		}
 		self.currentPage = 0
 		self.albumArtCache = {}
+		if config.autoConnect:
+			self.ui.connectButton.click()
+			#it just werkz!
 
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.domain)
 		self.ui.usernameInput.setText(config.username)
 		self.ui.passwordInput.setText(config.password)
+		self.ui.autoConnectCheckBox.setChecked(config.autoConnect)
+
+
 
 	@pyqtSlot(bool)
 	def connectResult(self, success):
@@ -142,7 +151,7 @@ class MainWindow(QMainWindow):
 			self.ui.stackedWidget.setCurrentIndex(1)
 			self.populatePlayerUI()
 		else:
-			pass
+			self.handleError('Unable to connect to your server. Please check your domain and credentials and try again.')
 
 	# should slap an error somewhere lol
 
@@ -230,7 +239,7 @@ class MainWindow(QMainWindow):
 		}
 		self.playQueueActions = [vapoursonicActions.goToAlbumAction(self, self.ui.playQueueList),
 								 vapoursonicActions.removeFromQueue(self, self.ui.playQueueList),
-								 vapoursonicActions.addToPlaylistMenu(self, self.ui.albumTrackList)]
+								 vapoursonicActions.addToPlaylistMenu(self, self.ui.playQueueList)]
 
 	def populateRightPanel(self):
 		# populate right panel
@@ -287,6 +296,7 @@ class MainWindow(QMainWindow):
 		self.ui.playQueueList.setAlternatingRowColors(True)
 
 	def populateThumbnailToolbar(self):
+		print('initing QWinThumbnailToolBar')
 		self.thumbnailToolBar = QWinThumbnailToolBar(self)
 		self.thumbnailToolBar.setWindow(self.windowHandle())
 
@@ -310,27 +320,28 @@ class MainWindow(QMainWindow):
 		self.thumbnailToolBar.addButton(self.nextToolbarButton)
 
 	def initializeWindowsIntegration(self):
-		if sys.platform == 'win32':
-			# try:
-			from vapoursonic import windowsIntegration
-			# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
-			# 	print('not windows, unable to bind media keys')
-			# 	return
-			self.keyHookThreadPool = QThreadPool()
-			self.keyHookThreadPool.setMaxThreadCount(1)
-			self.keyHook = windowsIntegration.mediaKeysHooker(self)
-			self.keyHook.signals.playPauseSignal.connect(self.playbackController.playPause)
-			self.keyHook.signals.nextSongSignal.connect(self.playbackController.playNextSongExplicitly)
-			self.keyHook.signals.prevSongSignal.connect(self.playbackController.playPreviousSong)
-			self.keyHook.signals.errSignal.connect(self.handleError)
-			self.keyHookThreadPool.start(self.keyHook)
+		# try:
+		from vapoursonic import windowsIntegration
+		# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
+		# 	print('not windows, unable to bind media keys')
+		# 	return
+		self.keyHookThreadPool = QThreadPool()
+		self.keyHookThreadPool.setMaxThreadCount(1)
+		self.keyHook = windowsIntegration.mediaKeysHooker(self)
+		self.keyHook.signals.playPauseSignal.connect(self.playbackController.playPause)
+		self.keyHook.signals.nextSongSignal.connect(self.playbackController.playNextSongExplicitly)
+		self.keyHook.signals.prevSongSignal.connect(self.playbackController.playPreviousSong)
+		self.keyHook.signals.errSignal.connect(self.handleError)
+		self.keyHookThreadPool.start(self.keyHook)
 
-			if QWinTaskbarProgress:
-				self.taskbarButton = QWinTaskbarButton(self)
-				self.taskbarButton.setWindow(self.windowHandle())
-				self.taskbarProgress = self.taskbarButton.progress()
-			else:
-				self.taskbarProgress = None
+		if QWinTaskbarProgress:
+			print('initing QWinTaskbarProgress')
+			self.taskbarButton = QWinTaskbarButton(self)
+			self.taskbarButton.setWindow(self.windowHandle())
+			self.taskbarProgress = self.taskbarButton.progress()
+			self.populateThumbnailToolbar()
+		else:
+			self.taskbarProgress = None
 
 	# self.mediaTransportControls = windowsIntegration.systemMediaTransportControls()
 
@@ -359,10 +370,14 @@ class MainWindow(QMainWindow):
 
 		self.populatePlayQueue()
 
-		self.populateThumbnailToolbar()
+
 
 		if sys.platform == 'win32':
-			self.initializeWindowsIntegration()
+			timer = QTimer(self)
+			timer.timeout.connect(lambda: self.initializeWindowsIntegration())
+			timer.setSingleShot(True)
+			timer.start(0)
+
 
 		self.cachePlaylists()
 
@@ -778,6 +793,8 @@ class MainWindow(QMainWindow):
 		dialog.raise_()
 		dialog.activateWindow()
 
+	def showSettings(self):
+		dialog = settingsPanel.settingsDialog()
 
 def buildItemForSong(song, fields):
 	items = []
