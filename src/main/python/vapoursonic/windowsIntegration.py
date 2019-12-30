@@ -3,7 +3,6 @@ import ctypes.wintypes
 
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
 
-
 # import clr
 # sys.path.append(r'C:\Windows\System32')
 # Win = clr.AddReference("Windows")
@@ -12,6 +11,9 @@ from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
 
 
 # thanks to https://gist.github.com/mdavey/6d40a89dbc15aefcc8cd
+from PyQt5.QtWidgets import QStyle
+from PyQt5.QtWinExtras import QWinThumbnailToolBar, QWinThumbnailToolButton, QWinTaskbarButton
+
 
 class GlobalHotKeys(QObject):
 	"""
@@ -117,6 +119,50 @@ class mediaKeysHooker(QRunnable):
 	def prevSong(self):
 		print('received prev song keypress')
 		self.signals.prevSongSignal.emit()
+
+
+class taskbarProgressBar(QObject):
+	def __init__(self, parent):
+		super(taskbarProgressBar, self).__init__(parent=parent)
+		print('initing QWinTaskbarProgress')
+		self.taskbarButton = QWinTaskbarButton(self)
+		self.taskbarButton.setWindow(self.parent().windowHandle())
+		self.taskbarProgress = self.taskbarButton.progress()
+		self.taskbarProgress.setVisible(True)
+		self.populateThumbnailToolbar()
+
+	def updateProgressBar(self, value, total):
+		self.taskbarProgress.setMaximum(total)
+		self.taskbarProgress.setValue(value)
+
+	def updatePlayButtonIcon(self, paused):
+		if paused:
+			self.taskbarProgress.setPaused(True)
+			self.playToolbarButton.setIcon(self.parent().style().standardIcon(QStyle.SP_MediaPlay))
+		else:
+			self.taskbarProgress.setPaused(False)
+			self.playToolbarButton.setIcon(self.parent().style().standardIcon(QStyle.SP_MediaPause))
+
+	def populateThumbnailToolbar(self):
+		print('initing QWinThumbnailToolBar')
+		self.thumbnailToolBar = QWinThumbnailToolBar(self)
+		self.thumbnailToolBar.setWindow(self.parent().windowHandle())
+
+		self.playToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
+		self.playToolbarButton.setEnabled(True)
+		self.playToolbarButton.setIcon(self.parent().style().standardIcon(QStyle.SP_MediaPlay))
+
+		self.prevToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
+		self.prevToolbarButton.setEnabled(True)
+		self.prevToolbarButton.setIcon(self.parent().style().standardIcon(QStyle.SP_MediaSkipBackward))
+
+		self.nextToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
+		self.nextToolbarButton.setEnabled(True)
+		self.nextToolbarButton.setIcon(self.parent().style().standardIcon(QStyle.SP_MediaSkipForward))
+
+		self.thumbnailToolBar.addButton(self.prevToolbarButton)
+		self.thumbnailToolBar.addButton(self.playToolbarButton)
+		self.thumbnailToolBar.addButton(self.nextToolbarButton)
 
 # class systemMediaTransportControls(object):
 # 	def __init__(self):

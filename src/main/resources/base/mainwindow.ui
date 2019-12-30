@@ -27,7 +27,7 @@
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="connectionSetup">
        <layout class="QGridLayout" name="gridLayout_2">
@@ -749,7 +749,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QSlider" name="trackProgressBar">
+           <widget class="trackProgressSlider" name="trackProgressBar">
             <property name="tracking">
              <bool>false</bool>
             </property>
@@ -877,7 +877,12 @@
   <customwidget>
    <class>PlayQueueView</class>
    <extends>QTreeView</extends>
-   <header>vapoursonic/playqueueview.h</header>
+   <header>vapoursonic/widgets/playqueueview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>trackProgressSlider</class>
+   <extends>QSlider</extends>
+   <header>vapoursonic/widgets/trackProgressSlider.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

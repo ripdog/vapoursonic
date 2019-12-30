@@ -6,10 +6,10 @@ from datetime import timedelta
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel, QTimer
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication
-from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox, QLabel
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
-from vapoursonic.albumArtViewer import albumArtViewer
+from vapoursonic.windowsIntegration import taskbarProgressBar
 
 try:
 	# noinspection PyUnresolvedReferences
@@ -22,9 +22,10 @@ from vapoursonic.config import config
 from vapoursonic.albumArtLoader import albumArtLoader
 from vapoursonic.networkWorker import networkWorker
 from vapoursonic.playbackController import playbackController
-from vapoursonic.ui_mainwindow import Ui_vapoursonic
+from vapoursonic.widgets.ui_mainwindow import Ui_vapoursonic
 from vapoursonic import vapoursonicActions
-from vapoursonic import settingsPanel
+from vapoursonic.widgets import settingsPanel
+from vapoursonic.widgets.albumArtViewer import albumArtViewer
 
 
 class MainWindowSignals(QObject):
@@ -130,15 +131,13 @@ class MainWindow(QMainWindow):
 		self.albumArtCache = {}
 		if config.autoConnect:
 			self.ui.connectButton.click()
-			#it just werkz!
+	# it just werkz!
 
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.domain)
 		self.ui.usernameInput.setText(config.username)
 		self.ui.passwordInput.setText(config.password)
 		self.ui.autoConnectCheckBox.setChecked(config.autoConnect)
-
-
 
 	@pyqtSlot(bool)
 	def connectResult(self, success):
@@ -263,6 +262,7 @@ class MainWindow(QMainWindow):
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
 		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
+		self.playbackController.idleUpdate.connect(self.idleUpdate)
 		self.signals.playbackControl.connect(self.playbackController.playbackControl)
 
 		# connect play controls
@@ -270,10 +270,8 @@ class MainWindow(QMainWindow):
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
 		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSongExplicitly)
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
+		self.playbackController.trackProgressUpdate.connect(self.ui.trackProgressBar.progressUpdate)
 		self.ui.trackProgressBar.valueChanged.connect(self.playbackController.setTrackProgress)
-		self.ui.trackProgressBar.sliderPressed.connect(self.trackSliderPressed)
-		self.ui.trackProgressBar.sliderReleased.connect(self.trackSliderReleased)
-		self.sliderBeingDragged = False
 		self.ui.toggleFollowPlayedTrackButton.setChecked(config.followPlaybackInQueue)
 		self.followPlayedTrack = config.followPlaybackInQueue
 		self.ui.toggleFollowPlayedTrackButton.clicked.connect(self.updateFollowPlayedTrack)
@@ -295,36 +293,8 @@ class MainWindow(QMainWindow):
 		# configure the play queue itself
 		self.ui.playQueueList.setAlternatingRowColors(True)
 
-	def populateThumbnailToolbar(self):
-		print('initing QWinThumbnailToolBar')
-		self.thumbnailToolBar = QWinThumbnailToolBar(self)
-		self.thumbnailToolBar.setWindow(self.windowHandle())
-
-		self.playToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
-		self.playToolbarButton.setEnabled(True)
-		self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-		self.playToolbarButton.clicked.connect(self.playbackController.playPause)
-
-		self.prevToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
-		self.prevToolbarButton.setEnabled(True)
-		self.prevToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipBackward))
-		self.prevToolbarButton.clicked.connect(self.playbackController.playPreviousSong)
-
-		self.nextToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
-		self.nextToolbarButton.setEnabled(True)
-		self.nextToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipForward))
-		self.nextToolbarButton.clicked.connect(self.playbackController.playNextSongExplicitly)
-
-		self.thumbnailToolBar.addButton(self.prevToolbarButton)
-		self.thumbnailToolBar.addButton(self.playToolbarButton)
-		self.thumbnailToolBar.addButton(self.nextToolbarButton)
-
 	def initializeWindowsIntegration(self):
-		# try:
 		from vapoursonic import windowsIntegration
-		# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
-		# 	print('not windows, unable to bind media keys')
-		# 	return
 		self.keyHookThreadPool = QThreadPool()
 		self.keyHookThreadPool.setMaxThreadCount(1)
 		self.keyHook = windowsIntegration.mediaKeysHooker(self)
@@ -335,11 +305,13 @@ class MainWindow(QMainWindow):
 		self.keyHookThreadPool.start(self.keyHook)
 
 		if QWinTaskbarProgress:
-			print('initing QWinTaskbarProgress')
-			self.taskbarButton = QWinTaskbarButton(self)
-			self.taskbarButton.setWindow(self.windowHandle())
-			self.taskbarProgress = self.taskbarButton.progress()
-			self.populateThumbnailToolbar()
+			self.taskbarProgressBar = taskbarProgressBar(self)
+			self.taskbarProgressBar.playToolbarButton.clicked.connect(self.playbackController.playPause)
+			self.taskbarProgressBar.prevToolbarButton.clicked.connect(self.playbackController.playPreviousSong)
+			self.taskbarProgressBar.nextToolbarButton.clicked.connect(self.playbackController.playNextSongExplicitly)
+			self.playbackController.idleUpdate.connect(self.taskbarProgressBar.updatePlayButtonIcon)
+			self.playbackController.trackProgressUpdate.connect(self.taskbarProgressBar.updateProgressBar)
+
 		else:
 			self.taskbarProgress = None
 
@@ -354,7 +326,7 @@ class MainWindow(QMainWindow):
 
 	def loadPlayQueue(self):
 		if config.playQueueState['queueServer'] and \
-			config.playQueueState['queueServer'] == config.username + "@" + config.domain:
+				config.playQueueState['queueServer'] == config.username + "@" + config.domain:
 			queue = config.playQueueState['queue']
 			self.playbackController.addSongs(queue, queue[config.playQueueState['currentIndex']])
 			self.playbackController.playPause()
@@ -370,27 +342,15 @@ class MainWindow(QMainWindow):
 
 		self.populatePlayQueue()
 
-
-
 		if sys.platform == 'win32':
 			timer = QTimer(self)
 			timer.timeout.connect(lambda: self.initializeWindowsIntegration())
 			timer.setSingleShot(True)
 			timer.start(0)
 
-
 		self.cachePlaylists()
 
 		self.loadPlayQueue()
-
-
-
-
-	def trackSliderPressed(self):
-		self.sliderBeingDragged = True
-
-	def trackSliderReleased(self):
-		self.sliderBeingDragged = False
 
 	def nextPage(self):
 		self.currentPage += 1
@@ -415,15 +375,7 @@ class MainWindow(QMainWindow):
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, updateType):
-		if updateType == 'total':
-			self.ui.trackProgressBar.blockSignals(True)
-			self.ui.trackProgressBar.setRange(0, update)
-			try:
-				self.taskbarProgress.setMaximum(update)
-			except AttributeError:
-				pass
-			self.ui.trackProgressBar.blockSignals(False)
-		elif updateType == "progressText":
+		if updateType == "progressText":
 			self.ui.trackProgressIndicator.setText(update)
 		elif updateType == "newCurrentSong":
 			if update:
@@ -445,15 +397,6 @@ class MainWindow(QMainWindow):
 				self.ui.trackArtistName.setText('No Artist')
 				self.ui.trackArtistName.setToolTip('No Artist')
 				self.setWindowTitle('Not Playing - {}'.format(config.appname))
-		elif updateType == 'progress':
-			if not self.sliderBeingDragged:
-				self.ui.trackProgressBar.blockSignals(True)
-				self.ui.trackProgressBar.setValue(update)
-				self.ui.trackProgressBar.blockSignals(False)
-			try:
-				self.taskbarProgress.setValue(update)
-			except AttributeError:
-				pass
 		elif updateType == 'statusBar':
 			self.statusBar().showMessage(update)
 		elif updateType == 'scrollTo':
@@ -462,32 +405,18 @@ class MainWindow(QMainWindow):
 				self.ui.playQueueList.selectionModel().select(update,
 															  QItemSelectionModel.ClearAndSelect |
 															  QItemSelectionModel.Rows)
-		elif updateType == 'idle':
-			if update:
-				self.ui.playPause.setIcon(self.playIcon)
-				try:
-					self.taskbarProgress.setPaused(True)
-					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-				except AttributeError:
-					pass  # not on windows, or this is not ready yet
-			else:
-				self.ui.playPause.setIcon(self.pauseIcon)
-				try:
-					self.taskbarProgress.setPaused(False)
-					self.taskbarProgress.setVisible(True)
-					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
-				except AttributeError:
-					pass  # not on windows, or this is not ready yet
+
+	def idleUpdate(self, paused):
+		if paused:
+			self.ui.playPause.setIcon(self.playIcon)
+		else:
+			self.ui.playPause.setIcon(self.pauseIcon)
 
 	def updateFollowPlayedTrack(self):
 		if config.followPlaybackInQueue:
 			self.followPlayedTrack = False
 		else:
 			self.followPlayedTrack = True
-
-	def playPause(self):
-		print('playPause hotkey hit')
-		self.signals.playbackControl.emit('playPause')
 
 	def albumListClick(self, index):
 		item = self.albumTreeListModel.itemFromIndex(index)
@@ -724,7 +653,6 @@ class MainWindow(QMainWindow):
 																 'title',
 																 'artist']))
 
-
 	def refreshAlbumListView(self):
 		self.loadDataforAlbumListView(self.albumListState)
 
@@ -801,6 +729,7 @@ class MainWindow(QMainWindow):
 
 	def showSettings(self):
 		dialog = settingsPanel.settingsDialog()
+
 
 def buildItemForSong(song, fields):
 	items = []

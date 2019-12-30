@@ -37,6 +37,7 @@ class Ui_vapoursonic(object):
         self.formLayout = QtWidgets.QFormLayout()
         self.formLayout.setObjectName("formLayout")
         self.passwordInput = QtWidgets.QLineEdit(self.connectionSetup)
+        self.passwordInput.setEchoMode(QtWidgets.QLineEdit.Password)
         self.passwordInput.setObjectName("passwordInput")
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.passwordInput)
         self.passwordLabel = QtWidgets.QLabel(self.connectionSetup)
@@ -49,6 +50,7 @@ class Ui_vapoursonic(object):
         self.usernameInput.setObjectName("usernameInput")
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.usernameInput)
         self.domainInput = QtWidgets.QLineEdit(self.connectionSetup)
+        self.domainInput.setPlaceholderText("")
         self.domainInput.setObjectName("domainInput")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.domainInput)
         self.usernameLabel = QtWidgets.QLabel(self.connectionSetup)
@@ -298,7 +300,7 @@ class Ui_vapoursonic(object):
         self.trackArtistName.setObjectName("trackArtistName")
         self.verticalLayout.addWidget(self.trackArtistName)
         self.nowPlayingLayout.addLayout(self.verticalLayout)
-        self.trackProgressBar = QtWidgets.QSlider(self.mainPage)
+        self.trackProgressBar = trackProgressSlider(self.mainPage)
         self.trackProgressBar.setTracking(False)
         self.trackProgressBar.setOrientation(QtCore.Qt.Horizontal)
         self.trackProgressBar.setObjectName("trackProgressBar")
@@ -345,8 +347,6 @@ class Ui_vapoursonic(object):
         self.statusbar = QtWidgets.QStatusBar(vapoursonic)
         self.statusbar.setObjectName("statusbar")
         vapoursonic.setStatusBar(self.statusbar)
-        self.actionConnect = QtWidgets.QAction(vapoursonic)
-        self.actionConnect.setObjectName("actionConnect")
         self.actionExit = QtWidgets.QAction(vapoursonic)
         self.actionExit.setObjectName("actionExit")
         self.actionSettings = QtWidgets.QAction(vapoursonic)
@@ -356,7 +356,7 @@ class Ui_vapoursonic(object):
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(vapoursonic)
-        self.stackedWidget.setCurrentIndex(0)
+        self.stackedWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(vapoursonic)
         vapoursonic.setTabOrder(self.domainInput, self.usernameInput)
         vapoursonic.setTabOrder(self.usernameInput, self.passwordInput)
@@ -443,7 +443,7 @@ class Ui_vapoursonic(object):
         self.playPause.setText(_translate("vapoursonic", "..."))
         self.nextTrack.setText(_translate("vapoursonic", "..."))
         self.menuFile.setTitle(_translate("vapoursonic", "File"))
-        self.actionConnect.setText(_translate("vapoursonic", "Disconnect"))
         self.actionExit.setText(_translate("vapoursonic", "Exit"))
         self.actionSettings.setText(_translate("vapoursonic", "Settings"))
-from vapoursonic.playqueueview import PlayQueueView
+from vapoursonic.widgets.playqueueview import PlayQueueView
+from vapoursonic.widgets.trackProgressSlider import trackProgressSlider

@@ -42,6 +42,8 @@ class playQueueModel(QStandardItemModel):
 
 class playbackController(QObject):
 	updatePlayerUI = pyqtSignal(object, str)
+	trackProgressUpdate = pyqtSignal(int, int)
+	idleUpdate = pyqtSignal(bool)
 
 	def __init__(self):
 		super(playbackController, self).__init__()
@@ -258,10 +260,8 @@ class playbackController(QObject):
 			return
 		duration = self.player.duration
 		value = self.player.time_pos
-		# print("progress: {}, percent: {}".format(value, percent))
 		if value and duration:
-			self.updatePlayerUI.emit(math.ceil(total), 'total')
-			self.updatePlayerUI.emit(math.ceil(value), 'progress')
+			self.trackProgressUpdate.emit(math.ceil(value), math.ceil(total))
 
 	def mpvEventHandler(self, event):
 		if event['event_id'] == 8:  # file-loaded
@@ -362,10 +362,8 @@ class playbackController(QObject):
 		except SystemError:
 			pass
 
-	def updateIdleState(self, _name, _value):
-		# print('player idle state: {}'.format(value))
-		value = self.player.core_idle
-		self.updatePlayerUI.emit(value, 'idle')
+	def updateIdleState(self, _name, value):
+		self.idleUpdate.emit(value)
 
 	@pyqtSlot(bool)
 	@pyqtSlot()
