@@ -31,6 +31,7 @@
           <option value="ui_mainwindow.Ui_AirsonicDesktop" />
           <option value="PyQt5.QtCore.pyqtBoundSignal.*" />
           <option value="windowsIntegration.Windows" />
+          <option value="PyQt5.QtCore.timeout.connect" />
         </list>
       </option>
     </inspection_tool>

@@ -428,7 +428,9 @@ class MainWindow(QMainWindow):
 		elif updateType == "newCurrentSong":
 			if update:
 				self.ui.currentPlayingLabel.setText(update['title'])
+				self.ui.currentPlayingLabel.setToolTip(update['title'])
 				self.ui.trackArtistName.setText(update['artist'])
+				self.ui.trackArtistName.setToolTip(update['artist'])
 
 				self.setWindowTitle("{} by {} - {}".format(update['title'] if 'title' in update else 'Unk. Title',
 														   update['artist'] if 'artist' in update else 'Unk. Artist',
@@ -439,7 +441,9 @@ class MainWindow(QMainWindow):
 					self.clearAlbumArt('currentlyPlaying')
 			else:
 				self.ui.currentPlayingLabel.setText('Not Playing')
+				self.ui.currentPlayingLabel.setToolTip('Not Playing')
 				self.ui.trackArtistName.setText('No Artist')
+				self.ui.trackArtistName.setToolTip('No Artist')
 				self.setWindowTitle('Not Playing - {}'.format(config.appname))
 		elif updateType == 'progress':
 			if not self.sliderBeingDragged:
@@ -705,7 +709,9 @@ class MainWindow(QMainWindow):
 		except KeyError:
 			self.clearAlbumArt('album')
 		self.ui.selectedAlbumTitle.setText(albumdeets['name'])
+		self.ui.selectedAlbumTitle.setToolTip(albumdeets['name'])
 		self.ui.selectedAlbumArtist.setText(albumdeets['artist'])
+		self.ui.selectedAlbumArtist.setToolTip(albumdeets['artist'])
 		self.ui.selectedAlbumTrackCount.setText(str(albumdeets['songCount']))
 		self.ui.selectedAlbumTotalLength.setText(str(timedelta(seconds=albumdeets['duration'])))
 		try:
