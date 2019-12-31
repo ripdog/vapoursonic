@@ -72,7 +72,8 @@ class configManager():
 							   'queueServer': None,  # format: username@domain
 							   'queue': []
 							   },
-			'autoConnect': False
+			'autoConnect': False,
+			'streamTypeDownload': False,
 		}
 		for item in self.fallbackConfig:
 			if item in userConfig:

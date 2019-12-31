@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>settingsDialog</class>
+ <widget class="QDialog" name="settingsDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Settings</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
@@ -20,7 +23,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <property name="elideMode">
       <enum>Qt::ElideNone</enum>
@@ -56,7 +59,7 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QCheckBox" name="checkBox">
+           <widget class="QCheckBox" name="autoConnectCheckBox">
             <property name="text">
              <string>Automatically connect upon starting vapoursonic.</string>
             </property>
@@ -84,7 +87,7 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout">
             <item>
-             <widget class="QLineEdit" name="lineEdit">
+             <widget class="QLineEdit" name="applicationNameLineEdit">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -154,10 +157,13 @@
            </widget>
           </item>
           <item>
-           <widget class="QRadioButton" name="radioButton">
+           <widget class="QRadioButton" name="streamTypeStreamRadioButton">
             <property name="text">
              <string>Stream</string>
             </property>
+            <attribute name="buttonGroup">
+             <string notr="true">streamTypeButtonGroup</string>
+            </attribute>
            </widget>
           </item>
           <item>
@@ -180,10 +186,13 @@
            </widget>
           </item>
           <item>
-           <widget class="QRadioButton" name="radioButton_2">
+           <widget class="QRadioButton" name="streamTypeDownloadRadioButton">
             <property name="text">
              <string>Download</string>
             </property>
+            <attribute name="buttonGroup">
+             <string notr="true">streamTypeButtonGroup</string>
+            </attribute>
            </widget>
           </item>
           <item>
@@ -222,7 +231,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
@@ -233,7 +242,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>settingsDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -249,7 +258,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>settingsDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -263,4 +272,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="streamTypeButtonGroup"/>
+ </buttongroups>
 </ui>

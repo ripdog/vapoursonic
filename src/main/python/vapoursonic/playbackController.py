@@ -179,7 +179,11 @@ class playbackController(QObject):
 				break
 
 	def buildUrlForSong(self, song):
-		return config.fqdn + '/rest/stream?f=json&v=1.15.0&c=' + \
+		if config.streamTypeDownload:
+			baseurl = '/rest/download?f=json&v=1.15.0&c='
+		else:
+			baseurl = '/rest/stream?f=json&v=1.15.0&c='
+		return config.fqdn + baseurl + \
 			   config.appname + '&u=' + config.username + '&s=' + config.salt + \
 			   '&t=' + config.token + '&id=' + song['id']
 

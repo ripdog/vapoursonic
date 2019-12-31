@@ -9,6 +9,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGui
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox, QLabel
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
+from vapoursonic.widgets.messagePopup import toastMessageDisplay
 from vapoursonic.windowsIntegration import taskbarProgressBar
 
 try:
@@ -37,6 +38,7 @@ class MainWindowSignals(QObject):
 	addSongsToPlaylist = pyqtSignal(str, object)
 	beginSearch = pyqtSignal(str, int)
 	loadAlbumsForArtist = pyqtSignal(str, object)
+	resized = pyqtSignal()
 
 
 def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
@@ -90,6 +92,7 @@ class MainWindow(QMainWindow):
 		self.ui.stackedWidget.setCurrentIndex(0)
 
 		self.signals = MainWindowSignals()
+		self.toastDisplay = toastMessageDisplay(self)
 		self.ui.connectButton.clicked.connect(lambda: self.networkWorker.connectToServer(
 			self.ui.domainInput.text(),
 			self.ui.usernameInput.text(),
@@ -131,6 +134,7 @@ class MainWindow(QMainWindow):
 		self.albumArtCache = {}
 		if config.autoConnect:
 			self.ui.connectButton.click()
+
 	# it just werkz!
 
 	def populateConnectFields(self):
@@ -138,6 +142,10 @@ class MainWindow(QMainWindow):
 		self.ui.usernameInput.setText(config.username)
 		self.ui.passwordInput.setText(config.password)
 		self.ui.autoConnectCheckBox.setChecked(config.autoConnect)
+
+	def resizeEvent(self, newSize):
+		self.signals.resized.emit()
+		QMainWindow.resizeEvent(self, newSize)
 
 	@pyqtSlot(bool)
 	def connectResult(self, success):
@@ -150,7 +158,8 @@ class MainWindow(QMainWindow):
 			self.ui.stackedWidget.setCurrentIndex(1)
 			self.populatePlayerUI()
 		else:
-			self.handleError('Unable to connect to your server. Please check your domain and credentials and try again.')
+			self.handleError(
+				'Unable to connect to your server. Please check your domain and credentials and try again.')
 
 	# should slap an error somewhere lol
 
@@ -301,7 +310,7 @@ class MainWindow(QMainWindow):
 		self.keyHook.signals.playPauseSignal.connect(self.playbackController.playPause)
 		self.keyHook.signals.nextSongSignal.connect(self.playbackController.playNextSongExplicitly)
 		self.keyHook.signals.prevSongSignal.connect(self.playbackController.playPreviousSong)
-		self.keyHook.signals.errSignal.connect(self.handleError)
+		self.keyHook.signals.errSignal.connect(self.toastDisplay.showMessage)
 		self.keyHookThreadPool.start(self.keyHook)
 
 		if QWinTaskbarProgress:
