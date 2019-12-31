@@ -674,6 +674,7 @@ class MainWindow(QMainWindow):
 	def closeEvent(self, a0):
 		print('vapoursonic closing, saving config')
 		config.save(self.playbackController)
+		sys.exit(0)
 
 	def startAlbumArtLoad(self, aid, artType):
 		loader = albumArtLoader(aid, artType)
@@ -756,4 +757,4 @@ if __name__ == "__main__":
 	appcontext = ApplicationContext()
 	window = MainWindow(appcontext)
 	window.show()
-	sys.exit(appcontext.app.exec_())
+	appcontext.app.exec_()
