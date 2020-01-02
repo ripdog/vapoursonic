@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QRegExp
+from PyQt5.QtCore import QRegExp, Qt
 from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtWidgets import QDialog
 from PyQt5 import uic
@@ -33,6 +33,7 @@ class settingsDialog(QDialog):
 
 		self.setModal(True)
 		self.tabWidget.setCurrentIndex(0)
+		self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 		self.exec_()
 
 	def setAppName(self):

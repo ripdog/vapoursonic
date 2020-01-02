@@ -106,7 +106,7 @@ class mediaKeysHooker(QRunnable):
 		try:
 			GlobalHotKeys.listen()
 		except Exception as e:
-			self.signals.errSignal.emit(str(e))
+			self.signals.errSignal.emit('Unable to bind playback keys. Is something else using them?')
 
 	def playPause(self):
 		print('received play/pause keypress')

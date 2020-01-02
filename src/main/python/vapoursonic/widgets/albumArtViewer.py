@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThreadPool, QPoint, QRect
+from PyQt5.QtCore import QThreadPool, QPoint, QRect, Qt
 from PyQt5.QtGui import QImage, QPixmap, QGuiApplication
 from PyQt5.QtWidgets import QDialog, QGridLayout, QLabel
 
@@ -14,6 +14,7 @@ class albumArtViewer(QDialog):
 		# UI setup
 		self.setSizeGripEnabled(False)
 		self.gridLayout = QGridLayout(self)
+		self.gridLayout.setContentsMargins(0,0,0,0)
 		self.albumArtLabel = QLabel('Loading...')
 		self.gridLayout.addWidget(self.albumArtLabel)
 		#Download art
@@ -21,6 +22,7 @@ class albumArtViewer(QDialog):
 		self.albumArtLoader.signals.albumArtLoaded.connect(self.displayAlbumArt)
 		self.albumArtLoader.signals.errorHandler.connect(parent.handleError)
 		self.albumArtLoaderThreadPool.start(self.albumArtLoader)
+		self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
 	def displayAlbumArt(self, art, _albumId, _type):
 		image = QImage()

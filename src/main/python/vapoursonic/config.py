@@ -49,6 +49,7 @@ class configManager():
 					 'baseline-subdirectory-arrow-right.svg',
 					 'baseline-remove-circle-outline.svg',
 					 'baseline-delete-outline.svg',
+					 'baseline-close-white.svg',
 					 ]:
 			self.icons[item] = self.loadIcon(item)
 		try:

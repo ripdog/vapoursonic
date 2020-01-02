@@ -116,6 +116,7 @@ class MainWindow(QMainWindow):
 		self.networkWorker.returnArtistAlbums.connect(self.receiveArtistAlbums)
 		self.networkWorker.returnArtists.connect(self.receiveArtists)
 		self.networkWorker.errorHandler.connect(self.handleError)
+		self.networkWorker.showMessageBox.connect(self.toastDisplay.showMessage)
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
 		self.albumListState = 'home'
