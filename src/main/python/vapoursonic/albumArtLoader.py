@@ -35,4 +35,4 @@ class albumArtLoader(QRunnable):
 		else:
 			self.url = config.fqdn + '/rest/getCoverArt?f=json&v=1.15.0&c=' + \
 					   config.appname + '&u=' + config.username + '&s=' + config.salt + \
-					   '&t=' + config.token + '&id=' + self.albumId + '&size=128'
+					   '&t=' + config.token + '&id=' + self.albumId + '&size=256'

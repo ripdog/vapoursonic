@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel, QTimer
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication, QIntValidator
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox, QLabel
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
@@ -39,6 +39,7 @@ class MainWindowSignals(QObject):
 	beginSearch = pyqtSignal(str, int)
 	loadAlbumsForArtist = pyqtSignal(str, object)
 	resized = pyqtSignal()
+	artAvailableForCurrentSong = pyqtSignal()
 
 
 def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
@@ -98,7 +99,7 @@ class MainWindow(QMainWindow):
 			self.ui.usernameInput.text(),
 			self.ui.passwordInput.text()
 		))
-		self.ui.actionSettings.triggered.connect(self.showSettings)
+		self.ui.actionSettings.triggered.connect(showSettings)
 		self.ui.autoConnectCheckBox.stateChanged.connect(settingsPanel.setAutoConnectState)
 		self.networkWorker.returnAlbums.connect(self.receiveAlbumList)
 		self.networkWorker.connectResult.connect(self.connectResult)
@@ -321,7 +322,7 @@ class MainWindow(QMainWindow):
 			self.taskbarProgressBar.nextToolbarButton.clicked.connect(self.playbackController.playNextSongExplicitly)
 			self.playbackController.idleUpdate.connect(self.taskbarProgressBar.updatePlayButtonIcon)
 			self.playbackController.trackProgressUpdate.connect(self.taskbarProgressBar.updateProgressBar)
-
+			self.signals.artAvailableForCurrentSong.connect(self.taskbarProgressBar.artAvailable)
 		else:
 			self.taskbarProgress = None
 
@@ -329,10 +330,6 @@ class MainWindow(QMainWindow):
 
 	def cachePlaylists(self):
 		self.signals.getPlaylists.emit()
-
-	def initConnectionParams(self):
-		config.salt = md5(os.urandom(100)).hexdigest()
-		config.token = md5((config.password + config.salt).encode('utf-8')).hexdigest()
 
 	def loadPlayQueue(self):
 		if config.playQueueState['queueServer'] and \
@@ -342,7 +339,7 @@ class MainWindow(QMainWindow):
 			self.playbackController.playPause()
 
 	def populatePlayerUI(self):
-		self.initConnectionParams()
+		initConnectionParams()
 
 		self.populateIcons()
 
@@ -683,6 +680,7 @@ class MainWindow(QMainWindow):
 		loader.signals.errorHandler.connect(self.handleError)
 		self.albumArtLoaderThreads.start(loader)
 
+	# noinspection PyCallByClass
 	def receiveAlbumArt(self, art, aid, artType):
 		image = QImage()
 		image.loadFromData(art)
@@ -702,6 +700,8 @@ class MainWindow(QMainWindow):
 		elif artType == 'currentlyPlaying':
 			self.ui.playingAlbumArt.setPixmap(QPixmap())
 			self.ui.playingAlbumArt.setCursor(Qt.ArrowCursor)
+			print('emitting artAvailable as song has no art')
+			self.signals.artAvailableForCurrentSong.emit()
 
 	def displayAlbumArt(self, aid, artType):
 		if artType == 'album' and aid == self.currentAlbum['coverArt']:
@@ -710,18 +710,20 @@ class MainWindow(QMainWindow):
 											   scaled(self.ui.selectedAlbumArt.size(),
 													  Qt.KeepAspectRatio,
 													  Qt.SmoothTransformation))
-		elif artType == 'currentlyPlaying' and self.playbackController.currentSong and \
-				aid == self.playbackController.currentSong.data()['coverArt']:
+		elif artType == 'currentlyPlaying' and self.playbackController.currentSongData and \
+				aid == self.playbackController.currentSongData['coverArt']:
 			self.ui.playingAlbumArt.setCursor(Qt.PointingHandCursor)
 			self.ui.playingAlbumArt.setPixmap(self.albumArtCache[aid].
 											  scaled(self.ui.playingAlbumArt.size(),
 													 Qt.KeepAspectRatio,
 													 Qt.SmoothTransformation))
+			print('emitting artAvailable art is available for {}'.format(aid))
+			self.signals.artAvailableForCurrentSong.emit()
 
-	def displayFullAlbumArtForPlaying(self, event):
+	def displayFullAlbumArtForPlaying(self, _):
 		self.displayFullAlbumArt('currentlyPlaying')
 
-	def displayFullAlbumArtForBrowsing(self, event):
+	def displayFullAlbumArtForBrowsing(self, _):
 		self.displayFullAlbumArt('currentlyBrowsing')
 
 	def displayFullAlbumArt(self, artType):
@@ -737,9 +739,6 @@ class MainWindow(QMainWindow):
 		dialog.show()
 		dialog.raise_()
 		dialog.activateWindow()
-
-	def showSettings(self):
-		dialog = settingsPanel.settingsDialog()
 
 
 def buildItemForSong(song, fields):

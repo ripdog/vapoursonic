@@ -11,6 +11,7 @@ from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
 
 
 # thanks to https://gist.github.com/mdavey/6d40a89dbc15aefcc8cd
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QStyle
 from PyQt5.QtWinExtras import QWinThumbnailToolBar, QWinThumbnailToolButton, QWinTaskbarButton
 
@@ -163,6 +164,17 @@ class taskbarProgressBar(QObject):
 		self.thumbnailToolBar.addButton(self.prevToolbarButton)
 		self.thumbnailToolBar.addButton(self.playToolbarButton)
 		self.thumbnailToolBar.addButton(self.nextToolbarButton)
+
+		self.thumbnailToolBar.setIconicPixmapNotificationsEnabled(True)
+
+	def artAvailable(self):
+		if self.parent().playbackController.currentSongData:
+			if 'coverArt' in self.parent().playbackController.currentSongData:
+				artId = self.parent().playbackController.currentSongData['coverArt']
+				self.thumbnailToolBar.setIconicThumbnailPixmap(self.parent().albumArtCache[artId].scaled(128,128))
+				self.thumbnailToolBar.setIconicLivePreviewPixmap(self.parent().albumArtCache[artId].scaled(256,256))
+			else:
+				self.thumbnailToolBar.setIconicThumbnailPixmap(QPixmap(128,128))
 
 # class systemMediaTransportControls(object):
 # 	def __init__(self):
