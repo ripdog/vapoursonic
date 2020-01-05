@@ -945,12 +945,12 @@
   <customwidget>
    <class>PlayQueueView</class>
    <extends>QTreeView</extends>
-   <header>vapoursonic/widgets/playqueueview.h</header>
+   <header>vapoursonic_pkg/widgets/playqueueview.h</header>
   </customwidget>
   <customwidget>
    <class>trackProgressSlider</class>
    <extends>QSlider</extends>
-   <header>vapoursonic/widgets/trackProgressSlider.h</header>
+   <header>vapoursonic_pkg/widgets/trackProgressSlider.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

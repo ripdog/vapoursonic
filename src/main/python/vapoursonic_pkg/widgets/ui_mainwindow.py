@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'resources\base\mainwindow.ui'
+# Form implementation generated from reading ui file 'resources/base/mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.2
 #
@@ -82,13 +82,13 @@ class Ui_vapoursonic(object):
         self.customPortGroupBox.setObjectName("customPortGroupBox")
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.customPortGroupBox)
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        self.checkBox = QtWidgets.QCheckBox(self.customPortGroupBox)
-        self.checkBox.setObjectName("checkBox")
-        self.horizontalLayout_4.addWidget(self.checkBox)
-        self.lineEdit = QtWidgets.QLineEdit(self.customPortGroupBox)
-        self.lineEdit.setMaximumSize(QtCore.QSize(150, 16777215))
-        self.lineEdit.setObjectName("lineEdit")
-        self.horizontalLayout_4.addWidget(self.lineEdit)
+        self.useCustomPortCheckBox = QtWidgets.QCheckBox(self.customPortGroupBox)
+        self.useCustomPortCheckBox.setObjectName("useCustomPortCheckBox")
+        self.horizontalLayout_4.addWidget(self.useCustomPortCheckBox)
+        self.customPortLineEdit = QtWidgets.QLineEdit(self.customPortGroupBox)
+        self.customPortLineEdit.setMaximumSize(QtCore.QSize(150, 16777215))
+        self.customPortLineEdit.setObjectName("customPortLineEdit")
+        self.horizontalLayout_4.addWidget(self.customPortLineEdit)
         self.horizontalLayout_3.addWidget(self.customPortGroupBox)
         self.formLayout.setLayout(2, QtWidgets.QFormLayout.FieldRole, self.horizontalLayout_3)
         self.horizontalLayout.addLayout(self.formLayout)
@@ -341,7 +341,7 @@ class Ui_vapoursonic(object):
 "                                                        padding:0;\n"
 "                                                    ")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("resources\\base\\."), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("resources/base/."), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.prevTrack.setIcon(icon)
         self.prevTrack.setObjectName("prevTrack")
         self.nowPlayingLayout.addWidget(self.prevTrack)
@@ -413,10 +413,10 @@ class Ui_vapoursonic(object):
         self.usernameLabel.setText(_translate("vapoursonic", "Username"))
         self.domainLabel.setText(_translate("vapoursonic", "Domain"))
         self.autoConnectCheckBox.setText(_translate("vapoursonic", "Automatically log in"))
-        self.useTLSCheckBox.setText(_translate("vapoursonic", "Use TLS"))
+        self.useTLSCheckBox.setText(_translate("vapoursonic", "Use TLS (recommended)"))
         self.customPortGroupBox.setTitle(_translate("vapoursonic", "Custom Port"))
-        self.checkBox.setText(_translate("vapoursonic", "Use Custom Port"))
-        self.lineEdit.setPlaceholderText(_translate("vapoursonic", "Port"))
+        self.useCustomPortCheckBox.setText(_translate("vapoursonic", "Use Custom Port"))
+        self.customPortLineEdit.setPlaceholderText(_translate("vapoursonic", "Port"))
         self.backHomeButton.setToolTip(_translate("vapoursonic", "Return to the home screen."))
         self.backHomeButton.setText(_translate("vapoursonic", "Back"))
         self.albumTreeListTitle.setText(_translate("vapoursonic", "Home"))
@@ -476,5 +476,5 @@ class Ui_vapoursonic(object):
         self.menuFile.setTitle(_translate("vapoursonic", "File"))
         self.actionExit.setText(_translate("vapoursonic", "Exit"))
         self.actionSettings.setText(_translate("vapoursonic", "Settings"))
-from vapoursonic.widgets.playqueueview import PlayQueueView
-from vapoursonic.widgets.trackProgressSlider import trackProgressSlider
+from vapoursonic_pkg.widgets.playqueueview import PlayQueueView
+from vapoursonic_pkg.widgets.trackProgressSlider import trackProgressSlider
