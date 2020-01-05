@@ -4,12 +4,13 @@ from _md5 import md5
 from datetime import timedelta
 
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
-	Qt, QItemSelectionModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication
-from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
+	Qt, QItemSelectionModel, QTimer
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication, QIntValidator
+from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox, QLabel
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
-from vapoursonic_pkg.albumArtViewer import albumArtViewer
+from vapoursonic_pkg.widgets.messagePopup import toastMessageDisplay
+from vapoursonic_pkg.windowsIntegration import taskbarProgressBar
 
 try:
 	# noinspection PyUnresolvedReferences
@@ -22,10 +23,10 @@ from vapoursonic_pkg.config import config
 from vapoursonic_pkg.albumArtLoader import albumArtLoader
 from vapoursonic_pkg.networkWorker import networkWorker
 from vapoursonic_pkg.playbackController import playbackController
-from vapoursonic_pkg.ui_mainwindow import Ui_vapoursonic
+from vapoursonic_pkg.widgets.ui_mainwindow import Ui_vapoursonic
 from vapoursonic_pkg import vapoursonicActions
-from vapoursonic_pkg import settingsPanel
-
+from vapoursonic_pkg.widgets import settingsPanel
+from vapoursonic_pkg.widgets.albumArtViewer import albumArtViewer
 
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str, int)
@@ -36,6 +37,8 @@ class MainWindowSignals(QObject):
 	addSongsToPlaylist = pyqtSignal(str, object)
 	beginSearch = pyqtSignal(str, int)
 	loadAlbumsForArtist = pyqtSignal(str, object)
+	resized = pyqtSignal()
+	artAvailableForCurrentSong = pyqtSignal()
 
 
 def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
@@ -89,12 +92,13 @@ class MainWindow(QMainWindow):
 		self.ui.stackedWidget.setCurrentIndex(0)
 
 		self.signals = MainWindowSignals()
+		self.toastDisplay = toastMessageDisplay(self)
 		self.ui.connectButton.clicked.connect(lambda: self.networkWorker.connectToServer(
 			self.ui.domainInput.text(),
 			self.ui.usernameInput.text(),
 			self.ui.passwordInput.text()
 		))
-		self.ui.actionSettings.triggered.connect(self.showSettings)
+		self.ui.actionSettings.triggered.connect(showSettings)
 		self.ui.autoConnectCheckBox.stateChanged.connect(settingsPanel.setAutoConnectState)
 		self.networkWorker.returnAlbums.connect(self.receiveAlbumList)
 		self.networkWorker.connectResult.connect(self.connectResult)
@@ -112,7 +116,7 @@ class MainWindow(QMainWindow):
 		self.networkWorker.returnArtistAlbums.connect(self.receiveArtistAlbums)
 		self.networkWorker.returnArtists.connect(self.receiveArtists)
 		self.networkWorker.errorHandler.connect(self.handleError)
-
+		self.networkWorker.showMessageBox.connect(self.toastDisplay.showMessage)
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
 		self.albumListState = 'home'
@@ -129,9 +133,10 @@ class MainWindow(QMainWindow):
 		}
 		self.currentPage = 0
 		self.albumArtCache = {}
-		# if config.autoConnect:
-		# 	self.ui.connectButton.click()
-			#it just werkz!
+		if config.autoConnect:
+			self.ui.connectButton.click()
+
+	# it just werkz!
 
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.domain)
@@ -139,7 +144,9 @@ class MainWindow(QMainWindow):
 		self.ui.passwordInput.setText(config.password)
 		self.ui.autoConnectCheckBox.setChecked(config.autoConnect)
 
-
+	def resizeEvent(self, newSize):
+		self.signals.resized.emit()
+		QMainWindow.resizeEvent(self, newSize)
 
 	@pyqtSlot(bool)
 	def connectResult(self, success):
@@ -152,7 +159,8 @@ class MainWindow(QMainWindow):
 			self.ui.stackedWidget.setCurrentIndex(1)
 			self.populatePlayerUI()
 		else:
-			self.handleError('Unable to connect to your server. Please check your domain and credentials and try again.')
+			self.handleError(
+				'Unable to connect to your server. Please check your domain and credentials and try again.')
 
 	# should slap an error somewhere lol
 
@@ -240,7 +248,7 @@ class MainWindow(QMainWindow):
 		}
 		self.playQueueActions = [vapoursonicActions.goToAlbumAction(self, self.ui.playQueueList),
 								 vapoursonicActions.removeFromQueue(self, self.ui.playQueueList),
-								 vapoursonicActions.addToPlaylistMenu(self, self.ui.albumTrackList)]
+								 vapoursonicActions.addToPlaylistMenu(self, self.ui.playQueueList)]
 
 	def populateRightPanel(self):
 		# populate right panel
@@ -264,6 +272,7 @@ class MainWindow(QMainWindow):
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
 		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
+		self.playbackController.idleUpdate.connect(self.idleUpdate)
 		self.signals.playbackControl.connect(self.playbackController.playbackControl)
 
 		# connect play controls
@@ -271,6 +280,7 @@ class MainWindow(QMainWindow):
 		self.ui.playPause.clicked.connect(self.playbackController.playPause)
 		self.ui.nextTrack.clicked.connect(self.playbackController.playNextSongExplicitly)
 		self.ui.prevTrack.clicked.connect(self.playbackController.playPreviousSong)
+		self.playbackController.trackProgressUpdate.connect(self.ui.trackProgressBar.progressUpdate)
 		self.ui.trackProgressBar.valueChanged.connect(self.playbackController.setTrackProgress)
 		self.ui.trackProgressBar.sliderPressed.connect(self.trackSliderPressed)
 		self.ui.trackProgressBar.sliderReleased.connect(self.trackSliderReleased)
@@ -296,50 +306,25 @@ class MainWindow(QMainWindow):
 		# configure the play queue itself
 		self.ui.playQueueList.setAlternatingRowColors(True)
 
-	def populateThumbnailToolbar(self):
-		print('initing QWinThumbnailToolBar')
-		self.thumbnailToolBar = QWinThumbnailToolBar(self)
-		self.thumbnailToolBar.setWindow(self.windowHandle())
-
-		self.playToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
-		self.playToolbarButton.setEnabled(True)
-		self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-		self.playToolbarButton.clicked.connect(self.playbackController.playPause)
-
-		self.prevToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
-		self.prevToolbarButton.setEnabled(True)
-		self.prevToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipBackward))
-		self.prevToolbarButton.clicked.connect(self.playbackController.playPreviousSong)
-
-		self.nextToolbarButton = QWinThumbnailToolButton(self.thumbnailToolBar)
-		self.nextToolbarButton.setEnabled(True)
-		self.nextToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipForward))
-		self.nextToolbarButton.clicked.connect(self.playbackController.playNextSongExplicitly)
-
-		self.thumbnailToolBar.addButton(self.prevToolbarButton)
-		self.thumbnailToolBar.addButton(self.playToolbarButton)
-		self.thumbnailToolBar.addButton(self.nextToolbarButton)
-
 	def initializeWindowsIntegration(self):
-		# try:
-		from vapoursonic_pkg import windowsIntegration
-		# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
-		# 	print('not windows, unable to bind media keys')
-		# 	return
+		from vapoursonic import windowsIntegration
 		self.keyHookThreadPool = QThreadPool()
 		self.keyHookThreadPool.setMaxThreadCount(1)
 		self.keyHook = windowsIntegration.mediaKeysHooker(self)
 		self.keyHook.signals.playPauseSignal.connect(self.playbackController.playPause)
 		self.keyHook.signals.nextSongSignal.connect(self.playbackController.playNextSongExplicitly)
 		self.keyHook.signals.prevSongSignal.connect(self.playbackController.playPreviousSong)
-		self.keyHook.signals.errSignal.connect(self.handleError)
+		self.keyHook.signals.errSignal.connect(self.toastDisplay.showMessage)
 		self.keyHookThreadPool.start(self.keyHook)
 
 		if QWinTaskbarProgress:
-			print('initing QWinTaskbarProgress')
-			self.taskbarButton = QWinTaskbarButton(self)
-			self.taskbarButton.setWindow(self.windowHandle())
-			self.taskbarProgress = self.taskbarButton.progress()
+			self.taskbarProgressBar = taskbarProgressBar(self)
+			self.taskbarProgressBar.playToolbarButton.clicked.connect(self.playbackController.playPause)
+			self.taskbarProgressBar.prevToolbarButton.clicked.connect(self.playbackController.playPreviousSong)
+			self.taskbarProgressBar.nextToolbarButton.clicked.connect(self.playbackController.playNextSongExplicitly)
+			self.playbackController.idleUpdate.connect(self.taskbarProgressBar.updatePlayButtonIcon)
+			self.playbackController.trackProgressUpdate.connect(self.taskbarProgressBar.updateProgressBar)
+			self.signals.artAvailableForCurrentSong.connect(self.taskbarProgressBar.artAvailable)
 		else:
 			self.taskbarProgress = None
 
@@ -348,13 +333,9 @@ class MainWindow(QMainWindow):
 	def cachePlaylists(self):
 		self.signals.getPlaylists.emit()
 
-	def initConnectionParams(self):
-		config.salt = md5(os.urandom(100)).hexdigest()
-		config.token = md5((config.password + config.salt).encode('utf-8')).hexdigest()
-
 	def loadPlayQueue(self):
 		if config.playQueueState['queueServer'] and \
-			config.playQueueState['queueServer'] == config.username + "@" + config.domain:
+				config.playQueueState['queueServer'] == config.username + "@" + config.domain:
 			queue = config.playQueueState['queue']
 			self.playbackController.addSongs(queue, queue[config.playQueueState['currentIndex']])
 			self.playbackController.playPause()
@@ -364,7 +345,7 @@ class MainWindow(QMainWindow):
 		self.mprisIntegration = linuxIntegration.mprisIntegration(self.playbackController)
 
 	def populatePlayerUI(self):
-		self.initConnectionParams()
+		initConnectionParams()
 
 		self.populateIcons()
 
@@ -375,8 +356,10 @@ class MainWindow(QMainWindow):
 		self.populatePlayQueue()
 
 		if sys.platform == 'win32':
-			self.initializeWindowsIntegration()
-			self.populateThumbnailToolbar()
+			timer = QTimer(self)
+			timer.timeout.connect(lambda: self.initializeWindowsIntegration())
+			timer.setSingleShot(True)
+			timer.start(0)
 		elif sys.platform == 'linux':
 			self.initializeLinuxIntegration()
 
@@ -413,20 +396,15 @@ class MainWindow(QMainWindow):
 
 	@pyqtSlot(object, str)
 	def updatePlayerUI(self, update, updateType):
-		if updateType == 'total':
-			self.ui.trackProgressBar.blockSignals(True)
-			self.ui.trackProgressBar.setRange(0, update)
-			try:
-				self.taskbarProgress.setMaximum(update)
-			except AttributeError:
-				pass
-			self.ui.trackProgressBar.blockSignals(False)
-		elif updateType == "progressText":
+		if updateType == "progressText":
 			self.ui.trackProgressIndicator.setText(update)
 		elif updateType == "newCurrentSong":
 			if update:
 				self.ui.currentPlayingLabel.setText(update['title'])
+				self.ui.currentPlayingLabel.setToolTip(update['title'])
 				self.ui.trackArtistName.setText(update['artist'])
+				self.ui.trackArtistName.setToolTip(update['artist'])
+
 				self.setWindowTitle("{} by {} - {}".format(update['title'] if 'title' in update else 'Unk. Title',
 														   update['artist'] if 'artist' in update else 'Unk. Artist',
 														   config.appname))
@@ -436,17 +414,10 @@ class MainWindow(QMainWindow):
 					self.clearAlbumArt('currentlyPlaying')
 			else:
 				self.ui.currentPlayingLabel.setText('Not Playing')
+				self.ui.currentPlayingLabel.setToolTip('Not Playing')
 				self.ui.trackArtistName.setText('No Artist')
+				self.ui.trackArtistName.setToolTip('No Artist')
 				self.setWindowTitle('Not Playing - {}'.format(config.appname))
-		elif updateType == 'progress':
-			if not self.sliderBeingDragged:
-				self.ui.trackProgressBar.blockSignals(True)
-				self.ui.trackProgressBar.setValue(update)
-				self.ui.trackProgressBar.blockSignals(False)
-			try:
-				self.taskbarProgress.setValue(update)
-			except AttributeError:
-				pass
 		elif updateType == 'statusBar':
 			self.statusBar().showMessage(update)
 		elif updateType == 'scrollTo':
@@ -455,32 +426,18 @@ class MainWindow(QMainWindow):
 				self.ui.playQueueList.selectionModel().select(update,
 															  QItemSelectionModel.ClearAndSelect |
 															  QItemSelectionModel.Rows)
-		elif updateType == 'idle':
-			if update:
-				self.ui.playPause.setIcon(self.playIcon)
-				try:
-					self.taskbarProgress.setPaused(True)
-					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-				except AttributeError:
-					pass  # not on windows, or this is not ready yet
-			else:
-				self.ui.playPause.setIcon(self.pauseIcon)
-				try:
-					self.taskbarProgress.setPaused(False)
-					self.taskbarProgress.setVisible(True)
-					self.playToolbarButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
-				except AttributeError:
-					pass  # not on windows, or this is not ready yet
+
+	def idleUpdate(self, paused):
+		if paused:
+			self.ui.playPause.setIcon(self.playIcon)
+		else:
+			self.ui.playPause.setIcon(self.pauseIcon)
 
 	def updateFollowPlayedTrack(self):
 		if config.followPlaybackInQueue:
 			self.followPlayedTrack = False
 		else:
 			self.followPlayedTrack = True
-
-	def playPause(self):
-		print('playPause hotkey hit')
-		self.signals.playbackControl.emit('playPause')
 
 	def albumListClick(self, index):
 		item = self.albumTreeListModel.itemFromIndex(index)
@@ -702,7 +659,9 @@ class MainWindow(QMainWindow):
 		except KeyError:
 			self.clearAlbumArt('album')
 		self.ui.selectedAlbumTitle.setText(albumdeets['name'])
+		self.ui.selectedAlbumTitle.setToolTip(albumdeets['name'])
 		self.ui.selectedAlbumArtist.setText(albumdeets['artist'])
+		self.ui.selectedAlbumArtist.setToolTip(albumdeets['artist'])
 		self.ui.selectedAlbumTrackCount.setText(str(albumdeets['songCount']))
 		self.ui.selectedAlbumTotalLength.setText(str(timedelta(seconds=albumdeets['duration'])))
 		try:
@@ -714,7 +673,6 @@ class MainWindow(QMainWindow):
 																['track',
 																 'title',
 																 'artist']))
-
 
 	def refreshAlbumListView(self):
 		self.loadDataforAlbumListView(self.albumListState)
@@ -728,6 +686,7 @@ class MainWindow(QMainWindow):
 	def closeEvent(self, a0):
 		print('vapoursonic closing, saving config')
 		config.save(self.playbackController)
+		sys.exit(0)
 
 	def startAlbumArtLoad(self, aid, artType):
 		loader = albumArtLoader(aid, artType)
@@ -735,6 +694,7 @@ class MainWindow(QMainWindow):
 		loader.signals.errorHandler.connect(self.handleError)
 		self.albumArtLoaderThreads.start(loader)
 
+	# noinspection PyCallByClass
 	def receiveAlbumArt(self, art, aid, artType):
 		image = QImage()
 		image.loadFromData(art)
@@ -754,6 +714,8 @@ class MainWindow(QMainWindow):
 		elif artType == 'currentlyPlaying':
 			self.ui.playingAlbumArt.setPixmap(QPixmap())
 			self.ui.playingAlbumArt.setCursor(Qt.ArrowCursor)
+			print('emitting artAvailable as song has no art')
+			self.signals.artAvailableForCurrentSong.emit()
 
 	def displayAlbumArt(self, aid, artType):
 		if artType == 'album' and aid == self.currentAlbum['coverArt']:
@@ -762,18 +724,20 @@ class MainWindow(QMainWindow):
 											   scaled(self.ui.selectedAlbumArt.size(),
 													  Qt.KeepAspectRatio,
 													  Qt.SmoothTransformation))
-		elif artType == 'currentlyPlaying' and self.playbackController.currentSong and \
-				aid == self.playbackController.currentSong.data()['coverArt']:
+		elif artType == 'currentlyPlaying' and self.playbackController.currentSongData and \
+				aid == self.playbackController.currentSongData['coverArt']:
 			self.ui.playingAlbumArt.setCursor(Qt.PointingHandCursor)
 			self.ui.playingAlbumArt.setPixmap(self.albumArtCache[aid].
 											  scaled(self.ui.playingAlbumArt.size(),
 													 Qt.KeepAspectRatio,
 													 Qt.SmoothTransformation))
+			print('emitting artAvailable art is available for {}'.format(aid))
+			self.signals.artAvailableForCurrentSong.emit()
 
-	def displayFullAlbumArtForPlaying(self, event):
+	def displayFullAlbumArtForPlaying(self, _):
 		self.displayFullAlbumArt('currentlyPlaying')
 
-	def displayFullAlbumArtForBrowsing(self, event):
+	def displayFullAlbumArtForBrowsing(self, _):
 		self.displayFullAlbumArt('currentlyBrowsing')
 
 	def displayFullAlbumArt(self, artType):
@@ -810,4 +774,4 @@ if __name__ == "__main__":
 	appcontext.app.setAttribute(Qt.AA_UseHighDpiPixmaps)
 	window = MainWindow(appcontext)
 	window.show()
-	sys.exit(appcontext.app.exec_())
+	appcontext.app.exec_()

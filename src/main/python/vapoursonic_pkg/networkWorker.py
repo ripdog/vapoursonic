@@ -18,7 +18,7 @@ class networkWorker(QObject):
 	returnArtistAlbums = pyqtSignal(object, object)
 	returnArtists = pyqtSignal(object)
 	errorHandler = pyqtSignal(str)
-	returnFullAlbumArtHandle = pyqtSignal(object)
+	showMessageBox = pyqtSignal(str)
 
 	def handleErr(self, e):
 		if hasattr(e, 'reason'):
@@ -74,13 +74,6 @@ class networkWorker(QObject):
 		except URLError as e:
 			self.handleErr(e)
 
-	@pyqtSlot(str)
-	def getFullAlbumArtWithId(self, id):
-		try:
-			self.returnFullAlbumArtHandle.emit(self.connection.getCoverArt(id))
-		except URLError as e:
-			self.handleErr(e)
-
 	@pyqtSlot()
 	def getPlaylists(self):
 		try:
@@ -110,6 +103,7 @@ class networkWorker(QObject):
 			for song in songs:
 				songlist.append(song['id'])
 			self.connection.updatePlaylist(id, songIdsToAdd=songlist)
+			self.showMessageBox.emit('Added {} songs to playlist'.format(len(songs)))
 		except URLError as e:
 			self.handleErr(e)
 

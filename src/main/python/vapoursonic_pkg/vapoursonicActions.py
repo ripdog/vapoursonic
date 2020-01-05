@@ -57,9 +57,11 @@ class addToPlaylistAction(QAction):
 
 	def addToPlaylist(self):
 		items = getItemsFromList(self.focusedList)
+		addUs = []
 		for item in items:
 			if item['type'] == 'song':
-				self.parent().signals.addSongsToPlaylist.emit(self.playlist['id'], items)
+				addUs.append(item)
+		self.parent().signals.addSongsToPlaylist.emit(self.playlist['id'], addUs)
 
 
 class addToPlaylistMenu(QMenu):
