@@ -10,15 +10,6 @@ from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShor
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
 from vapoursonic_pkg.widgets.messagePopup import toastMessageDisplay
-from vapoursonic_pkg.windowsIntegration import taskbarProgressBar
-
-try:
-	# noinspection PyUnresolvedReferences
-	from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, QWinThumbnailToolButton
-except ImportError as e:
-	print('unable to import Qt Windows Extras')
-	print(e)
-	pass
 from vapoursonic_pkg.config import config
 from vapoursonic_pkg.albumArtLoader import albumArtLoader
 from vapoursonic_pkg.networkWorker import networkWorker
@@ -27,6 +18,7 @@ from vapoursonic_pkg.widgets.ui_mainwindow import Ui_vapoursonic
 from vapoursonic_pkg import vapoursonicActions
 from vapoursonic_pkg.widgets import settingsPanel
 from vapoursonic_pkg.widgets.albumArtViewer import albumArtViewer
+
 
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str, int)
@@ -72,6 +64,10 @@ def buildItemForAlbum(album):
 	itemsList[0].setData(album)
 	itemsList[1].setData(album)
 	return itemsList
+
+
+def showSettings():
+	dialog = settingsPanel.settingsDialog()
 
 
 class MainWindow(QMainWindow):
@@ -307,7 +303,9 @@ class MainWindow(QMainWindow):
 		self.ui.playQueueList.setAlternatingRowColors(True)
 
 	def initializeWindowsIntegration(self):
-		from vapoursonic import windowsIntegration
+		from vapoursonic_pkg import windowsIntegration
+		from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, \
+			QWinThumbnailToolButton
 		self.keyHookThreadPool = QThreadPool()
 		self.keyHookThreadPool.setMaxThreadCount(1)
 		self.keyHook = windowsIntegration.mediaKeysHooker(self)
@@ -318,7 +316,7 @@ class MainWindow(QMainWindow):
 		self.keyHookThreadPool.start(self.keyHook)
 
 		if QWinTaskbarProgress:
-			self.taskbarProgressBar = taskbarProgressBar(self)
+			self.taskbarProgressBar = windowsIntegration.taskbarProgressBar(self)
 			self.taskbarProgressBar.playToolbarButton.clicked.connect(self.playbackController.playPause)
 			self.taskbarProgressBar.prevToolbarButton.clicked.connect(self.playbackController.playPreviousSong)
 			self.taskbarProgressBar.nextToolbarButton.clicked.connect(self.playbackController.playNextSongExplicitly)
@@ -754,8 +752,6 @@ class MainWindow(QMainWindow):
 		dialog.raise_()
 		dialog.activateWindow()
 
-	def showSettings(self):
-		dialog = settingsPanel.settingsDialog()
 
 def buildItemForSong(song, fields):
 	items = []
