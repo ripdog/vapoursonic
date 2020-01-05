@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel, QTimer
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication, QIntValidator
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication, QIntValidator, QCursor
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox, QLabel
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
@@ -48,7 +48,7 @@ def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
 			if not playlistAddActionsAdded and item['type'] == 'song':
 				playlistAddActionsAdded = True
 				menu.addMenu(actionsDict['addToPlaylist'][0])
-		menu.exec_(focusedList.mapToGlobal(position))
+		menu.exec_(QCursor.pos())
 
 
 def buildItemForArtist(artist):
