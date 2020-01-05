@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5 import uic
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
-from vapoursonic.config import config
+from vapoursonic_pkg.config import config
 
 def setAutoConnectState(state):
 	if state == 0:

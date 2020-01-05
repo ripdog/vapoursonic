@@ -2,7 +2,7 @@ from PyQt5.QtCore import QThreadPool, QPoint, QRect
 from PyQt5.QtGui import QImage, QPixmap, QGuiApplication
 from PyQt5.QtWidgets import QDialog, QGridLayout, QLabel
 
-from vapoursonic.albumArtLoader import albumArtLoader
+from vapoursonic_pkg.albumArtLoader import albumArtLoader
 
 
 class albumArtViewer(QDialog):

@@ -2,7 +2,7 @@ import requests
 from PyQt5.QtCore import QRunnable, pyqtSignal, QObject
 from requests import RequestException
 
-from vapoursonic.config import config
+from vapoursonic_pkg.config import config
 
 
 class albumArtLoaderSignals(QObject):

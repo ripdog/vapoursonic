@@ -16,7 +16,7 @@ except FileNotFoundError:
 	print('unable to find mpv dll. Only a problem on windows.')
 
 import mpv
-from vapoursonic.config import config
+from vapoursonic_pkg.config import config
 
 
 def my_log(loglevel, component, message):
@@ -62,7 +62,6 @@ class playbackController(QObject):
 		self.currentSong = None
 		self.currentSongData = None
 
-
 		# create timer for 1-per-second playback status update
 		self.secondTimer = QTimer()
 		self.secondTimer.timeout.connect(self.everySecond)
@@ -82,7 +81,15 @@ class playbackController(QObject):
 		else:
 			self.updatePlayerUI.emit('00:00/00:00', 'progressText')
 
-
+	def getCurrentPlaybackState(self):
+		if self.currentSongData and self.currentSongData['type'] == 'song':
+			# song is loaded
+			if self.player.core_idle:
+				return 'Paused'
+			else:
+				return 'Playing'
+		else:
+			return 'Stopped'
 
 	def setCurrentSong(self, newsong):
 		if newsong is None:
@@ -178,8 +185,8 @@ class playbackController(QObject):
 
 	def buildUrlForSong(self, song):
 		return config.fqdn + '/rest/stream?f=json&v=1.15.0&c=' + \
-			   config.appname + '&u=' + config.username + '&s=' + config.salt + \
-			   '&t=' + config.token + '&id=' + song['id']
+		       config.appname + '&u=' + config.username + '&s=' + config.salt + \
+		       '&t=' + config.token + '&id=' + song['id']
 
 	def playSong(self, song):
 		url = self.buildUrlForSong(song)
@@ -274,7 +281,6 @@ class playbackController(QObject):
 				self.setCurrentSongFromId(songId)
 				if self.currentSongData:
 					self.updatePlayerUI.emit(self.currentSongData, 'newCurrentSong')
-					self.updatePlayerUI.emit(self.currentSongData['artist'], 'artist')
 					self.updatePlayerUI.emit(self.currentSongData['coverArt'], 'playingAlbumArt')
 				else:
 					self.updatePlayerUI.emit('Not Playing', 'title')

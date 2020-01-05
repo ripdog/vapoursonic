@@ -446,4 +446,4 @@ class Ui_vapoursonic(object):
         self.actionConnect.setText(_translate("vapoursonic", "Disconnect"))
         self.actionExit.setText(_translate("vapoursonic", "Exit"))
         self.actionSettings.setText(_translate("vapoursonic", "Settings"))
-from vapoursonic.playqueueview import PlayQueueView
+from vapoursonic_pkg.playqueueview import PlayQueueView

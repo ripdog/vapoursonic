@@ -9,7 +9,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGui
 from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
-from vapoursonic.albumArtViewer import albumArtViewer
+from vapoursonic_pkg.albumArtViewer import albumArtViewer
 
 try:
 	# noinspection PyUnresolvedReferences
@@ -18,13 +18,13 @@ except ImportError as e:
 	print('unable to import Qt Windows Extras')
 	print(e)
 	pass
-from vapoursonic.config import config
-from vapoursonic.albumArtLoader import albumArtLoader
-from vapoursonic.networkWorker import networkWorker
-from vapoursonic.playbackController import playbackController
-from vapoursonic.ui_mainwindow import Ui_vapoursonic
-from vapoursonic import vapoursonicActions
-from vapoursonic import settingsPanel
+from vapoursonic_pkg.config import config
+from vapoursonic_pkg.albumArtLoader import albumArtLoader
+from vapoursonic_pkg.networkWorker import networkWorker
+from vapoursonic_pkg.playbackController import playbackController
+from vapoursonic_pkg.ui_mainwindow import Ui_vapoursonic
+from vapoursonic_pkg import vapoursonicActions
+from vapoursonic_pkg import settingsPanel
 
 
 class MainWindowSignals(QObject):
@@ -322,7 +322,7 @@ class MainWindow(QMainWindow):
 
 	def initializeWindowsIntegration(self):
 		# try:
-		from vapoursonic import windowsIntegration
+		from vapoursonic_pkg import windowsIntegration
 		# except ImportError: #FIXME this is almost certainly not the error we'll get on non-windows
 		# 	print('not windows, unable to bind media keys')
 		# 	return
@@ -359,6 +359,10 @@ class MainWindow(QMainWindow):
 			self.playbackController.addSongs(queue, queue[config.playQueueState['currentIndex']])
 			self.playbackController.playPause()
 
+	def initializeLinuxIntegration(self):
+		from vapoursonic_pkg import linuxIntegration
+		self.mprisIntegration = linuxIntegration.mprisIntegration(self.playbackController)
+
 	def populatePlayerUI(self):
 		self.initConnectionParams()
 
@@ -370,18 +374,15 @@ class MainWindow(QMainWindow):
 
 		self.populatePlayQueue()
 
-
-
 		if sys.platform == 'win32':
 			self.initializeWindowsIntegration()
 			self.populateThumbnailToolbar()
+		elif sys.platform == 'linux':
+			self.initializeLinuxIntegration()
 
 		self.cachePlaylists()
 
 		self.loadPlayQueue()
-
-
-
 
 	def trackSliderPressed(self):
 		self.sliderBeingDragged = True
@@ -426,7 +427,6 @@ class MainWindow(QMainWindow):
 			if update:
 				self.ui.currentPlayingLabel.setText(update['title'])
 				self.ui.trackArtistName.setText(update['artist'])
-
 				self.setWindowTitle("{} by {} - {}".format(update['title'] if 'title' in update else 'Unk. Title',
 														   update['artist'] if 'artist' in update else 'Unk. Artist',
 														   config.appname))
