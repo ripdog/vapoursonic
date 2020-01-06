@@ -151,6 +151,7 @@ class playbackController(QObject):
 				standardItem.setDropEnabled(False)
 			if insertAfterRow:
 				self.playQueueModel.insertRow(insertAfterRow, standardItems)
+				insertAfterRow += 1
 				print('inserting row for {}'.format(item['title']))
 			else:
 				self.playQueueModel.appendRow(standardItems)

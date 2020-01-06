@@ -40,6 +40,8 @@ class MainWindowSignals(QObject):
 	loadAlbumsForArtist = pyqtSignal(str, object)
 	resized = pyqtSignal()
 	artAvailableForCurrentSong = pyqtSignal()
+	loadMusicFolder = pyqtSignal(str)
+	loadRootMusicFolder = pyqtSignal()
 
 
 def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
@@ -75,6 +77,16 @@ def buildItemForAlbum(album):
 	return itemsList
 
 
+def initConnectionParams():
+	config.salt = md5(os.urandom(100)).hexdigest()
+	config.token = md5((config.password + config.salt).encode('utf-8')).hexdigest()
+
+
+def showSettings():
+	dialog = settingsPanel.settingsDialog()
+
+
+# noinspection PyArgumentList
 class MainWindow(QMainWindow):
 
 	def __init__(self, appContext, *args, **kwargs):
@@ -118,6 +130,10 @@ class MainWindow(QMainWindow):
 		self.networkWorker.returnArtists.connect(self.receiveArtists)
 		self.networkWorker.errorHandler.connect(self.handleError)
 		self.networkWorker.showMessageBox.connect(self.toastDisplay.showMessage)
+		self.networkWorker.returnMusicFolder.connect(self.receiveMusicFolder)
+		self.signals.loadMusicFolder.connect(self.networkWorker.loadMusicFolder)
+		self.signals.loadRootMusicFolder.connect(self.networkWorker.loadRootMusicFolders)
+		self.networkWorker.returnRootMusicFolders.connect(self.receiveRootMusicFolders)
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
 		self.albumListState = 'home'
@@ -130,7 +146,8 @@ class MainWindow(QMainWindow):
 			'recent': True,
 			'random': True,
 			'search': True,
-			'playlists': True
+			'playlists': True,
+			'folders': False
 		}
 		self.currentPage = 0
 		self.albumArtCache = {}
@@ -144,6 +161,11 @@ class MainWindow(QMainWindow):
 		self.ui.usernameInput.setText(config.username)
 		self.ui.passwordInput.setText(config.password)
 		self.ui.autoConnectCheckBox.setChecked(config.autoConnect)
+		self.ui.useTLSCheckBox.setChecked(config.useTLS)
+		self.ui.useCustomPortCheckBox.setChecked(config.useCustomPort)
+		self.ui.customPortLineEdit.setEnabled(config.useCustomPort)
+		self.ui.customPortLineEdit.setText(str(config.customPort))
+		self.ui.customPortLineEdit.setValidator(QIntValidator())
 
 	def resizeEvent(self, newSize):
 		self.signals.resized.emit()
@@ -476,6 +498,43 @@ class MainWindow(QMainWindow):
 					self.albumTreeListModel.appendRow(items)
 			self.refreshActions()
 
+	def getMusicFolderInsertionPoint(self, folderId):
+		if self.albumListState == 'folders':
+			for item in range(0, self.albumTreeListModel.rowCount()):
+				row = self.albumTreeListModel.item(item, 0).data()
+				if row and row['type'] == 'musicFolder':
+					if row['id'] == folderId:
+						return item
+
+	def receiveMusicFolder(self, folders, folderId):
+		insertionPoint = self.albumTreeListModel.item(
+			self.getMusicFolderInsertionPoint(folderId), 0)
+		for item in folders['directory']['child']:
+			row = []
+			standardItem = QStandardItem(item['title'])
+			standardItem.setData(item)
+			row.append(standardItem)
+			standardItem = QStandardItem(item['album'])
+			standardItem.setData(item)
+			row.append(standardItem)
+			insertionPoint.appendRow(row)
+		self.refreshActions()
+
+	def receiveRootMusicFolders(self, folders):
+		self.ui.albumTreeList.setIndentation(15)
+		self.albumTreeListModel.setColumnCount(2)
+		self.ui.albumTreeList.setHeaderHidden(False)
+		self.albumTreeListModel.setHorizontalHeaderLabels(['Title', 'Artist'])
+		self.ui.albumTreeList.setColumnWidth(0, 200)
+		self.ui.albumTreeList.setColumnWidth(1, 200)
+		for item in folders['musicFolders']['musicFolder']:
+			standardItem = QStandardItem(item['name'])
+			standardItem.setData(item)
+			self.albumTreeListModel.appendRow(standardItem)
+			standardItem.appendRow(QStandardItem('Loading...'))
+		self.refreshActions()
+
+
 	def beginSearch(self):
 		query = self.ui.search.text()
 		self.signals.beginSearch.emit(query, self.currentPage)
@@ -524,6 +583,9 @@ class MainWindow(QMainWindow):
 		if data and 'type' in data and data['type'] == 'artist':
 			print('loading artist {}'.format(item.data()))
 			self.signals.loadAlbumsForArtist.emit(data['id'], index)
+		if data and 'type' in data and data['type'] == 'rootMusicFolder':
+			print('loading root music folder {}'.format(item.data()['name']))
+			self.signals.loadMusicFolder.emit(str(item.data()['id']))
 
 	def receiveArtistAlbums(self, albums, index):
 		insertionPoint = self.albumTreeListModel.itemFromIndex(index)
@@ -548,7 +610,10 @@ class MainWindow(QMainWindow):
 		elif dataType == 'frequently played':
 			dataType = 'frequent'
 		self.changeAlbumListState(dataType)
-		self.signals.loadAlbumsOfType.emit(dataType, self.currentPage)
+		if dataType == 'folders':
+			self.signals.loadRootMusicFolder.emit()
+		else:
+			self.signals.loadAlbumsOfType.emit(dataType, self.currentPage)
 
 	def albumTrackListDoubleClick(self, index):
 		item = self.albumTrackListModel.itemFromIndex(index)

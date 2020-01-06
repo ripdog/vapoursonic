@@ -61,10 +61,10 @@ class configManager():
 		if not userConfig:
 			userConfig = {}
 		self.fallbackConfig = {
-			'domain': 'example.com',
-			'fqdn': 'https://example.com',
-			'username': 'yourUsername',
-			'password': 'yourPassword',
+			'domain': '',  # e.g. example.com
+			'fqdn': '',  # e.g. https://example.com - autofilled
+			'username': '',
+			'password': '',
 			'volume': 100,
 			'appname': 'vapoursonic',
 			'followPlaybackInQueue': True,
@@ -75,6 +75,9 @@ class configManager():
 							   },
 			'autoConnect': False,
 			'streamTypeDownload': False,
+			'useTLS': True,
+			'useCustomPort': False,
+			'customPort': 0,
 		}
 		for item in self.fallbackConfig:
 			if item in userConfig:

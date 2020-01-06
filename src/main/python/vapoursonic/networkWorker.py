@@ -1,9 +1,20 @@
 from urllib.error import URLError
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
-from libsonic import Connection
+from libsonic import Connection, AuthError, CredentialError, VersionError, ParameterError, SonicError, LicenseError, \
+	DataNotFoundError
 
 from vapoursonic.config import config
+
+errors = (SonicError,
+		  ParameterError,
+		  VersionError,
+		  VersionError,
+		  CredentialError,
+		  AuthError,
+		  LicenseError,
+		  DataNotFoundError,
+		  URLError)
 
 
 class networkWorker(QObject):
@@ -17,6 +28,8 @@ class networkWorker(QObject):
 	returnSearchResults = pyqtSignal(object, int)
 	returnArtistAlbums = pyqtSignal(object, object)
 	returnArtists = pyqtSignal(object)
+	returnMusicFolder = pyqtSignal(object, str)
+	returnRootMusicFolders = pyqtSignal(object)
 	errorHandler = pyqtSignal(str)
 	showMessageBox = pyqtSignal(str)
 
@@ -38,7 +51,7 @@ class networkWorker(QObject):
 			ping = self.connection.ping()
 			print(ping)
 			self.connectResult.emit(ping)
-		except URLError as e:
+		except errors as e:
 			self.handleErr(e)
 
 	@pyqtSlot(str, int)
@@ -58,7 +71,29 @@ class networkWorker(QObject):
 				for item in albums['albumList2']['album']:
 					item['type'] = 'album'
 				self.returnAlbums.emit(albums, type)
-		except URLError as e:
+		except errors as e:
+			self.handleErr(e)
+
+	@pyqtSlot(str)
+	def loadMusicFolder(self, folderId):
+		try:
+			folders = self.connection.getMusicDirectory(folderId)
+			if 'directory' in folders:
+				for item in folders['directory']['child']:
+					item['type'] = 'musicFolder'
+			self.returnMusicFolder.emit(folders, folderId)
+		except errors as e:
+			self.handleErr(e)
+
+	@pyqtSlot()
+	def loadRootMusicFolders(self):
+		try:
+			folders = self.connection.getMusicFolders()
+			if 'musicFolders' in folders and 'musicFolder' in folders['musicFolders']:
+				for item in folders['musicFolders']['musicFolder']:
+					item['type'] = 'rootMusicFolder'
+			self.returnRootMusicFolders.emit(folders)
+		except errors as e:
 			self.handleErr(e)
 
 	@pyqtSlot(str, object)
@@ -71,7 +106,7 @@ class networkWorker(QObject):
 			songs = songs['album']
 			songs['type'] = 'album'
 			self.returnAlbumSongs.emit(songs, addToQueue)
-		except URLError as e:
+		except errors as e:
 			self.handleErr(e)
 
 	@pyqtSlot()
@@ -82,7 +117,7 @@ class networkWorker(QObject):
 				for item in ret['playlists']['playlist']:
 					item['type'] = 'playlist'
 			self.returnPlaylists.emit(ret)
-		except URLError as e:
+		except errors as e:
 			self.handleErr(e)
 
 	@pyqtSlot(str, object)
@@ -93,7 +128,7 @@ class networkWorker(QObject):
 			for item in ret['playlist']['entry']:
 				item['type'] = 'song'
 			self.returnPlaylistSongs.emit(ret, addToQueue)
-		except URLError as e:
+		except errors as e:
 			self.handleErr(e)
 
 	@pyqtSlot(str, object)
@@ -104,7 +139,7 @@ class networkWorker(QObject):
 				songlist.append(song['id'])
 			self.connection.updatePlaylist(id, songIdsToAdd=songlist)
 			self.showMessageBox.emit('Added {} songs to playlist'.format(len(songs)))
-		except URLError as e:
+		except errors as e:
 			self.handleErr(e)
 
 	@pyqtSlot(str, int)
@@ -121,7 +156,7 @@ class networkWorker(QObject):
 				for item in ret['searchResult3']['song']:
 					item['type'] = 'song'
 			self.returnSearchResults.emit(ret['searchResult3'], page)
-		except URLError as e:
+		except errors as e:
 			self.handleErr(e)
 
 	@pyqtSlot(str, object)
@@ -132,5 +167,5 @@ class networkWorker(QObject):
 				for item in ret['artist']['album']:
 					item['type'] = 'album'
 			self.returnArtistAlbums.emit(ret, index)
-		except URLError as e:
+		except errors as e:
 			self.handleErr(e)

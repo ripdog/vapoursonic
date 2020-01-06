@@ -1,7 +1,7 @@
 import ctypes
 import ctypes.wintypes
 
-from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
+from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, Qt
 
 # import clr
 # sys.path.append(r'C:\Windows\System32')
@@ -171,10 +171,19 @@ class taskbarProgressBar(QObject):
 		if self.parent().playbackController.currentSongData:
 			if 'coverArt' in self.parent().playbackController.currentSongData:
 				artId = self.parent().playbackController.currentSongData['coverArt']
-				self.thumbnailToolBar.setIconicThumbnailPixmap(self.parent().albumArtCache[artId].scaled(128,128))
-				self.thumbnailToolBar.setIconicLivePreviewPixmap(self.parent().albumArtCache[artId].scaled(256,256))
+				try:
+					self.thumbnailToolBar.setIconicThumbnailPixmap(
+						self.parent().albumArtCache[artId].scaled(179, 179, Qt.KeepAspectRatio,
+																  Qt.SmoothTransformation))
+					self.thumbnailToolBar.setIconicLivePreviewPixmap(
+						self.parent().albumArtCache[artId].scaled(256, 256, Qt.KeepAspectRatio,
+																  Qt.SmoothTransformation))
+				except KeyError:
+					self.thumbnailToolBar.setIconicThumbnailPixmap(QPixmap(128, 128))
+					self.thumbnailToolBar.setIconicLivePreviewPixmap(QPixmap(128, 128))  # UNTESTED
 			else:
-				self.thumbnailToolBar.setIconicThumbnailPixmap(QPixmap(128,128))
+				self.thumbnailToolBar.setIconicThumbnailPixmap(QPixmap(128, 128))
+				self.thumbnailToolBar.setIconicLivePreviewPixmap(QPixmap(128, 128))  # UNTESTED
 
 # class systemMediaTransportControls(object):
 # 	def __init__(self):
