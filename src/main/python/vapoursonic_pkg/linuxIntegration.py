@@ -1,8 +1,8 @@
 import os
 import random
 
-from PyQt5.QtCore import QObject, pyqtProperty, Q_CLASSINFO, pyqtSlot
-from PyQt5.QtDBus import QDBusConnection, QDBusAbstractAdaptor, QDBusMessage, QDBusObjectPath
+from PyQt5.QtCore import QObject, pyqtProperty, Q_CLASSINFO, pyqtSlot, QMetaType
+from PyQt5.QtDBus import QDBusConnection, QDBusAbstractAdaptor, QDBusMessage, QDBusObjectPath, QDBusArgument
 
 # a lot of this was lifted shamelessly from https://github.com/KenjiTakahashi/gayeogi
 # Thanks!
@@ -71,6 +71,7 @@ class mprisPlayer(QDBusAbstractAdaptor):
 		self.setAutoRelaySignals(True)
 		self.playbackController = playbackController
 		playbackController.updatePlayerUI.connect(self._emitMetadata)
+		playbackController.idleUpdate.connect(self._emitIdleUpdate)
 		self.helper = MPRIS2Helper()
 	
 	@pyqtSlot()
@@ -130,13 +131,14 @@ class mprisPlayer(QDBusAbstractAdaptor):
 			self.helper.PropertiesChanged(
 				'org.mpris.MediaPlayer2.Player', 'Metadata', metadata
 			)
-		elif updateType == 'idle':
-			self.helper.PropertiesChanged("org.mpris.MediaPlayer2.Player",
-			                              "PlaybackStatus", self.playbackController.getCurrentPlaybackState())
-	
+
 	@pyqtProperty(str)
 	def PlaybackStatus(self):
 		return self.playbackController.getCurrentPlaybackState()
+	
+	def _emitIdleUpdate(self, _):
+		self.helper.PropertiesChanged("org.mpris.MediaPlayer2.Player",
+		                              "PlaybackStatus", self.playbackController.getCurrentPlaybackState())
 	
 	@pyqtProperty(str)
 	def RepeatStatus(self):
@@ -241,7 +243,7 @@ class MPRIS2Helper(object):
 			property: property name
 			values: current property value(s)
 		"""
-		self.signal.setArguments(
-			[interface, {property: values}, ['']]
-		)
+		emptyStringListArg = QDBusArgument()
+		emptyStringListArg.add([""], QMetaType.QStringList)
+		self.signal.setArguments([interface, {property: values}, emptyStringListArg])
 		QDBusConnection.sessionBus().send(self.signal)
