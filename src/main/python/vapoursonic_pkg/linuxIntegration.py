@@ -1,12 +1,11 @@
 import os
-import random
-
-from PyQt5.QtCore import QObject, pyqtProperty, Q_CLASSINFO, pyqtSlot, QMetaType
+from PyQt5.QtCore import QObject, pyqtProperty, Q_CLASSINFO, pyqtSlot, QMetaType, pyqtSignal
 from PyQt5.QtDBus import QDBusConnection, QDBusAbstractAdaptor, QDBusMessage, QDBusObjectPath, QDBusArgument
 
 # a lot of this was lifted shamelessly from https://github.com/KenjiTakahashi/gayeogi
 # Thanks!
 from vapoursonic_pkg.config import config
+from vapoursonic_pkg.albumArtLoader import buildUrl
 
 
 class mprisIntegration(QObject):
@@ -63,6 +62,21 @@ class mprisMain(QDBusAbstractAdaptor):
 
 
 # noinspection PyArgumentList
+def buildMetadataDict(song):
+	return {
+		'mpris:trackid': QDBusObjectPath(
+			'/vapoursonic/{}'.format(song['id'])
+		),
+		'xesam:trackNumber': song['track'],
+		'xesam:title': song['title'],
+		'xesam:album': song['album'],
+		'xesam:artist': song['artist'],
+		'mpris:length': song['duration'] * 1000000,  # convert to microseconds
+		'mpris:artUrl': buildUrl('currentlyPlaying',
+		                         song['coverArt']) if 'coverArt' in song else ""
+	}
+
+
 class mprisPlayer(QDBusAbstractAdaptor):
 	Q_CLASSINFO("D-Bus Interface", "org.mpris.MediaPlayer2.Player")
 	
@@ -72,66 +86,44 @@ class mprisPlayer(QDBusAbstractAdaptor):
 		self.playbackController = playbackController
 		playbackController.updatePlayerUI.connect(self._emitMetadata)
 		playbackController.idleUpdate.connect(self._emitIdleUpdate)
+		playbackController.seeked.connect(self._emitSeeked)
+		playbackController.volumeSet.connect(self._emitVolume)
 		self.helper = MPRIS2Helper()
 	
 	@pyqtSlot()
 	def Play(self):
-		print('play signal sent')
 		self.playbackController.playPause()
 	
 	@pyqtSlot()
 	def Pause(self):
-		print('pause signal sent')
+		# print('pause signal sent')
 		self.playbackController.playPause()
 	
 	@pyqtSlot()
 	def Next(self):
-		print('Next signal sent')
+		# print('Next signal sent')
 		self.playbackController.playNextSongExplicitly()
 	
 	@pyqtSlot()
 	def Previous(self):
-		print('Next signal sent')
+		# print('Next signal sent')
 		self.playbackController.playPreviousSong()
 	
 	@pyqtProperty("QMap<QString, QVariant>")
 	def Metadata(self):
-		metadata = {}
-		currentSong = self.playbackController.currentSongData
-		if not currentSong:
-			metadata['mpris:trackid'] = QDBusObjectPath(
+		if not self.playbackController.currentSongData:
+			metadata = {'mpris:trackid': QDBusObjectPath(
 				'/vapoursonic/notrack'
-			)
+			)}
 			return metadata
-		metadata = {
-			'mpris:trackid': QDBusObjectPath(
-				'/vapoursonic/{}'.format(currentSong['id'])
-			),
-			'xesam:trackNumber': currentSong['track'],
-			'xesam:title': currentSong['title'],
-			'xesam:album': currentSong['album'],
-			'xesam:artist': currentSong['artist'],
-			'mpris:length': currentSong['duration'] * 1000000  # convert to microseconds
-		}
-		return metadata
+		return buildMetadataDict(self.playbackController.currentSongData)
 	
 	def _emitMetadata(self, update, updateType):
 		if update and updateType == 'newCurrentSong':
-			print('emitting new metadata on mpris')
-			metadata = {
-				'mpris:trackid': QDBusObjectPath(
-					'/vapoursonic/{}'.format(update['id'])
-				),
-				'xesam:trackNumber': update['track'],
-				'xesam:title': update['title'],
-				'xesam:album': update['album'],
-				'xesam:artist': update['artist'],
-				'mpris:length': update['duration'] * 1000000  # convert to microseconds
-			}
 			self.helper.PropertiesChanged(
-				'org.mpris.MediaPlayer2.Player', 'Metadata', metadata
+				'org.mpris.MediaPlayer2.Player', 'Metadata', buildMetadataDict(update)
 			)
-
+	
 	@pyqtProperty(str)
 	def PlaybackStatus(self):
 		return self.playbackController.getCurrentPlaybackState()
@@ -162,7 +154,7 @@ class mprisPlayer(QDBusAbstractAdaptor):
 		return False
 	
 	@Shuffle.setter
-	def Shuffle(self, shuffle):
+	def Shuffle(self, _):
 		self.playbackController.shufflePlayQueue()
 	
 	@pyqtProperty(float)
@@ -201,6 +193,23 @@ class mprisPlayer(QDBusAbstractAdaptor):
 		else:
 			return False
 	
+	@pyqtSlot("qlonglong")
+	def Seek(self, offset):
+		# print('seeking to {}'.format(offset))
+		newtime = self.playbackController.player.time_pos + (offset / 1000000)
+		self.playbackController.setTrackProgress(newtime)
+	
+	Seeked = pyqtSignal('qlonglong')
+	
+	def _emitSeeked(self, position):
+		self.Seeked.emit(position * 1000000)
+	
+	@pyqtSlot(QDBusObjectPath, "qlonglong")
+	def SetPosition(self, trackId, position):
+		# print('seeking track id {} position to {}'.format(trackId.path(), position / 1000000))
+		if trackId.path() == '/vapoursonic/{}'.format(self.playbackController.currentSongData['id']):
+			self.playbackController.setTrackProgress(position / 1000000)
+	
 	@pyqtProperty(bool)
 	def CanSeek(self):
 		return True
@@ -216,6 +225,14 @@ class mprisPlayer(QDBusAbstractAdaptor):
 		except:
 			pass
 	
+	@Volume.setter
+	def Volume(self, volume):
+		self.playbackController.setVolume(int(volume * 100))
+	
+	def _emitVolume(self, volume):
+		self.helper.PropertiesChanged("org.mpris.MediaPlayer2.Player",
+		                              "Volume", volume / 100)
+	
 	@pyqtProperty("qlonglong")
 	def Position(self):
 		try:
@@ -228,6 +245,7 @@ class mprisPlayer(QDBusAbstractAdaptor):
 		self.playbackController.playPause()
 
 
+# noinspection PyCallByClass
 class MPRIS2Helper(object):
 	def __init__(self):
 		self.signal = QDBusMessage.createSignal(
@@ -236,14 +254,14 @@ class MPRIS2Helper(object):
 			"PropertiesChanged"
 		)
 	
-	def PropertiesChanged(self, interface, property, values):
+	def PropertiesChanged(self, interface, prop, values):
 		"""Sends PropertiesChanged signal through sessionBus.
 		Args:
 			interface: interface name
-			property: property name
+			prop: property name
 			values: current property value(s)
 		"""
 		emptyStringListArg = QDBusArgument()
 		emptyStringListArg.add([""], QMetaType.QStringList)
-		self.signal.setArguments([interface, {property: values}, emptyStringListArg])
+		self.signal.setArguments([interface, {prop: values}, emptyStringListArg])
 		QDBusConnection.sessionBus().send(self.signal)
