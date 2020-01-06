@@ -1,2 +1,6 @@
 config.yaml
 /target/
+*.pyo
+tests/
+.idea
+__pycache__

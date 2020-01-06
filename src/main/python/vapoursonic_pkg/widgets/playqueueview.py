@@ -1,4 +1,5 @@
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QTreeView, QMenu
 
 
@@ -33,7 +34,7 @@ class PlayQueueView(QTreeView):
 					menu.addAction(item)
 				except TypeError:
 					menu.addMenu(item)
-			menu.exec_(self.mapToGlobal(position))
+			menu.exec_(QCursor.pos())
 
 	def playSelectedSongFromQueue(self):
 		print('playing song from queue')

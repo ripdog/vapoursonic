@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'resources\base\mainwindow.ui'
+# Form implementation generated from reading ui file 'resources/base/mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.2
 #
@@ -341,7 +341,7 @@ class Ui_vapoursonic(object):
 "                                                        padding:0;\n"
 "                                                    ")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("resources\\base\\."), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("resources/base/."), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.prevTrack.setIcon(icon)
         self.prevTrack.setObjectName("prevTrack")
         self.nowPlayingLayout.addWidget(self.prevTrack)
@@ -476,5 +476,5 @@ class Ui_vapoursonic(object):
         self.menuFile.setTitle(_translate("vapoursonic", "File"))
         self.actionExit.setText(_translate("vapoursonic", "Exit"))
         self.actionSettings.setText(_translate("vapoursonic", "Settings"))
-from vapoursonic.widgets.playqueueview import PlayQueueView
-from vapoursonic.widgets.trackProgressSlider import trackProgressSlider
+from vapoursonic_pkg.widgets.playqueueview import PlayQueueView
+from vapoursonic_pkg.widgets.trackProgressSlider import trackProgressSlider

@@ -1,6 +1,6 @@
 {
-  "categories": "Utility;",
-  "description": "",
-  "author_email": "",
+  "categories": "Multimedia;",
+  "description": "A simple player client for Airsonic servers",
+  "author_email": "ripdog@users.noreply.github.com",
   "url": ""
 }

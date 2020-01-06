@@ -4,7 +4,7 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from libsonic import Connection, AuthError, CredentialError, VersionError, ParameterError, SonicError, LicenseError, \
 	DataNotFoundError
 
-from vapoursonic.config import config
+from vapoursonic_pkg.config import config
 
 errors = (SonicError,
 		  ParameterError,

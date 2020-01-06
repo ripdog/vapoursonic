@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QAction, QMenu
 
-from vapoursonic.config import config
+from vapoursonic_pkg.config import config
 
 
 def getItemsFromList(focusedList):

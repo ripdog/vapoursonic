@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QTimer, Qt, QRect
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton, QStyle
 
-from vapoursonic.config import config
+from vapoursonic_pkg.config import config
 
 
 class toastMessageDisplay(QWidget):
