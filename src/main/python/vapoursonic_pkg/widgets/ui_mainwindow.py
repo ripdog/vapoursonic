@@ -296,6 +296,7 @@ class Ui_vapoursonic(object):
         self.playQueueToolboxLayout.addWidget(self.volumeSliderLabel)
         self.volumeSlider = QtWidgets.QSlider(self.horizontalLayoutWidget)
         self.volumeSlider.setOrientation(QtCore.Qt.Vertical)
+        self.volumeSlider.setMaximum(100)
         self.volumeSlider.setObjectName("volumeSlider")
         self.playQueueToolboxLayout.addWidget(self.volumeSlider)
         self.playQueueListLayout.addLayout(self.playQueueToolboxLayout)

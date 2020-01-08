@@ -281,6 +281,7 @@ class MainWindow(QMainWindow):
 	def populatePlayQueue(self):
 		# define playbackController and connect it up
 		self.playbackController = playbackController()
+		self.playbackController.volumeSet.connect(lambda vol: self.ui.volumeSlider.setValue(vol))
 		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
 		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
@@ -771,7 +772,7 @@ class MainWindow(QMainWindow):
 		elif artType == 'currentlyPlaying':
 			self.ui.playingAlbumArt.setPixmap(QPixmap())
 			self.ui.playingAlbumArt.setCursor(Qt.ArrowCursor)
-			print('emitting artAvailable as song has no art')
+			# print('emitting artAvailable as song has no art')
 			self.signals.artAvailableForCurrentSong.emit()
 
 	def displayAlbumArt(self, aid, artType):
@@ -788,7 +789,7 @@ class MainWindow(QMainWindow):
 			                                  scaled(self.ui.playingAlbumArt.size(),
 			                                         Qt.KeepAspectRatio,
 			                                         Qt.SmoothTransformation))
-			print('emitting artAvailable art is available for {}'.format(aid))
+			# print('emitting artAvailable art is available for {}'.format(aid))
 			self.signals.artAvailableForCurrentSong.emit()
 
 	def displayFullAlbumArtForPlaying(self, _):
