@@ -4,6 +4,7 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from libsonic import Connection, AuthError, CredentialError, VersionError, ParameterError, SonicError, LicenseError, \
 	DataNotFoundError
 
+from re import sub
 from vapoursonic_pkg.config import config
 
 errors = (SonicError,
@@ -38,15 +39,28 @@ class networkWorker(QObject):
 			e = e.reason
 		self.errorHandler.emit(str(e))
 
-	@pyqtSlot(str, str, str, result=bool)
-	def connectToServer(self, domain, username, password):
+	@pyqtSlot(bool, result=bool)
+	def connectToServer(self, _):
 		try:
-			print('connecting to {}'.format(domain))
-			domain = domain.strip()
-			if not domain[0:8] == "https://" and not domain[0:7] == "http://":
-				domain = "https://" + domain
-			config.fqdn = domain
-			self.connection = Connection(domain, username, password, port=443, appName=config.appname,
+			print('connecting to {}'.format(config.domain))
+			domain = config.domain.strip()
+			domain = sub(r'https?://', '', domain)
+			domain = sub(r'/', '', domain)
+			if config.useTLS:
+				scheme = "https"
+			else:
+				scheme = 'http'
+			if config.customPort:
+				port = config.customPort
+			else:
+				if config.useTLS:
+					port = 443
+				else:
+					port = 80
+			noportdomain = f"{scheme}://{domain}"
+			config.fqdn =  f"{scheme}://{domain}:{port}"
+			print(f'fqdn: {config.fqdn}')
+			self.connection = Connection(noportdomain, config.username, config.password, port=port, appName=config.appname,
 										 apiVersion="1.15.0")
 			ping = self.connection.ping()
 			print(ping)

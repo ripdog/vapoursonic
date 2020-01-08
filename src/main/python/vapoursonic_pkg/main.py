@@ -96,11 +96,7 @@ class MainWindow(QMainWindow):
 
 		self.signals = MainWindowSignals()
 		self.toastDisplay = toastMessageDisplay(self)
-		self.ui.connectButton.clicked.connect(lambda: self.networkWorker.connectToServer(
-			self.ui.domainInput.text(),
-			self.ui.usernameInput.text(),
-			self.ui.passwordInput.text()
-		))
+		self.ui.connectButton.clicked.connect(self.networkWorker.connectToServer)
 		self.ui.actionSettings.triggered.connect(showSettings)
 		self.ui.autoConnectCheckBox.stateChanged.connect(settingsPanel.setAutoConnectState)
 		self.networkWorker.returnAlbums.connect(self.receiveAlbumList)
@@ -148,14 +144,26 @@ class MainWindow(QMainWindow):
 
 	def populateConnectFields(self):
 		self.ui.domainInput.setText(config.domain)
+		self.ui.domainInput.textChanged.connect(lambda text: config.setVar('domain', text))
 		self.ui.usernameInput.setText(config.username)
+		self.ui.usernameInput.textChanged.connect(lambda text: config.setVar('username', text))
 		self.ui.passwordInput.setText(config.password)
+		self.ui.passwordInput.textChanged.connect(lambda text: config.setVar('password', text))
 		self.ui.autoConnectCheckBox.setChecked(config.autoConnect)
 		self.ui.useTLSCheckBox.setChecked(config.useTLS)
+		self.ui.useTLSCheckBox.toggled.connect(lambda: config.setVar('useTLS', not config.useTLS))
 		self.ui.useCustomPortCheckBox.setChecked(config.useCustomPort)
+		self.ui.useCustomPortCheckBox.toggled.connect(self.toggleUseCustomPort)
 		self.ui.customPortLineEdit.setEnabled(config.useCustomPort)
 		self.ui.customPortLineEdit.setText(str(config.customPort))
+		self.ui.customPortLineEdit.textChanged.connect(lambda text: config.setVar('customPort', int(text)))
 		self.ui.customPortLineEdit.setValidator(QIntValidator())
+
+	def toggleUseCustomPort(self, _):
+		config.useCustomPort = not config.useCustomPort
+		self.ui.customPortLineEdit.setEnabled(config.useCustomPort)
+
+
 	def resizeEvent(self, newSize):
 		self.signals.resized.emit()
 		QMainWindow.resizeEvent(self, newSize)
@@ -165,9 +173,6 @@ class MainWindow(QMainWindow):
 		# print('got connect result: ')
 		# print(success)
 		if success:
-			config.domain = self.ui.domainInput.text()
-			config.username = self.ui.usernameInput.text()
-			config.password = self.ui.passwordInput.text()
 			self.ui.stackedWidget.setCurrentIndex(1)
 			self.populatePlayerUI()
 		else:

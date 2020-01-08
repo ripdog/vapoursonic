@@ -85,6 +85,12 @@ class configManager():
 			else:
 				setattr(self, item, self.fallbackConfig[item])
 
+	def setVar(self, var, val):
+		if var in self.fallbackConfig.keys():
+			setattr(self, var, val)
+		else:
+			raise AttributeError('invalid config variable name: {}'.format(var))
+
 	def save(self, playbackController):
 		saveme = {}
 		for item in self.fallbackConfig.keys():
