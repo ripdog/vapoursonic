@@ -38,6 +38,8 @@ Obviously transcoding isn't great for audio quality, especially if your files ar
 ***
 Known Issues:
 
+Folder browsing doesn't work right now, as my server is returning errors when I try to call the API. I won't be getting that working until I can call the API locally.
+
 HTTP requests do not attempt IPv6 and v4 simultaneously (happy eyeballs). 
 This means that if you have a working v6 connection and your server has a broken v6 address advertised in DNS, all requests to your server will be extremely slow. 
 Fix or remove the v6 record in your server DNS to fix.

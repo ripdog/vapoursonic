@@ -170,8 +170,6 @@ class MainWindow(QMainWindow):
 
 	@pyqtSlot(bool)
 	def connectResult(self, success):
-		# print('got connect result: ')
-		# print(success)
 		if success:
 			self.ui.stackedWidget.setCurrentIndex(1)
 			self.populatePlayerUI()
@@ -493,7 +491,6 @@ class MainWindow(QMainWindow):
 
 	def receivePlaylists(self, playlists):
 		self.playlistCache = []
-		print(playlists)
 		if 'status' in playlists.keys() and playlists['status'] == 'ok':
 			self.playlistCache = playlists['playlists']['playlist']
 			if self.albumListState == 'playlists':
