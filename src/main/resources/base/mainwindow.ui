@@ -27,7 +27,7 @@
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="connectionSetup">
        <layout class="QGridLayout" name="gridLayout_2">
@@ -451,7 +451,7 @@
                <item>
                 <layout class="QVBoxLayout" name="selectedAlbumTextDetails">
                  <item>
-                  <widget class="QLabel" name="selectedAlbumTitle">
+                  <widget class="marqueeLabel" name="selectedAlbumTitle">
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
@@ -480,7 +480,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="selectedAlbumArtist">
+                  <widget class="marqueeLabel" name="selectedAlbumArtist">
                    <property name="maximumSize">
                     <size>
                      <width>600</width>
@@ -502,6 +502,22 @@
                  </item>
                  <item>
                   <layout class="QHBoxLayout" name="selectedAlbumTextDetailsMinor">
+                   <item>
+                    <spacer name="horizontalSpacer_6">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::Fixed</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>16</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
                    <item>
                     <widget class="QLabel" name="selectedAlbumTrackCountIcon">
                      <property name="sizePolicy">
@@ -740,11 +756,11 @@
               </item>
               <item>
                <widget class="QSlider" name="volumeSlider">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
                 <property name="maximum">
                  <number>100</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
                 </property>
                </widget>
               </item>
@@ -787,7 +803,13 @@
           <item>
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
-             <widget class="QLabel" name="currentPlayingLabel">
+             <widget class="marqueeLabel" name="currentPlayingLabel">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>300</width>
@@ -805,7 +827,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="trackArtistName">
+             <widget class="marqueeLabel" name="trackArtistName">
               <property name="maximumSize">
                <size>
                 <width>300</width>
@@ -954,6 +976,11 @@
    <class>trackProgressSlider</class>
    <extends>QSlider</extends>
    <header>vapoursonic_pkg/widgets/trackProgressSlider.h</header>
+  </customwidget>
+  <customwidget>
+   <class>marqueeLabel</class>
+   <extends>QLabel</extends>
+   <header>vapoursonic_pkg/widgets/marqueeLabel.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

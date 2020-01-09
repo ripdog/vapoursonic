@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'resources/base/mainwindow.ui'
+# Form implementation generated from reading ui file 'resources\base\mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.2
 #
@@ -188,7 +188,7 @@ class Ui_vapoursonic(object):
         self.selectedAlbumDetails.addWidget(self.selectedAlbumArt)
         self.selectedAlbumTextDetails = QtWidgets.QVBoxLayout()
         self.selectedAlbumTextDetails.setObjectName("selectedAlbumTextDetails")
-        self.selectedAlbumTitle = QtWidgets.QLabel(self.verticalLayoutWidget_2)
+        self.selectedAlbumTitle = marqueeLabel(self.verticalLayoutWidget_2)
         self.selectedAlbumTitle.setMinimumSize(QtCore.QSize(0, 64))
         self.selectedAlbumTitle.setMaximumSize(QtCore.QSize(600, 128))
         font = QtGui.QFont()
@@ -199,7 +199,7 @@ class Ui_vapoursonic(object):
         self.selectedAlbumTitle.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.selectedAlbumTitle.setObjectName("selectedAlbumTitle")
         self.selectedAlbumTextDetails.addWidget(self.selectedAlbumTitle)
-        self.selectedAlbumArtist = QtWidgets.QLabel(self.verticalLayoutWidget_2)
+        self.selectedAlbumArtist = marqueeLabel(self.verticalLayoutWidget_2)
         self.selectedAlbumArtist.setMaximumSize(QtCore.QSize(600, 48))
         font = QtGui.QFont()
         font.setPointSize(14)
@@ -209,6 +209,8 @@ class Ui_vapoursonic(object):
         self.selectedAlbumTextDetails.addWidget(self.selectedAlbumArtist)
         self.selectedAlbumTextDetailsMinor = QtWidgets.QHBoxLayout()
         self.selectedAlbumTextDetailsMinor.setObjectName("selectedAlbumTextDetailsMinor")
+        spacerItem6 = QtWidgets.QSpacerItem(16, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.selectedAlbumTextDetailsMinor.addItem(spacerItem6)
         self.selectedAlbumTrackCountIcon = QtWidgets.QLabel(self.verticalLayoutWidget_2)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -295,8 +297,8 @@ class Ui_vapoursonic(object):
         self.volumeSliderLabel.setObjectName("volumeSliderLabel")
         self.playQueueToolboxLayout.addWidget(self.volumeSliderLabel)
         self.volumeSlider = QtWidgets.QSlider(self.horizontalLayoutWidget)
-        self.volumeSlider.setOrientation(QtCore.Qt.Vertical)
         self.volumeSlider.setMaximum(100)
+        self.volumeSlider.setOrientation(QtCore.Qt.Vertical)
         self.volumeSlider.setObjectName("volumeSlider")
         self.playQueueToolboxLayout.addWidget(self.volumeSlider)
         self.playQueueListLayout.addLayout(self.playQueueToolboxLayout)
@@ -316,14 +318,19 @@ class Ui_vapoursonic(object):
         self.nowPlayingLayout.addWidget(self.playingAlbumArt)
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.currentPlayingLabel = QtWidgets.QLabel(self.mainPage)
+        self.currentPlayingLabel = marqueeLabel(self.mainPage)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.currentPlayingLabel.sizePolicy().hasHeightForWidth())
+        self.currentPlayingLabel.setSizePolicy(sizePolicy)
         self.currentPlayingLabel.setMaximumSize(QtCore.QSize(300, 16777215))
         font = QtGui.QFont()
         font.setPointSize(12)
         self.currentPlayingLabel.setFont(font)
         self.currentPlayingLabel.setObjectName("currentPlayingLabel")
         self.verticalLayout.addWidget(self.currentPlayingLabel)
-        self.trackArtistName = QtWidgets.QLabel(self.mainPage)
+        self.trackArtistName = marqueeLabel(self.mainPage)
         self.trackArtistName.setMaximumSize(QtCore.QSize(300, 16777215))
         self.trackArtistName.setObjectName("trackArtistName")
         self.verticalLayout.addWidget(self.trackArtistName)
@@ -342,7 +349,7 @@ class Ui_vapoursonic(object):
 "                                                        padding:0;\n"
 "                                                    ")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("resources/base/."), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("resources\\base\\."), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.prevTrack.setIcon(icon)
         self.prevTrack.setObjectName("prevTrack")
         self.nowPlayingLayout.addWidget(self.prevTrack)
@@ -384,7 +391,7 @@ class Ui_vapoursonic(object):
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(vapoursonic)
-        self.stackedWidget.setCurrentIndex(0)
+        self.stackedWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(vapoursonic)
         vapoursonic.setTabOrder(self.domainInput, self.usernameInput)
         vapoursonic.setTabOrder(self.usernameInput, self.passwordInput)
@@ -477,5 +484,6 @@ class Ui_vapoursonic(object):
         self.menuFile.setTitle(_translate("vapoursonic", "File"))
         self.actionExit.setText(_translate("vapoursonic", "Exit"))
         self.actionSettings.setText(_translate("vapoursonic", "Settings"))
+from vapoursonic_pkg.widgets.marqueeLabel import marqueeLabel
 from vapoursonic_pkg.widgets.playqueueview import PlayQueueView
 from vapoursonic_pkg.widgets.trackProgressSlider import trackProgressSlider
