@@ -146,13 +146,25 @@ class networkWorker(QObject):
 			self.handleErr(e)
 
 	@pyqtSlot(str, object)
+	def addSongsToNewPlaylist(self, name, songs):
+		try:
+			ids = []
+			for song in songs:
+				ids.append(song['id'])
+			self.connection.createPlaylist(name=name, songIds=ids)
+			self.showMessageBox.emit('Created playlist {} with {} songs'.format(name, len(ids)))
+			self.getPlaylists()
+		except errors as e:
+			self.handleErr(e)
+
+	@pyqtSlot(str, object)
 	def addSongsToPlaylist(self, id, songs):
 		try:
 			songlist = []
 			for song in songs:
 				songlist.append(song['id'])
 			self.connection.updatePlaylist(id, songIdsToAdd=songlist)
-			self.showMessageBox.emit('Added {} songs to playlist'.format(len(songs)))
+			self.showMessageBox.emit('Added {} songs to playlist'.format(len(songlist)))
 		except errors as e:
 			self.handleErr(e)
 

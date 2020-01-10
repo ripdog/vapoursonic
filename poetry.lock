@@ -185,6 +185,17 @@ version = "12.7.0"
 
 [[package]]
 category = "dev"
+description = "PEP561 stub files for the PyQt5 framework"
+name = "pyqt5-stubs"
+optional = false
+python-versions = "*"
+version = "5.13.1.4"
+
+[package.dependencies]
+PyQt5 = ">=5.13.0,<5.14.0"
+
+[[package]]
+category = "dev"
 description = "pytest: simple powerful testing with Python"
 name = "pytest"
 optional = false
@@ -305,7 +316,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "1d29224769d7bb8cd08240292078f3cc2301a81a08d483ca7a44e56608d71e58"
+content-hash = "ea6a2a2cb03484ba581295898422eb078aba6259c83e1519f714e6e91cea536b"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -392,6 +403,9 @@ pyqt5-sip = [
     {file = "PyQt5_sip-12.7.0-cp38-cp38-win32.whl", hash = "sha256:7695dfafb4f5549ce1290ae643d6508dfc2646a9003c989218be3ce42a1aa422"},
     {file = "PyQt5_sip-12.7.0-cp38-cp38-win_amd64.whl", hash = "sha256:091fbbe10a7aebadc0e8897a9449cda08d3c3f663460d812eca3001ca1ed3526"},
     {file = "PyQt5_sip-12.7.0.tar.gz", hash = "sha256:0a067ade558befe4d46335b13d8b602b5044363bfd601419b556d4ec659bca18"},
+]
+pyqt5-stubs = [
+    {file = "PyQt5-stubs-5.13.1.4.tar.gz", hash = "sha256:c396d3a6de0e92b3d9465aa318e945464b7fa35bceeae1e68e5233715c8a0c90"},
 ]
 pytest = [
     {file = "pytest-3.10.1-py2.py3-none-any.whl", hash = "sha256:3f193df1cfe1d1609d4c583838bea3d532b18d6160fd3f55c9447fdca30848ec"},

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QAction, QMenu
+from PyQt5.QtWidgets import QAction, QMenu, QInputDialog, QLineEdit
 
 from vapoursonic_pkg.config import config
 
@@ -63,6 +63,25 @@ class addToPlaylistAction(QAction):
 				addUs.append(item)
 		self.parent().signals.addSongsToPlaylist.emit(self.playlist['id'], addUs)
 
+class addToNewPlaylistAction(QAction):
+	def __init__(self, parent, focusedList):
+		super(addToNewPlaylistAction, self).__init__('New Playlist...', parent)
+		self.focusedList = focusedList
+		self.triggered.connect(self.addToNewPlaylist)
+
+
+	def addToNewPlaylist(self):
+		items = getItemsFromList(self.focusedList)
+		addUs = []
+		for item in items:
+			if item['type'] == 'song':
+				addUs.append(item)
+		text, ok = QInputDialog().getText(self.parent(), 'New Playlist Name',
+										  'Enter the name of the new playlist:',
+										  QLineEdit.Normal)
+		if text and ok:
+			self.parent().signals.addSongsToNewPlaylist.emit(text, addUs)
+
 
 class addToPlaylistMenu(QMenu):
 	def __init__(self, parent, focusedList):
@@ -73,6 +92,7 @@ class addToPlaylistMenu(QMenu):
 		try:
 			for playlist in self.parent().playlistCache:
 				self.addAction(addToPlaylistAction(playlist, parent, focusedList))
+			self.addAction(addToNewPlaylistAction(parent, focusedList))
 		except AttributeError:
 			pass
 
