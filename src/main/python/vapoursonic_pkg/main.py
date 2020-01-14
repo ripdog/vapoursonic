@@ -34,6 +34,7 @@ class MainWindowSignals(QObject):
 	loadMusicFolder = pyqtSignal(str)
 	loadRootMusicFolder = pyqtSignal()
 	addSongsToNewPlaylist = pyqtSignal(str, object)
+	deletePlaylist = pyqtSignal(object)
 
 
 def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
@@ -42,15 +43,20 @@ def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
 		items = vapoursonicActions.getItemsFromList(focusedList)
 		queueSongsActionsAdded = False
 		playlistAddActionsAdded = False
+		playlistEditingActionsAdded = False
 		for item in items:
 			if not queueSongsActionsAdded and \
 					item['type'] == 'song' or \
 					item['type'] == 'album':
 				queueSongsActionsAdded = True
 				menu.addActions(actionsDict['addToQueue'])
+				menu.addAction(actionsDict['itemDetails'])
 			if not playlistAddActionsAdded and item['type'] == 'song':
 				playlistAddActionsAdded = True
 				menu.addMenu(actionsDict['addToPlaylist'][0])
+			if not playlistEditingActionsAdded and item['type'] == 'playlist':
+				playlistEditingActionsAdded = True
+				menu.addActions(actionsDict['playlistEditing'])
 		menu.exec_(QCursor.pos())
 
 
@@ -122,6 +128,7 @@ class MainWindow(QMainWindow):
 		self.signals.loadMusicFolder.connect(self.networkWorker.loadMusicFolder)
 		self.signals.loadRootMusicFolder.connect(self.networkWorker.loadRootMusicFolders)
 		self.networkWorker.returnRootMusicFolders.connect(self.receiveRootMusicFolders)
+		self.signals.deletePlaylist.connect(self.networkWorker.deletePlaylist)
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
 		self.albumListState = 'home'
@@ -253,18 +260,20 @@ class MainWindow(QMainWindow):
 		self.albumTreeListActions = {
 			'addToQueue': [vapoursonicActions.playNextAction(self, self.ui.albumTreeList),
 						   vapoursonicActions.playLastAction(self, self.ui.albumTreeList)],
-			'addToPlaylist': [vapoursonicActions.addToPlaylistMenu(self, self.ui.albumTreeList)]
-			# TODO: Actions should be refreshed when a new playlist is added.
+			'addToPlaylist': [vapoursonicActions.addToPlaylistMenu(self, self.ui.albumTreeList)],
+			'playlistEditing': [vapoursonicActions.deletePlaylistAction(self, self.ui.albumTreeList)],
+			'itemDetails': [vapoursonicActions.copyDetailsMenu(self, self.ui.albumTreeList)]
 		}
 		self.albumTrackListActions = {
 			'addToQueue': [vapoursonicActions.playNextAction(self, self.ui.albumTrackList),
 						   vapoursonicActions.playLastAction(self, self.ui.albumTrackList)],
-			'addToPlaylist': [vapoursonicActions.addToPlaylistMenu(self, self.ui.albumTrackList)]
-			# TODO: Actions should be refreshed when a new playlist is added.
+			'addToPlaylist': [vapoursonicActions.addToPlaylistMenu(self, self.ui.albumTrackList)],
+			'itemDetails': [vapoursonicActions.copyDetailsMenu(self, self.ui.albumTrackList)]
 		}
 		self.playQueueActions = [vapoursonicActions.goToAlbumAction(self, self.ui.playQueueList),
 								 vapoursonicActions.removeFromQueue(self, self.ui.playQueueList),
-								 vapoursonicActions.addToPlaylistMenu(self, self.ui.playQueueList)]
+								 vapoursonicActions.addToPlaylistMenu(self, self.ui.playQueueList),
+								 vapoursonicActions.copyDetailsMenu(self, self.ui.playQueueList)]
 
 	def populateRightPanel(self):
 		# populate right panel
@@ -495,6 +504,7 @@ class MainWindow(QMainWindow):
 		if 'status' in playlists.keys() and playlists['status'] == 'ok':
 			self.playlistCache = playlists['playlists']['playlist']
 			if self.albumListState == 'playlists':
+				self.albumTreeListModel.clear()
 				self.albumTreeListModel.setHorizontalHeaderLabels(["Playlist", 'Song Count'])
 				self.ui.albumTreeList.setHeaderHidden(False)
 				for playlist in playlists['playlists']['playlist']:

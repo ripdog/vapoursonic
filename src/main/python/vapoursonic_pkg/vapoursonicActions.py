@@ -1,4 +1,6 @@
 from PyQt5.QtWidgets import QAction, QMenu, QInputDialog, QLineEdit
+from PyQt5.QtGui import QClipboard
+from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
 from vapoursonic_pkg.config import config
 
@@ -123,3 +125,39 @@ class removeFromQueue(QAction):
 			for item in items:
 				ids.append(item['id'])
 			self.parent().playbackController.removeFromQueue(ids)
+
+class deletePlaylistAction(QAction):
+	def __init__(self, parent, focusedList):
+		super(deletePlaylistAction, self).__init__('Delete playlist', parent)
+		self.focusedList = focusedList
+		self.triggered.connect(self.deletePlaylist)
+
+	def deletePlaylist(self):
+		items = ['No, don\'t delete', 'Yes, I\'m sure - Delete']
+		confirmation, ok = QInputDialog().getItem(self.parent(), 'Really delete playlist?',
+												  'WARNING: This will IRREVERSABLY *DELETE* the '
+												  'selected playlist. Are you absolutely sure?',
+												  items, 0, editable=False)
+		if ok and confirmation == items[1]:
+			lists = getItemsFromList(self.focusedList)
+			if lists[0]['type'] == 'playlist':
+				self.parent().signals.deletePlaylist.emit(lists[0])
+
+class copyDetailsMenu(QAction):
+	def __init__(self, parent, focusedList):
+		# print('init addToPlaylistMenu')
+		super(copyDetailsMenu, self).__init__("Copy details", parent)
+		# self.setIcon(config.icons['baseline-playlist-add.svg'])
+		self.focusedList = focusedList
+		self.triggered.connect(self.copyData)
+		self.clipboard = ApplicationContext().app.clipboard()
+
+	def copyData(self, action):
+		items = getItemsFromList(self.focusedList)
+		text = ''
+		for item in items:
+			if item['type'] == 'song':
+				text = f'Title: {item["title"]}, Artist: {item["artist"]},' \
+					   f' Album: {item["album"]}, Id: {item["id"]}'
+		self.clipboard.setText(text)
+		# print(f'copy data triggered: {action.data()}')

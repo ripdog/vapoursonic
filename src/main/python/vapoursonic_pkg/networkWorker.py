@@ -195,3 +195,12 @@ class networkWorker(QObject):
 			self.returnArtistAlbums.emit(ret, index)
 		except errors as e:
 			self.handleErr(e)
+
+	@pyqtSlot(object)
+	def deletePlaylist(self, playlist):
+		try:
+			self.connection.deletePlaylist(playlist['id'])
+			self.showMessageBox.emit('Deleted playlist {}.'.format(playlist['name']))
+			self.getPlaylists()
+		except errors as e:
+			self.handleErr(e)
