@@ -50,7 +50,7 @@ def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
 					item['type'] == 'album':
 				queueSongsActionsAdded = True
 				menu.addActions(actionsDict['addToQueue'])
-				menu.addAction(actionsDict['itemDetails'])
+				menu.addAction(actionsDict['itemDetails'][0])
 			if not playlistAddActionsAdded and item['type'] == 'song':
 				playlistAddActionsAdded = True
 				menu.addMenu(actionsDict['addToPlaylist'][0])
