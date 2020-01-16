@@ -425,6 +425,7 @@ class Ui_vapoursonic(object):
         self.customPortGroupBox.setTitle(_translate("vapoursonic", "Custom Port"))
         self.useCustomPortCheckBox.setText(_translate("vapoursonic", "Use Custom Port"))
         self.customPortLineEdit.setPlaceholderText(_translate("vapoursonic", "Port"))
+        self.search.setPlaceholderText(_translate("vapoursonic", "Search"))
         self.backHomeButton.setToolTip(_translate("vapoursonic", "Return to the home screen."))
         self.backHomeButton.setText(_translate("vapoursonic", "Back"))
         self.albumTreeListTitle.setText(_translate("vapoursonic", "Home"))

@@ -226,7 +226,11 @@
            <widget class="QWidget" name="verticalLayoutWidget_3">
             <layout class="QVBoxLayout" name="albumTreeListSearch">
              <item>
-              <widget class="QLineEdit" name="search"/>
+              <widget class="QLineEdit" name="search">
+               <property name="placeholderText">
+                <string>Search</string>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QWidget" name="backHomeButtonLayout" native="true">

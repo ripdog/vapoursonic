@@ -1,6 +1,7 @@
+from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QTreeView, QMenu
+from PyQt5.QtWidgets import QTreeView, QMenu, QHeaderView
 
 
 class PlayQueueView(QTreeView):
@@ -10,6 +11,17 @@ class PlayQueueView(QTreeView):
 
 		self.setContextMenuPolicy(Qt.CustomContextMenu)
 		self.customContextMenuRequested.connect(self.playQueueMenu)
+		self.setIndentation(0)
+		self.setAlternatingRowColors(True)
+
+
+	def showEvent(self, a0: QtGui.QShowEvent) -> None:
+		super(PlayQueueView, self).showEvent(a0)
+		self.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+		self.setColumnWidth(0, 25)
+		self.setColumnWidth(1, 25)
+		# self.header().setSectionResizeMode(0, QHeaderView.Fixed)
+		# self.header().setSectionResizeMode(1, QHeaderView.Fixed)
 
 	# self.setDragEnabled(True)
 	# self.setAcceptDrops(True)

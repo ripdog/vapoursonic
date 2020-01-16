@@ -19,7 +19,6 @@ from vapoursonic_pkg import vapoursonicActions
 from vapoursonic_pkg.widgets import settingsPanel
 from vapoursonic_pkg.widgets.albumArtViewer import albumArtViewer
 
-
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str, int)
 	loadAlbumWithId = pyqtSignal(str, object)
@@ -312,7 +311,6 @@ class MainWindow(QMainWindow):
 		self.ui.trackProgressBar.sliderReleased.connect(self.trackSliderReleased)
 		self.sliderBeingDragged = False
 		self.ui.toggleFollowPlayedTrackButton.setChecked(config.followPlaybackInQueue)
-		self.followPlayedTrack = config.followPlaybackInQueue
 		self.ui.toggleFollowPlayedTrackButton.clicked.connect(self.updateFollowPlayedTrack)
 		self.ui.shufflePlayqueueButton.clicked.connect(self.playbackController.shufflePlayQueue)
 		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
@@ -329,8 +327,7 @@ class MainWindow(QMainWindow):
 								activated=self.ui.playQueueList.playSelectedSongFromQueue)
 		self.short4 = QShortcut(Qt.Key_Space, self.ui.playQueueList, context=Qt.ApplicationShortcut,
 								activated=self.playbackController.playPause)
-		# configure the play queue itself
-		self.ui.playQueueList.setAlternatingRowColors(True)
+
 
 	def initializeWindowsIntegration(self):
 		from vapoursonic_pkg import windowsIntegration
@@ -449,7 +446,7 @@ class MainWindow(QMainWindow):
 		elif updateType == 'statusBar':
 			self.statusBar().showMessage(update)
 		elif updateType == 'scrollTo':
-			if self.followPlayedTrack:
+			if config.followPlaybackInQueue:
 				self.ui.playQueueList.scrollTo(update, QAbstractItemView.PositionAtTop)
 				self.ui.playQueueList.selectionModel().select(update,
 															  QItemSelectionModel.ClearAndSelect |
@@ -462,10 +459,7 @@ class MainWindow(QMainWindow):
 			self.ui.playPause.setIcon(self.pauseIcon)
 
 	def updateFollowPlayedTrack(self):
-		if config.followPlaybackInQueue:
-			self.followPlayedTrack = False
-		else:
-			self.followPlayedTrack = True
+		config.followPlaybackInQueue = not config.followPlaybackInQueue
 
 	def albumListClick(self, index):
 		item = self.albumTreeListModel.itemFromIndex(index)
@@ -811,10 +805,14 @@ class MainWindow(QMainWindow):
 		self.displayFullAlbumArt('currentlyBrowsing')
 
 	def displayFullAlbumArt(self, artType):
-		if artType == 'currentlyPlaying' and self.playbackController.currentSong:
+		if artType == 'currentlyPlaying':
+			if not self.playbackController.currentSong:
+				return
 			dialog = albumArtViewer(self, self.playbackController.currentSong.data()['coverArt'],
 									self.networkWorker)
-		elif artType == 'currentlyBrowsing' and self.currentAlbum:
+		elif artType == 'currentlyBrowsing':
+			if not self.currentAlbum:
+				return
 			dialog = albumArtViewer(self, self.currentAlbum['coverArt'],
 									self.networkWorker)
 		else:

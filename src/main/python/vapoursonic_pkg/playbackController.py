@@ -3,10 +3,11 @@ import os
 import random
 import re
 import sys
+import threading
 from datetime import timedelta
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSlot, pyqtSignal, QModelIndex, QTimer
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
+from PyQt5.QtGui import QStandardItem, QIcon
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
 try:
@@ -18,27 +19,11 @@ except FileNotFoundError:
 
 import mpv
 from vapoursonic_pkg.config import config
+from vapoursonic_pkg.playQueueModel import playQueueModel
 
 
 def my_log(loglevel, component, message):
 	print('[{}] {}: {}'.format(loglevel, component, message))
-
-
-class playQueueModel(QStandardItemModel):
-	def __init__(self, controller):
-		super(playQueueModel, self).__init__()
-		self.controller = controller
-	
-	def dropMimeData(self, data, action, row, col, parent):
-		"""
-		Always move the entire row, and don't allow column "shifting"
-		"""
-		currentSongId = self.controller.currentSong.data()['id']
-		self.controller.currentSong = None
-		ret = super().dropMimeData(data, action, row, 0, parent)
-		self.controller.setCurrentSongFromId(currentSongId)
-		self.controller.syncMpvPlaylist()
-		return ret
 
 
 # noinspection PyArgumentList
@@ -48,8 +33,8 @@ def buildUrlForSong(song):
 	else:
 		baseurl = '/rest/stream?f=json&v=1.15.0&c='
 	return config.fqdn + baseurl + \
-	       config.appname + '&u=' + config.username + '&s=' + config.salt + \
-	       '&t=' + config.token + '&id=' + song['id']
+		   config.appname + '&u=' + config.username + '&s=' + config.salt + \
+		   '&t=' + config.token + '&id=' + song['id']
 
 
 class playbackController(QObject):
@@ -58,12 +43,14 @@ class playbackController(QObject):
 	idleUpdate = pyqtSignal(bool)
 	seeked = pyqtSignal(int)
 	volumeSet = pyqtSignal(int)
-	
+
+	_handleMpvEvent = pyqtSignal(object)
+
 	def __init__(self):
 		super(playbackController, self).__init__()
 		self.playQueueModel = playQueueModel(self)
 		self.songLoaderThreads = QThreadPool()
-		
+
 		self.player = mpv.MPV(log_handler=my_log, loglevel='warn')
 		self.player['prefetch-playlist'] = True
 		self.player['gapless-audio'] = True
@@ -71,24 +58,24 @@ class playbackController(QObject):
 		self.player['demuxer-max-back-bytes'] = 999999999
 		self.player['cache-secs'] = 99999999.0
 		self.player['demuxer-max-bytes'] = 99999999999
+		self._handleMpvEvent.connect(self._mpvEventHandler)
 		self.player.observe_property('core-idle', self.updateIdleState)
 		self.player.register_event_callback(self.mpvEventHandler)
-		
-		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
+
 		self.currentSong = None
 		self.currentSongData = None
-		
+
 		# create timer for 1-per-second playback status update
 		self.secondTimer = QTimer()
 		self.secondTimer.timeout.connect(self.everySecond)
 		self.secondTimer.start(1000)
-	
+
 	def everySecond(self):
 		if self.currentSongData and not self.player.core_idle:
 			self.updatePlaybackProgressText()
 			self.updateAudioStatLine()
 			self.updateProgressBar()
-	
+
 	def updatePlaybackProgressText(self):
 		if self.currentSongData and self.player.time_pos:
 			current = str(timedelta(seconds=int(self.player.time_pos)))
@@ -96,7 +83,7 @@ class playbackController(QObject):
 			self.updatePlayerUI.emit(current + "/" + total, 'progressText')
 		else:
 			self.updatePlayerUI.emit('00:00/00:00', 'progressText')
-	
+
 	def getCurrentPlaybackState(self):
 		if self.currentSongData and self.currentSongData['type'] == 'song':
 			# song is loaded
@@ -106,13 +93,16 @@ class playbackController(QObject):
 				return 'Playing'
 		else:
 			return 'Stopped'
-	
+
 	def setCurrentSong(self, newsong):
 		if newsong is None:
 			print('setting current song to None. Caller: {}'.format(sys._getframe().f_back.f_code.co_name))
 		if self.currentSong:
 			try:
-				self.currentSong.setIcon(QIcon())
+				if not threading.current_thread() is threading.main_thread():
+					self.setCurrentSongIcon.emit(self.currentSong)
+				else:
+					self.currentSong.setIcon(QIcon())
 			except RuntimeError:
 				pass
 		self.currentSong = newsong
@@ -121,11 +111,11 @@ class playbackController(QObject):
 			self.updatePlaybackProgressText()
 			self.currentSong.setIcon(config.icons['baseline-play-arrow.svg'])
 			self.updatePlayerUI.emit(self.playQueueModel.indexFromItem(self.currentSong), 'scrollTo')
-	
+
 	def stop(self):
 		self.setCurrentSong(None)
 		self.player.command('stop')
-	
+
 	def shufflePlayQueue(self):
 		items = []
 		currsong = self.currentSongData
@@ -139,12 +129,12 @@ class playbackController(QObject):
 		self.addSongs(items)
 		self.setCurrentSong(self.playQueueModel.item(0, 0))
 		self.syncMpvPlaylist()
-	
+
 	def clearPlayQueue(self):
 		self.playQueueModel.clear()
 		self.syncMpvPlaylist()
-		self.playQueueModel.setHorizontalHeaderLabels(['Title', 'Artist', 'Album'])
-	
+		self.playQueueModel.refreshHeaderLabels()
+
 	def addSongs(self, songs, playThisSongNow=None, afterCurrent=False):
 		"""
 		This function adds songs to the play queue, optionally playing them.
@@ -160,30 +150,13 @@ class playbackController(QObject):
 			insertAfterRow = self.playQueueModel.indexFromItem(self.currentSong).row() + 1
 		else:
 			insertAfterRow = None
-		for item in songs:
-			standardItems = []
-			for key in ['title', 'artist', 'album']:
-				try:
-					standardItems.append(QStandardItem(item[key]))
-				except KeyError:
-					standardItems.append(QStandardItem('No {}'.format(key)))
-			for standardItem in standardItems:
-				standardItem.setData(item)
-				standardItem.setDropEnabled(False)
-			if insertAfterRow:
-				self.playQueueModel.insertRow(insertAfterRow, standardItems)
-				insertAfterRow += 1
-				print('inserting row for {}'.format(item['title']))
-			else:
-				self.playQueueModel.appendRow(standardItems)
-			if playThisSongNow and playThisSongNow['id'] == item['id']:
-				currentSongStandardObject = standardItems[0]
+		currentSongStandardObject = self.playQueueModel.addSongs(songs, playThisSongNow, insertAfterRow)
 		if currentSongStandardObject:
 			self.setCurrentSong(currentSongStandardObject)
 			self.playSong(currentSongStandardObject.data())
 		else:
 			self.syncMpvPlaylist()
-	
+
 	def syncMpvPlaylist(self):
 		self.player.playlist_clear()
 		try:
@@ -199,14 +172,14 @@ class playbackController(QObject):
 				index += 1
 			else:
 				break
-	
+
 	def playSong(self, song):
 		url = buildUrlForSong(song)
 		# print('playing {}'.format(url))
 		self.player.play(url)
 		self.player['pause'] = False
 		self.syncMpvPlaylist()
-	
+
 	@pyqtSlot()
 	def playNextSongExplicitly(self):
 		if not self.currentSong:
@@ -218,7 +191,7 @@ class playbackController(QObject):
 				self.playSongFromQueue(self.playQueueModel.index(0, 0))
 			else:
 				self.player.command('stop')
-	
+
 	@pyqtSlot()
 	def playPreviousSong(self):
 		if not self.currentSong:
@@ -229,13 +202,13 @@ class playbackController(QObject):
 			self.playSong(song.data())
 		else:
 			self.player.seek(0, 'absolute')
-	
+
 	@pyqtSlot(int)
 	def setVolume(self, value):
 		self.player.volume = value
 		self.volumeSet.emit(value)
 		config.volume = value
-	
+
 	@pyqtSlot(QModelIndex)
 	def playSongFromQueue(self, index):
 		index = index.siblingAtColumn(0)
@@ -243,7 +216,7 @@ class playbackController(QObject):
 		print('playing {} from queue click'.format(song.data()['title']))
 		self.setCurrentSong(song)
 		self.playSong(song.data())
-	
+
 	def getPreviousSong(self):
 		try:
 			currentindex = self.playQueueModel.indexFromItem(self.currentSong)
@@ -254,7 +227,7 @@ class playbackController(QObject):
 			return self.playQueueModel.item(currentindex.row() - 1, 0)
 		except AttributeError:
 			return None
-	
+
 	def getNextSong(self):
 		try:
 			currentindex = self.playQueueModel.indexFromItem(self.currentSong)
@@ -267,7 +240,7 @@ class playbackController(QObject):
 		except AttributeError:
 			print('Unable to get index for next song')
 			return None
-	
+
 	def updateProgressBar(self):
 		try:
 			total = self.currentSongData['duration']
@@ -281,14 +254,20 @@ class playbackController(QObject):
 		value = self.player.time_pos
 		if value and duration:
 			self.trackProgressUpdate.emit(math.ceil(value), math.ceil(total))
-	
+
 	def mpvEventHandler(self, event):
+		if event['event_id'] in [mpv.MpvEventID.FILE_LOADED, mpv.MpvEventID.END_FILE, mpv.MpvEventID.SEEK]:
+			self._handleMpvEvent.emit(event)
+		#signal is used here to move execution back to the main thread.
+
+	@pyqtSlot(object)
+	def _mpvEventHandler(self, event):
 		if event['event_id'] == mpv.MpvEventID.FILE_LOADED:
 			self.updateAudioStatLine()
 			self.updateProgressBar()
 			if self.player.path:
 				# print('song loaded, path {}'.format(self.player.path))
-				
+
 				songId = re.search(r'&id=(?P<songId>\d+)$', self.player.path).group('songId')
 				# print('found songId {}'.format(songId))
 				self.setCurrentSongFromId(songId)
@@ -297,18 +276,14 @@ class playbackController(QObject):
 						self.currentSongData['title'], self.currentSongData['album'], self.currentSongData['artist'],
 						timedelta(seconds=self.currentSongData['duration']), self.currentSongData['id']
 					))
-					self.updatePlayerUI.emit(self.currentSongData, 'newCurrentSong')
-					self.updatePlayerUI.emit(self.currentSongData['coverArt'], 'playingAlbumArt')
-				else:
-					self.updatePlayerUI.emit('Not Playing', 'title')
-					self.updatePlayerUI.emit('No Artist', 'artist')
+				self.updatePlayerUI.emit(self.currentSongData, 'newCurrentSong')
 			self.updatePlaybackProgressText()
 		elif event['event_id'] == mpv.MpvEventID.END_FILE:
 			self.mpvFileEnded(event)
 		elif event['event_id'] == mpv.MpvEventID.SEEK:
 			print(event)
 			self.seeked.emit(self.player.time_pos)
-	
+
 	def updateAudioStatLine(self):
 		audioOutParams = {}
 		trackList = {}
@@ -329,13 +304,13 @@ class playbackController(QObject):
 			ret += '~' + str(int(self.player.audio_bitrate / 1000)) + 'kbps | '
 		if trackList and 'demux-samplerate' in trackList:
 			ret += str(trackList['demux-samplerate']) + 'hz -> '
-		
+
 		if audioOutParams and 'samplerate' in audioOutParams:
 			ret += str(audioOutParams['samplerate']) + 'hz | '
 		if params and 'hr-channels' in params:
 			ret += str(params['hr-channels']) + ' | '
 		self.updatePlayerUI.emit(ret, 'statusBar')
-	
+
 	def mpvFileEnded(self, event):
 		# print(event)
 		# repeat current song when on repeat 1 mode
@@ -350,7 +325,7 @@ class playbackController(QObject):
 			self.updatePlayerUI.emit('No Artist', 'artist')
 			self.updatePlayerUI.emit(0, 'progress')
 			self.updatePlayerUI.emit(100, 'total')
-	
+
 	def setCurrentSongFromId(self, songId):
 		songId = int(songId)
 		if self.currentSongData:
@@ -377,7 +352,7 @@ class playbackController(QObject):
 				self.setCurrentSong(self.playQueueModel.item(n, 0))
 				return
 		print('WARNING: unable to find song in queue :(')
-	
+
 	@pyqtSlot(int)
 	def setTrackProgress(self, position):
 		if position < 0:
@@ -394,10 +369,10 @@ class playbackController(QObject):
 			print('refusing to seek, file not sufficiently loaded')
 		except SystemError:
 			pass
-	
+
 	def updateIdleState(self, _name, value):
 		self.idleUpdate.emit(value)
-	
+
 	@pyqtSlot(bool)
 	@pyqtSlot()
 	def playPause(self):
@@ -405,7 +380,7 @@ class playbackController(QObject):
 			self.player['pause'] = False
 		else:
 			self.player['pause'] = True
-	
+
 	@pyqtSlot(str)
 	def playbackControl(self, playbackChangeType):
 		if playbackChangeType == 'playPause':
@@ -414,7 +389,7 @@ class playbackController(QObject):
 			self.playNextSongExplicitly()
 		elif playbackChangeType == "prevSong":
 			self.playPreviousSong()
-	
+
 	def removeFromQueue(self, ids):
 		print('removing {} from play queue'.format(ids))
 		removeRowIds = []
