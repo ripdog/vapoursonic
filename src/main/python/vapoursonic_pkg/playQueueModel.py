@@ -18,7 +18,6 @@ class playQueueModel(QStandardItemModel):
 	def refreshHeaderLabels(self):
 		self.setHorizontalHeaderLabels(list(self.headerMapping))
 
-
 	# commented because drag and drop doesnt work well
 	# def dropMimeData(self, data, action, row, col, parent):
 	# 	"""
@@ -42,7 +41,7 @@ class playQueueModel(QStandardItemModel):
 				try:
 					standardItems.append(songItem(str(item[key]), item))
 				except KeyError:
-					standardItems.append(songItem('No {}'.format(key), item))
+					standardItems.append(songItem('Unk. {}'.format(key), item))
 			if afterRow:
 				self.insertRow(afterRow, standardItems)
 				afterRow += 1
@@ -54,9 +53,17 @@ class playQueueModel(QStandardItemModel):
 		if currentSongStandardObject:
 			return currentSongStandardObject
 
+
 class songItem(QStandardItem):
 	def __init__(self, string, data):
 		super(songItem, self).__init__(string)
 		assert data['type'] == 'song'
 		self.setData(data)
 		self.setDropEnabled(False)
+
+	def __str__(self):
+		if type(self.data()) == dict:
+			data = self.data()
+			return f"songItem Title: {data['title']}, " \
+				   f"Album: {data['album']}, " \
+				   f"Artist: {data['artist']}"

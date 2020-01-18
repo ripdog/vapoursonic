@@ -225,6 +225,8 @@ class MainWindow(QMainWindow):
 		self.ui.toggleFollowPlayedTrackButton.setIcon(config.icons['baseline-my-location.svg'])
 		self.ui.volumeSliderLabel.setPixmap(config.icons['baseline-volume-up.svg'].pixmap(QSize(32, 32)))
 		self.ui.clearPlaylistButton.setIcon(config.icons['baseline-delete-outline.svg'])
+		self.ui.moveSongsDownButton.setIcon(config.icons['baseline-keyboard-arrow-down.svg'])
+		self.ui.moveSongsUpButton.setIcon(config.icons['baseline-keyboard-arrow-up.svg'])
 		self.setIconForRepeatButton()
 
 	def populateLeftPanel(self):
@@ -319,6 +321,9 @@ class MainWindow(QMainWindow):
 		self.ui.clearPlaylistButton.clicked.connect(self.playbackController.clearPlayQueue)
 		self.ui.playingAlbumArt.mouseReleaseEvent = self.displayFullAlbumArtForPlaying
 
+		self.ui.moveSongsDownButton.clicked.connect(lambda: self.ui.playQueueList.moveSongs(False))
+		self.ui.moveSongsUpButton.clicked.connect(lambda: self.ui.playQueueList.moveSongs(True))
+
 		self.short1 = QShortcut(Qt.Key_Delete, self.ui.playQueueList, context=Qt.WidgetShortcut,
 								activated=self.playQueueActions[1].removeFromQueue)
 		self.short2 = QShortcut(Qt.Key_Enter, self.ui.playQueueList, context=Qt.WidgetShortcut,
@@ -362,8 +367,9 @@ class MainWindow(QMainWindow):
 		if config.playQueueState['queueServer'] and \
 				config.playQueueState['queueServer'] == config.username + "@" + config.domain:
 			queue = config.playQueueState['queue']
-			self.playbackController.addSongs(queue, queue[config.playQueueState['currentIndex']])
-			self.playbackController.playPause()
+			if len(queue) > 0 and config.playQueueState['currentIndex'] < len(queue):
+				self.playbackController.addSongs(queue, queue[config.playQueueState['currentIndex']])
+				self.playbackController.playPause()
 
 	def initializeLinuxIntegration(self):
 		from vapoursonic_pkg import linuxIntegration

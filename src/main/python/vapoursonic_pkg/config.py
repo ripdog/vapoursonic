@@ -50,6 +50,8 @@ class configManager():
 					 'baseline-remove-circle-outline.svg',
 					 'baseline-delete-outline.svg',
 					 'baseline-close-white.svg',
+					 'baseline-keyboard-arrow-up.svg',
+					 'baseline-keyboard-arrow-down.svg',
 					 ]:
 			self.icons[item] = self.loadIcon(item)
 		try:
@@ -95,8 +97,10 @@ class configManager():
 		saveme = {}
 		for item in self.fallbackConfig.keys():
 			saveme[item] = getattr(self, item)
-
-		index = playbackController.playQueueModel.indexFromItem(playbackController.currentSong).row()
+		try:
+			index = playbackController.playQueueModel.indexFromItem(playbackController.currentSong).row()
+		except RuntimeError:
+			index = 0
 		queue = [playbackController.playQueueModel.item(i, 0).data() for i in
 				 range(0, playbackController.playQueueModel.rowCount())]
 		saveme['playQueueState'] = {

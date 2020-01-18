@@ -749,6 +749,26 @@
                </widget>
               </item>
               <item>
+               <widget class="QToolButton" name="moveSongsUpButton">
+                <property name="toolTip">
+                 <string>Move the selected songs in the play queue up.</string>
+                </property>
+                <property name="text">
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="moveSongsDownButton">
+                <property name="toolTip">
+                 <string>Move the selected songs in the play queue down.</string>
+                </property>
+                <property name="text">
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QLabel" name="volumeSliderLabel">
                 <property name="text">
                  <string>Volume</string>
