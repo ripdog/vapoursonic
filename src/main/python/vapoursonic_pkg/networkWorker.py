@@ -1,6 +1,6 @@
 from urllib.error import URLError
 
-from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal, QTimer
 from libsonic import Connection, AuthError, CredentialError, VersionError, ParameterError, SonicError, LicenseError, \
 	DataNotFoundError
 
@@ -202,5 +202,30 @@ class networkWorker(QObject):
 			self.connection.deletePlaylist(playlist['id'])
 			self.showMessageBox.emit('Deleted playlist {}.'.format(playlist['name']))
 			self.getPlaylists()
+		except errors as e:
+			self.handleErr(e)
+
+	@pyqtSlot()
+	def startScanOnServer(self):
+		try:
+			self.connection.startScan()
+			self.showMessageBox.emit('Beginning music scan on server.')
+			self.scanStatusTimer = QTimer()
+			self.scanStatusTimer.setSingleShot(True)
+			self.scanStatusTimer.setInterval(1000)
+			self.scanStatusTimer.timeout.connect(self.reportScanStatus)
+			self.scanStatusTimer.start()
+		except errors as e:
+			self.handleErr(e)
+
+	@pyqtSlot()
+	def reportScanStatus(self):
+		try:
+			data = self.connection.getScanStatus()
+			if data['scanStatus']['scanning']:
+				self.showMessageBox.emit(f'Server is scanning files: {data["scanStatus"]["count"]} done.')
+				self.scanStatusTimer.start()
+			else:
+				self.showMessageBox.emit(f'Server is done scanning files.')
 		except errors as e:
 			self.handleErr(e)

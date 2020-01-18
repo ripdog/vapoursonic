@@ -976,7 +976,14 @@
     <addaction name="actionSettings"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuUtilities">
+    <property name="title">
+     <string>Utilities</string>
+    </property>
+    <addaction name="actionRescan_Songs_on_Server"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuUtilities"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
@@ -987,6 +994,11 @@
   <action name="actionSettings">
    <property name="text">
     <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionRescan_Songs_on_Server">
+   <property name="text">
+    <string>Rescan Songs on Server</string>
    </property>
   </action>
  </widget>

@@ -150,7 +150,7 @@ description = "A python wrapper library for the Subsonic REST API.  http://subso
 name = "py-sonic"
 optional = false
 python-versions = ">=3"
-version = "0.7.6"
+version = "0.7.7"
 
 [[package]]
 category = "main"
@@ -316,7 +316,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "ea6a2a2cb03484ba581295898422eb078aba6259c83e1519f714e6e91cea536b"
+content-hash = "01a580b4e06b3e4577517f3afe92dc3029033183360c23fb19f34d29283c4d6b"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -374,7 +374,7 @@ py = [
     {file = "py-1.8.1.tar.gz", hash = "sha256:5e27081401262157467ad6e7f851b7aa402c5852dbcb3dae06768434de5752aa"},
 ]
 py-sonic = [
-    {file = "py-sonic-0.7.6.tar.gz", hash = "sha256:9c8832de66515ef2cc4a359b3ee129317cdfc511dcf04ea6fbfbb480d18de031"},
+    {file = "py-sonic-0.7.7.tar.gz", hash = "sha256:4cea42a2b0dc2ed0fd8568d6bf0509cfa2675a8b1c347ce9364a00881ebc0272"},
 ]
 pyinstaller = [
     {file = "PyInstaller-3.5.tar.gz", hash = "sha256:ee7504022d1332a3324250faf2135ea56ac71fdb6309cff8cd235de26b1d0a96"},

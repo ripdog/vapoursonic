@@ -384,6 +384,8 @@ class Ui_vapoursonic(object):
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
+        self.menuUtilities = QtWidgets.QMenu(self.menubar)
+        self.menuUtilities.setObjectName("menuUtilities")
         vapoursonic.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(vapoursonic)
         self.statusbar.setObjectName("statusbar")
@@ -392,9 +394,13 @@ class Ui_vapoursonic(object):
         self.actionExit.setObjectName("actionExit")
         self.actionSettings = QtWidgets.QAction(vapoursonic)
         self.actionSettings.setObjectName("actionSettings")
+        self.actionRescan_Songs_on_Server = QtWidgets.QAction(vapoursonic)
+        self.actionRescan_Songs_on_Server.setObjectName("actionRescan_Songs_on_Server")
         self.menuFile.addAction(self.actionSettings)
         self.menuFile.addAction(self.actionExit)
+        self.menuUtilities.addAction(self.actionRescan_Songs_on_Server)
         self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuUtilities.menuAction())
 
         self.retranslateUi(vapoursonic)
         self.stackedWidget.setCurrentIndex(1)
@@ -480,7 +486,9 @@ class Ui_vapoursonic(object):
         self.shufflePlayqueueButton.setText(_translate("vapoursonic", "..."))
         self.clearPlaylistButton.setToolTip(_translate("vapoursonic", "Clear the play queue."))
         self.clearPlaylistButton.setText(_translate("vapoursonic", "..."))
+        self.moveSongsUpButton.setToolTip(_translate("vapoursonic", "Move the selected songs in the play queue up."))
         self.moveSongsUpButton.setText(_translate("vapoursonic", "..."))
+        self.moveSongsDownButton.setToolTip(_translate("vapoursonic", "Move the selected songs in the play queue down."))
         self.moveSongsDownButton.setText(_translate("vapoursonic", "..."))
         self.volumeSliderLabel.setText(_translate("vapoursonic", "Volume"))
         self.playingAlbumArt.setText(_translate("vapoursonic", "playingAlbumArt"))
@@ -491,8 +499,10 @@ class Ui_vapoursonic(object):
         self.playPause.setText(_translate("vapoursonic", "..."))
         self.nextTrack.setText(_translate("vapoursonic", "..."))
         self.menuFile.setTitle(_translate("vapoursonic", "File"))
+        self.menuUtilities.setTitle(_translate("vapoursonic", "Utilities"))
         self.actionExit.setText(_translate("vapoursonic", "Exit"))
         self.actionSettings.setText(_translate("vapoursonic", "Settings"))
+        self.actionRescan_Songs_on_Server.setText(_translate("vapoursonic", "Rescan Songs on Server"))
 from vapoursonic_pkg.widgets.marqueeLabel import marqueeLabel
 from vapoursonic_pkg.widgets.playqueueview import PlayQueueView
 from vapoursonic_pkg.widgets.trackProgressSlider import trackProgressSlider

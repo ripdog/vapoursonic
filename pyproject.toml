@@ -6,7 +6,7 @@ authors = ["ripdog"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-py-sonic = "^0.7.6"
+py-sonic = "0.7.7"
 pyyaml = "^5.1"
 python-mpv = "^0.4.5"
 wheel = "^0.33.6"

@@ -128,6 +128,7 @@ class MainWindow(QMainWindow):
 		self.signals.loadRootMusicFolder.connect(self.networkWorker.loadRootMusicFolders)
 		self.networkWorker.returnRootMusicFolders.connect(self.receiveRootMusicFolders)
 		self.signals.deletePlaylist.connect(self.networkWorker.deletePlaylist)
+		self.ui.menubar.hide()
 		self.currentAlbum = None
 		self.albumArtLoaderThreads = QThreadPool()
 		self.albumListState = 'home'
@@ -228,6 +229,10 @@ class MainWindow(QMainWindow):
 		self.ui.moveSongsDownButton.setIcon(config.icons['baseline-keyboard-arrow-down.svg'])
 		self.ui.moveSongsUpButton.setIcon(config.icons['baseline-keyboard-arrow-up.svg'])
 		self.setIconForRepeatButton()
+
+	def populateMenuBar(self):
+		self.ui.menubar.show()
+		self.ui.actionRescan_Songs_on_Server.triggered.connect(self.networkWorker.startScanOnServer)
 
 	def populateLeftPanel(self):
 		# Populate Left Panel
@@ -380,6 +385,8 @@ class MainWindow(QMainWindow):
 
 		self.populateIcons()
 
+		self.populateMenuBar()
+
 		self.populateLeftPanel()
 
 		self.populateRightPanel()
@@ -387,6 +394,8 @@ class MainWindow(QMainWindow):
 		self.populatePlayQueue()
 
 		if sys.platform == 'win32':
+			# Handles to the windows taskbar button are not possible to make until the window is visible.
+			# A simple one-shot timer will only execute once the window init is finished and the event loop is idle.
 			timer = QTimer(self)
 			timer.timeout.connect(lambda: self.initializeWindowsIntegration())
 			timer.setSingleShot(True)
