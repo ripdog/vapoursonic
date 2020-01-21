@@ -18,6 +18,10 @@ class playQueueModel(QStandardItemModel):
 	def refreshHeaderLabels(self):
 		self.setHorizontalHeaderLabels(list(self.headerMapping))
 
+	def clear(self) -> None:
+		super(playQueueModel, self).clear()
+		self.refreshHeaderLabels()
+
 	# commented because drag and drop doesnt work well
 	# def dropMimeData(self, data, action, row, col, parent):
 	# 	"""

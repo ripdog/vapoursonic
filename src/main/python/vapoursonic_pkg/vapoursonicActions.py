@@ -24,7 +24,7 @@ def addSongs(focusedList, parent, afterCurrent):
 			parent.signals.loadAlbumWithId.emit(item['id'], {'display': False,
 															 'afterCurrent': afterCurrent})
 	if len(songs) > 0:
-		parent.playbackController.addSongs(songs, afterCurrent=afterCurrent)
+		parent.playbackController.addSongs(songs, parent.playQueueView.model(), afterCurrent=afterCurrent)
 
 
 class playLastAction(QAction):
@@ -65,12 +65,12 @@ class addToPlaylistAction(QAction):
 				addUs.append(item)
 		self.parent().signals.addSongsToPlaylist.emit(self.playlist['id'], addUs)
 
+
 class addToNewPlaylistAction(QAction):
 	def __init__(self, parent, focusedList):
 		super(addToNewPlaylistAction, self).__init__('New Playlist...', parent)
 		self.focusedList = focusedList
 		self.triggered.connect(self.addToNewPlaylist)
-
 
 	def addToNewPlaylist(self):
 		items = getItemsFromList(self.focusedList)
@@ -126,6 +126,7 @@ class removeFromQueue(QAction):
 				ids.append(item['id'])
 			self.parent().playbackController.removeFromQueue(ids)
 
+
 class deletePlaylistAction(QAction):
 	def __init__(self, parent, focusedList):
 		super(deletePlaylistAction, self).__init__('Delete playlist', parent)
@@ -142,6 +143,7 @@ class deletePlaylistAction(QAction):
 			lists = getItemsFromList(self.focusedList)
 			if lists[0]['type'] == 'playlist':
 				self.parent().signals.deletePlaylist.emit(lists[0])
+
 
 class copyDetailsMenu(QAction):
 	def __init__(self, parent, focusedList):
@@ -160,4 +162,4 @@ class copyDetailsMenu(QAction):
 				text = f'Title: {item["title"]}, Artist: {item["artist"]},' \
 					   f' Album: {item["album"]}, Id: {item["id"]}'
 		self.clipboard.setText(text)
-		# print(f'copy data triggered: {action.data()}')
+	# print(f'copy data triggered: {action.data()}')

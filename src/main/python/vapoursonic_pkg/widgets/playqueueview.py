@@ -1,7 +1,7 @@
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, QItemSelectionModel
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QTreeView, QMenu, QHeaderView
+from PyQt5.QtWidgets import QTreeView, QMenu, QHeaderView, QAbstractItemView
 
 
 class PlayQueueView(QTreeView):
@@ -11,6 +11,9 @@ class PlayQueueView(QTreeView):
 		self.customContextMenuRequested.connect(self.playQueueMenu)
 		self.setIndentation(0)
 		self.setAlternatingRowColors(True)
+		self.setEditTriggers(QAbstractItemView.NoEditTriggers) # no editing possible
+		self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+		self.setSelectionBehavior(QAbstractItemView.SelectRows)
 
 	def showEvent(self, a0: QtGui.QShowEvent) -> None:
 		super(PlayQueueView, self).showEvent(a0)
@@ -70,7 +73,7 @@ class PlayQueueView(QTreeView):
 	def playQueueMenu(self, position):
 		if len(self.selectedIndexes()) > 0:
 			menu = QMenu()
-			for item in self.window().playQueueActions:
+			for item in self.actionsObjects:
 				try:
 					menu.addAction(item)
 				except TypeError:

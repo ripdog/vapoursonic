@@ -25,8 +25,7 @@ class configManager():
 		self.appContext = ApplicationContext()
 		self.icons = {}
 
-		for item in ['baseline-play-arrow.svg',
-					 'baseline-pause.svg',
+		for item in ['baseline-pause.svg',
 					 'baseline-skip-next.svg',
 					 'baseline-skip-previous.svg',
 					 'baseline-stop.svg',
@@ -52,6 +51,7 @@ class configManager():
 					 'baseline-close-white.svg',
 					 'baseline-keyboard-arrow-up.svg',
 					 'baseline-keyboard-arrow-down.svg',
+					 'baseline-add.svg',
 					 ]:
 			self.icons[item] = self.loadIcon(item)
 		try:

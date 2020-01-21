@@ -682,18 +682,12 @@
           <widget class="QWidget" name="horizontalLayoutWidget">
            <layout class="QHBoxLayout" name="playQueueListLayout">
             <item>
-             <widget class="PlayQueueView" name="playQueueList">
+             <widget class="playQueueTabWidget" name="playQueueTabView" native="true">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
-              </property>
-              <property name="editTriggers">
-               <set>QAbstractItemView::NoEditTriggers</set>
-              </property>
-              <property name="selectionMode">
-               <enum>QAbstractItemView::ExtendedSelection</enum>
               </property>
              </widget>
             </item>
@@ -1004,11 +998,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlayQueueView</class>
-   <extends>QTreeView</extends>
-   <header>vapoursonic_pkg/widgets/playqueueview.h</header>
-  </customwidget>
-  <customwidget>
    <class>trackProgressSlider</class>
    <extends>QSlider</extends>
    <header>vapoursonic_pkg/widgets/trackProgressSlider.h</header>
@@ -1017,6 +1006,12 @@
    <class>marqueeLabel</class>
    <extends>QLabel</extends>
    <header>vapoursonic_pkg/widgets/marqueeLabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>playQueueTabWidget</class>
+   <extends>QWidget</extends>
+   <header>vapoursonic_pkg/widgets/playQueueTabWidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -1031,7 +1026,6 @@
   <tabstop>albumListViewNextPage</tabstop>
   <tabstop>albumTreeList</tabstop>
   <tabstop>albumTrackList</tabstop>
-  <tabstop>playQueueList</tabstop>
   <tabstop>toggleFollowPlayedTrackButton</tabstop>
   <tabstop>repeatPlayQueueButton</tabstop>
   <tabstop>shufflePlayqueueButton</tabstop>

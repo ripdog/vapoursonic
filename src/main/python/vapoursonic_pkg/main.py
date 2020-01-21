@@ -5,19 +5,21 @@ from datetime import timedelta
 
 from PyQt5.QtCore import QThread, pyqtSlot, QModelIndex, pyqtSignal, QObject, QSize, QThreadPool, \
 	Qt, QItemSelectionModel, QTimer
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QGuiApplication, QIntValidator, QCursor
-from PyQt5.QtWidgets import QMainWindow, QMenu, QStyle, QAbstractItemView, QShortcut, QMessageBox, QLabel
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QImage, QIntValidator, QCursor, \
+	QKeySequence
+from PyQt5.QtWidgets import QMainWindow, QMenu, QAbstractItemView, QShortcut, QMessageBox
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
-from vapoursonic_pkg.widgets.messagePopup import toastMessageDisplay
-from vapoursonic_pkg.config import config
+from vapoursonic_pkg import vapoursonicActions
 from vapoursonic_pkg.albumArtLoader import albumArtLoader
+from vapoursonic_pkg.config import config
 from vapoursonic_pkg.networkWorker import networkWorker
 from vapoursonic_pkg.playbackController import playbackController
-from vapoursonic_pkg.widgets.ui_mainwindow import Ui_vapoursonic
-from vapoursonic_pkg import vapoursonicActions
 from vapoursonic_pkg.widgets import settingsPanel
 from vapoursonic_pkg.widgets.albumArtViewer import albumArtViewer
+from vapoursonic_pkg.widgets.messagePopup import toastMessageDisplay
+from vapoursonic_pkg.widgets.ui_mainwindow import Ui_vapoursonic
+
 
 class MainWindowSignals(QObject):
 	loadAlbumsOfType = pyqtSignal(str, int)
@@ -146,6 +148,7 @@ class MainWindow(QMainWindow):
 		}
 		self.currentPage = 0
 		self.albumArtCache = {}
+		self.playQueueView = None
 		if config.autoConnect:
 			self.ui.connectButton.click()
 
@@ -184,8 +187,6 @@ class MainWindow(QMainWindow):
 		else:
 			self.handleError(
 				'Unable to connect to your server. Please check your domain and credentials and try again.')
-
-	# should slap an error somewhere lol
 
 	def setIconForRepeatButton(self):
 		if config.repeatList == "1":
@@ -276,10 +277,6 @@ class MainWindow(QMainWindow):
 			'addToPlaylist': [vapoursonicActions.addToPlaylistMenu(self, self.ui.albumTrackList)],
 			'itemDetails': [vapoursonicActions.copyDetailsMenu(self, self.ui.albumTrackList)]
 		}
-		self.playQueueActions = [vapoursonicActions.goToAlbumAction(self, self.ui.playQueueList),
-								 vapoursonicActions.removeFromQueue(self, self.ui.playQueueList),
-								 vapoursonicActions.addToPlaylistMenu(self, self.ui.playQueueList),
-								 vapoursonicActions.copyDetailsMenu(self, self.ui.playQueueList)]
 
 	def populateRightPanel(self):
 		# populate right panel
@@ -296,13 +293,27 @@ class MainWindow(QMainWindow):
 		self.ui.selectedAlbumArt.mouseReleaseEvent = self.displayFullAlbumArtForBrowsing
 		self.refreshActions()
 
+	def createPlayQueue(self):
+		view, model = self.ui.playQueueTabView.createPlayQueue()
+		try:
+			view.doubleClicked.connect(self.playbackController.playSongFromQueue)
+		except AttributeError:
+			# this is the first tab being added
+			pass
+
+		self.playQueueView = view
+
+	def queueViewChanged(self, view):
+		self.playQueueView = view
+
 	# noinspection PyArgumentList
 	def populatePlayQueue(self):
 		# define playbackController and connect it up
-		self.playbackController = playbackController()
+		self.ui.playQueueTabView.viewChanged.connect(self.queueViewChanged)
+		self.createPlayQueue()
+		self.playbackController = playbackController(self.playQueueView.model())
+		self.playbackController.currentPlayingModelChanged.connect(self.ui.playQueueTabView.currentPlayingModelChanged)
 		self.playbackController.volumeSet.connect(lambda vol: self.ui.volumeSlider.setValue(vol))
-		self.ui.playQueueList.setModel(self.playbackController.playQueueModel)
-		self.ui.playQueueList.doubleClicked.connect(self.playbackController.playSongFromQueue)
 		self.playbackController.updatePlayerUI.connect(self.updatePlayerUI)
 		self.playbackController.idleUpdate.connect(self.idleUpdate)
 		self.signals.playbackControl.connect(self.playbackController.playbackControl)
@@ -319,30 +330,34 @@ class MainWindow(QMainWindow):
 		self.sliderBeingDragged = False
 		self.ui.toggleFollowPlayedTrackButton.setChecked(config.followPlaybackInQueue)
 		self.ui.toggleFollowPlayedTrackButton.clicked.connect(self.updateFollowPlayedTrack)
-		self.ui.shufflePlayqueueButton.clicked.connect(self.playbackController.shufflePlayQueue)
+		self.ui.shufflePlayqueueButton.clicked.connect(
+			lambda: self.playbackController.shufflePlayQueue(self.playQueueView.model()))
 		self.ui.volumeSlider.valueChanged.connect(self.playbackController.setVolume)
 		self.ui.volumeSlider.setValue(config.volume)
 		self.ui.repeatPlayQueueButton.clicked.connect(self.changeRepeatState)
-		self.ui.clearPlaylistButton.clicked.connect(self.playbackController.clearPlayQueue)
+		self.ui.clearPlaylistButton.clicked.connect(
+			lambda: self.playbackController.clearPlayQueue(self.playQueueView.model()))
 		self.ui.playingAlbumArt.mouseReleaseEvent = self.displayFullAlbumArtForPlaying
 
-		self.ui.moveSongsDownButton.clicked.connect(lambda: self.ui.playQueueList.moveSongs(False))
-		self.ui.moveSongsUpButton.clicked.connect(lambda: self.ui.playQueueList.moveSongs(True))
+		self.ui.moveSongsDownButton.clicked.connect(lambda: self.playQueueView.moveSongs(False))
+		self.ui.moveSongsUpButton.clicked.connect(lambda: self.playQueueView.moveSongs(True))
 
-		self.short1 = QShortcut(Qt.Key_Delete, self.ui.playQueueList, context=Qt.WidgetShortcut,
-								activated=self.playQueueActions[1].removeFromQueue)
-		self.short2 = QShortcut(Qt.Key_Enter, self.ui.playQueueList, context=Qt.WidgetShortcut,
-								activated=self.ui.playQueueList.playSelectedSongFromQueue)
-		self.short3 = QShortcut(Qt.Key_Return, self.ui.playQueueList, context=Qt.WidgetShortcut,
-								activated=self.ui.playQueueList.playSelectedSongFromQueue)
-		self.short4 = QShortcut(Qt.Key_Space, self.ui.playQueueList, context=Qt.ApplicationShortcut,
-								activated=self.playbackController.playPause)
+		self.short1 = QShortcut(QKeySequence.Delete, self.playQueueView, context=Qt.ApplicationShortcut,
+								activated=self.test)  # self.playQueueActions[1].removeFromQueue)
+		self.short1.activated.connect(self.test)
+		self.short2 = QShortcut(Qt.Key_Enter, self.playQueueView, context=Qt.WidgetShortcut,
+								activated=self.playQueueView.playSelectedSongFromQueue)
+		self.short3 = QShortcut(Qt.Key_Return, self.playQueueView, context=Qt.WidgetShortcut,
+								activated=self.playQueueView.playSelectedSongFromQueue)
+		self.short4 = QShortcut(QKeySequence(Qt.Key_Space), self, context=Qt.WidgetWithChildrenShortcut)
+		self.short4.activated.connect(self.playbackController.playPause)
 
+	def test(self):
+		print('pressed!')
 
 	def initializeWindowsIntegration(self):
 		from vapoursonic_pkg import windowsIntegration
-		from PyQt5.QtWinExtras import QWinTaskbarProgress, QWinTaskbarButton, QWinThumbnailToolBar, \
-			QWinThumbnailToolButton
+		from PyQt5.QtWinExtras import QWinTaskbarProgress
 		self.keyHookThreadPool = QThreadPool()
 		self.keyHookThreadPool.setMaxThreadCount(1)
 		self.keyHook = windowsIntegration.mediaKeysHooker(self)
@@ -373,7 +388,8 @@ class MainWindow(QMainWindow):
 				config.playQueueState['queueServer'] == config.username + "@" + config.domain:
 			queue = config.playQueueState['queue']
 			if len(queue) > 0 and config.playQueueState['currentIndex'] < len(queue):
-				self.playbackController.addSongs(queue, queue[config.playQueueState['currentIndex']])
+				self.playbackController.addSongs(queue, self.playQueueView.model(),
+												 queue[config.playQueueState['currentIndex']])
 				self.playbackController.playPause()
 
 	def initializeLinuxIntegration(self):
@@ -462,10 +478,10 @@ class MainWindow(QMainWindow):
 			self.statusBar().showMessage(update)
 		elif updateType == 'scrollTo':
 			if config.followPlaybackInQueue:
-				self.ui.playQueueList.scrollTo(update, QAbstractItemView.PositionAtTop)
-				self.ui.playQueueList.selectionModel().select(update,
-															  QItemSelectionModel.ClearAndSelect |
-															  QItemSelectionModel.Rows)
+				self.playQueueView.scrollTo(update, QAbstractItemView.PositionAtTop)
+				self.playQueueView.selectionModel().select(update,
+														   QItemSelectionModel.ClearAndSelect |
+														   QItemSelectionModel.Rows)
 
 	def idleUpdate(self, paused):
 		if paused:
@@ -498,7 +514,7 @@ class MainWindow(QMainWindow):
 		data = item.data()
 		print('{} dblclicked, attempting load...'.format(text))
 		if data['type'] == 'song':
-			self.playbackController.addSongs([data])
+			self.playbackController.addSongs([data], model=self.playQueueView)
 		elif data['type'] == 'album':
 			self.signals.loadAlbumWithId.emit(data['id'], {'display': False,
 														   'afterCurrent': False,
@@ -647,7 +663,9 @@ class MainWindow(QMainWindow):
 		item = self.albumTrackListModel.itemFromIndex(index)
 		text = item.text()
 		print('{} dblclicked in track list, playing now'.format(text))
-		self.playbackController.addSongs(self.currentAlbum['song'], item.data())
+		self.playbackController.addSongs(self.currentAlbum['song'],
+										 model=self.playQueueView.model(),
+										 playThisSongNow=item.data())
 
 	def setPagableState(self, state):
 		self.ui.albumListViewNextPage.setEnabled(state)
@@ -701,18 +719,22 @@ class MainWindow(QMainWindow):
 			if songContainer['type'] == 'album':
 				if 'playNow' in addToQueue.keys() and addToQueue['playNow']:
 					self.playbackController.addSongs(songContainer['song'],
-													 songContainer['song'][0],
-													 addToQueue['afterCurrent'])
+													 model=self.playQueueView.model(),
+													 playThisSongNow=songContainer['song'][0],
+													 afterCurrent=addToQueue['afterCurrent'])
 				else:
 					self.playbackController.addSongs(songContainer['song'],
+													 model=self.playQueueView.model(),
 													 afterCurrent=addToQueue['afterCurrent'])
 			elif songContainer['type'] == 'playlist':
 				if 'playNow' in addToQueue.keys() and addToQueue['playNow']:
 					self.playbackController.addSongs(songContainer['playlist']['entry'],
-													 songContainer['playlist']['entry'][0],
-													 addToQueue['afterCurrent'])
+													 model=self.playQueueView.model(),
+													 playThisSongNow=songContainer['playlist']['entry'][0],
+													 afterCurrent=addToQueue['afterCurrent'])
 				else:
 					self.playbackController.addSongs(songContainer['playlist']['entry'],
+													 model=self.playQueueView.model(),
 													 afterCurrent=songContainer['afterCurrent'])
 			return
 		if songContainer['type'] == 'album':

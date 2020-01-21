@@ -155,7 +155,7 @@ class mprisPlayer(QDBusAbstractAdaptor):
 	
 	@Shuffle.setter
 	def Shuffle(self, _):
-		self.playbackController.shufflePlayQueue()
+		self.playbackController.shufflePlayQueue(self.playbackController.playQueueModel)
 	
 	@pyqtProperty(float)
 	def MinimumRate(self):

@@ -43,12 +43,13 @@ class playbackController(QObject):
 	idleUpdate = pyqtSignal(bool)
 	seeked = pyqtSignal(int)
 	volumeSet = pyqtSignal(int)
+	currentPlayingModelChanged = pyqtSignal(object)
 
 	_handleMpvEvent = pyqtSignal(object)
 
-	def __init__(self):
+	def __init__(self, defaultModel):
 		super(playbackController, self).__init__()
-		self.playQueueModel = playQueueModel(self)
+		self.playQueueModel = defaultModel
 		self.songLoaderThreads = QThreadPool()
 
 		self.player = mpv.MPV(log_handler=my_log, loglevel='warn')
@@ -116,41 +117,55 @@ class playbackController(QObject):
 		self.setCurrentSong(None)
 		self.player.command('stop')
 
-	def shufflePlayQueue(self):
+	def shufflePlayQueue(self, model):
 		items = []
-		currsong = self.currentSongData
-		for item in range(self.playQueueModel.rowCount()):
-			item = self.playQueueModel.item(item, 0).data()
-			if not item['id'] == self.currentSongData['id']:
-				items.append(item)
-		random.shuffle(items)
-		items.insert(0, currsong)
-		self.clearPlayQueue()
-		self.addSongs(items)
-		self.setCurrentSong(self.playQueueModel.item(0, 0))
-		self.syncMpvPlaylist()
+		if model == self.playQueueModel:
+			currsong = self.currentSongData
+			for item in range(model.rowCount()):
+				item = model.item(item, 0).data()
+				if not item['id'] == self.currentSongData['id']:
+					items.append(item)
+			random.shuffle(items)
+			items.insert(0, currsong)
+		else:
+			for item in range(model.rowCount()):
+				items.append(model.item(item, 0).data())
+			random.shuffle(items)
 
-	def clearPlayQueue(self):
-		self.playQueueModel.clear()
-		self.syncMpvPlaylist()
-		self.playQueueModel.refreshHeaderLabels()
+		self.clearPlayQueue(model)
+		self.addSongs(items, model)
+		if model == self.playQueueModel:
+			self.setCurrentSong(self.playQueueModel.item(0, 0))
+			self.syncMpvPlaylist()
 
-	def addSongs(self, songs, playThisSongNow=None, afterCurrent=False):
+	def clearPlayQueue(self, model):
+		model.clear()
+		if model == self.playQueueModel:
+			self.syncMpvPlaylist()
+			self.playQueueModel.refreshHeaderLabels()
+
+	def setPlayQueue(self, model):
+		self.playQueueModel = model
+		self.currentPlayingModelChanged.emit(model)
+
+	def addSongs(self, songs, model, playThisSongNow=None, afterCurrent=False):
 		"""
 		This function adds songs to the play queue, optionally playing them.
 		Set `songs` to a list of song dicts.
+		Set `model` to the PlayQueueModel object you want to add to.
 		To play a song after adding, set 'playThisSongNow' to a song dict.
 		Set afterCurrent to True if you want the songs appended after the currently playing song.
 		"""
 		print('adding {} songs to playqueue'.format(len(songs)))
 		currentSongStandardObject = None
 		if playThisSongNow:
-			self.clearPlayQueue()
+			self.setPlayQueue(model)
+			self.clearPlayQueue(model)
 		if afterCurrent and self.currentSong:
 			insertAfterRow = self.playQueueModel.indexFromItem(self.currentSong).row() + 1
 		else:
 			insertAfterRow = None
-		currentSongStandardObject = self.playQueueModel.addSongs(songs, playThisSongNow, insertAfterRow)
+		currentSongStandardObject = model.addSongs(songs, playThisSongNow, insertAfterRow)
 		if currentSongStandardObject:
 			self.setCurrentSong(currentSongStandardObject)
 			self.playSong(currentSongStandardObject.data())
@@ -210,7 +225,10 @@ class playbackController(QObject):
 		config.volume = value
 
 	@pyqtSlot(QModelIndex)
-	def playSongFromQueue(self, index):
+	def playSongFromQueue(self, index, model=None):
+		if not model:
+			model = self.playQueueModel
+		self.playQueueModel = model
 		index = index.siblingAtColumn(0)
 		song = self.playQueueModel.itemFromIndex(index)
 		print('playing {} from queue click'.format(song.data()['title']))
