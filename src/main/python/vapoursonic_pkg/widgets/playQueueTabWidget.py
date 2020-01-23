@@ -18,11 +18,12 @@ class playQueueTabWidget(QWidget):
 
 		self.mainLayout = QVBoxLayout()
 		self.mainLayout.setContentsMargins(0,0,0,0)
+		self.mainLayout.setSpacing(0)
 		self.tabBar = QTabBar(self)
 		self.tabBar.setExpanding(False)
+		self.tabBar.setDrawBase(False)
 		self.tabBar.currentChanged.connect(self.displayQueueByIndex)
 		self.tabBarLayout = QHBoxLayout()
-		self.tabBarLayout.setContentsMargins(0,0,3,0)
 		self.tabBarLayout.addWidget(self.tabBar)
 		self.newTabButton = QPushButton(self)
 		self.newTabButton.setIcon(config.icons['baseline-add.svg'])
