@@ -36,6 +36,7 @@ class MainWindowSignals(QObject):
 	loadRootMusicFolder = pyqtSignal()
 	addSongsToNewPlaylist = pyqtSignal(str, object)
 	deletePlaylist = pyqtSignal(object)
+	playlistCacheUpdated = pyqtSignal()
 
 
 def openAlbumTreeOrListMenu(position, focusedList, actionsDict):
@@ -310,6 +311,7 @@ class MainWindow(QMainWindow):
 	def populatePlayQueue(self):
 		# define playbackController and connect it up
 		self.ui.playQueueTabView.viewChanged.connect(self.queueViewChanged)
+		self.signals.playlistCacheUpdated.connect(self.ui.playQueueTabView.updateContextMenus)
 		self.createPlayQueue()
 		self.playbackController = playbackController(self.playQueueView.model())
 		self.playbackController.currentPlayingModelChanged.connect(self.ui.playQueueTabView.currentPlayingModelChanged)
@@ -406,7 +408,7 @@ class MainWindow(QMainWindow):
 						num += 1
 		except KeyError:
 			pass
-		if not focusIndex is None:
+		if focusIndex is not None:
 			self.ui.playQueueTabView.tabBar.setCurrentIndex(focusIndex)
 
 	def initializeLinuxIntegration(self):
@@ -542,9 +544,10 @@ class MainWindow(QMainWindow):
 														 'afterCurrent': False})
 
 	def receivePlaylists(self, playlists):
-		self.playlistCache = []
+		config.playlistCache = []
 		if 'status' in playlists.keys() and playlists['status'] == 'ok':
-			self.playlistCache = playlists['playlists']['playlist']
+			config.playlistCache = playlists['playlists']['playlist']
+			self.signals.playlistCacheUpdated.emit()
 			if self.albumListState == 'playlists':
 				self.albumTreeListModel.clear()
 				self.albumTreeListModel.setHorizontalHeaderLabels(["Playlist", 'Song Count'])
@@ -725,7 +728,7 @@ class MainWindow(QMainWindow):
 		self.ui.albumTreeList.setColumnWidth(0, 250)
 
 	def playlistFromCacheById(self, playlistId):
-		for item in self.playlistCache:
+		for item in config.playlistCache:
 			if item['id'] == playlistId:
 				return item
 		return None

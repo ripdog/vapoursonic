@@ -82,6 +82,7 @@ class configManager():
 			'useTLS': True,
 			'useCustomPort': False,
 			'customPort': 0,
+			'playlistCache': [],
 		}
 		for item in self.fallbackConfig:
 			if item in userConfig:

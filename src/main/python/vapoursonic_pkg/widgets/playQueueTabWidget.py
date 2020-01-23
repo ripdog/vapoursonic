@@ -63,6 +63,10 @@ class playQueueTabWidget(QWidget):
 			self.tabBar.setTabIcon(index, config.icons['baseline-play-arrow.svg'])
 		return view, model
 
+	def updateContextMenus(self):
+		for viewModel in self.playQueueViews:
+			self.attachActionsForQueue(viewModel[0])
+
 	def attachActionsForQueue(self, view):
 		view.actionsObjects = [vapoursonicActions.goToAlbumAction(self.window(), view),
 								 vapoursonicActions.removeFromQueue(self.window(), view),

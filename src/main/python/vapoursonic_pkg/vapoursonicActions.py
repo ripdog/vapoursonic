@@ -92,7 +92,7 @@ class addToPlaylistMenu(QMenu):
 		self.setIcon(config.icons['baseline-playlist-add.svg'])
 		self.focusedList = focusedList
 		try:
-			for playlist in self.parent().playlistCache:
+			for playlist in config.playlistCache:
 				self.addAction(addToPlaylistAction(playlist, parent, focusedList))
 			self.addAction(addToNewPlaylistAction(parent, focusedList))
 		except AttributeError:
