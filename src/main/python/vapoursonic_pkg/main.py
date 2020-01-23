@@ -384,13 +384,30 @@ class MainWindow(QMainWindow):
 		self.signals.getPlaylists.emit()
 
 	def loadPlayQueue(self):
-		if config.playQueueState['queueServer'] and \
-				config.playQueueState['queueServer'] == config.username + "@" + config.domain:
-			queue = config.playQueueState['queue']
-			if len(queue) > 0 and config.playQueueState['currentIndex'] < len(queue):
-				self.playbackController.addSongs(queue, self.playQueueView.model(),
-												 queue[config.playQueueState['currentIndex']])
-				self.playbackController.playPause()
+		focusIndex = None
+		try:
+			num = 0
+
+			for queue in config.playQueueState:
+				if queue['queueServer'] == f'{config.username}@{config.domain}':
+					songlist = queue['queue']
+					if len(songlist) > 0:
+						if not num == 0:
+							model = self.ui.playQueueTabView.createPlayQueue()[1]
+						else:
+							model = self.playQueueView.model()
+						if 'currentIndex' in queue and queue['currentIndex'] < len(songlist):
+							self.playbackController.addSongs(songlist, model,
+															 songlist[queue['currentIndex']])
+							self.playbackController.playPause()
+							focusIndex = num
+						else:
+							self.playbackController.addSongs(songlist, model)
+						num += 1
+		except KeyError:
+			pass
+		if not focusIndex is None:
+			self.ui.playQueueTabView.tabBar.setCurrentIndex(focusIndex)
 
 	def initializeLinuxIntegration(self):
 		from vapoursonic_pkg import linuxIntegration
@@ -786,7 +803,7 @@ class MainWindow(QMainWindow):
 
 	def closeEvent(self, a0):
 		print('vapoursonic closing, saving config')
-		config.save(self.playbackController)
+		config.save(self.playbackController, self.ui.playQueueTabView.playQueueViews)
 		sys.exit(0)
 
 	def startAlbumArtLoad(self, aid, artType):
@@ -843,9 +860,9 @@ class MainWindow(QMainWindow):
 
 	def displayFullAlbumArt(self, artType):
 		if artType == 'currentlyPlaying':
-			if not self.playbackController.currentSong:
+			if not self.playbackController.currentSong or not 'coverArt' in self.playbackController.currentSongData:
 				return
-			dialog = albumArtViewer(self, self.playbackController.currentSong.data()['coverArt'],
+			dialog = albumArtViewer(self, self.playbackController.currentSongData['coverArt'],
 									self.networkWorker)
 		elif artType == 'currentlyBrowsing':
 			if not self.currentAlbum:

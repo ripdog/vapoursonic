@@ -1,5 +1,6 @@
 import os
 import pathlib
+import re
 import sys
 
 import yaml
@@ -7,14 +8,14 @@ from PyQt5.QtGui import QIcon
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
 
-def getPath():
+def getPath(filename):
 	if sys.platform == 'win32':
-		path = os.path.expandvars(r'%APPDATA%\vapoursonic\config.yaml')
+		path = os.path.expandvars(r'%APPDATA%\vapoursonic\{}'.format(filename))
 	elif sys.platform == 'linux':
-		path = os.path.expanduser(r'~/.config/vapoursonic/config.yaml')
+		path = os.path.expanduser(r'~/.config/vapoursonic/{}'.format(filename))
 	else:
 		print('unsupported OS!')
-		path = os.path.abspath('config.yaml')
+		path = os.path.abspath(filename)
 	pathlib.Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
 	return path
 
@@ -55,7 +56,7 @@ class configManager():
 					 ]:
 			self.icons[item] = self.loadIcon(item)
 		try:
-			with open(getPath()) as file:
+			with open(getPath('config.yaml')) as file:
 				userConfig = yaml.full_load(file)
 		except FileNotFoundError:
 			userConfig = {}
@@ -71,10 +72,11 @@ class configManager():
 			'appname': 'vapoursonic',
 			'followPlaybackInQueue': True,
 			'repeatList': True,  # can also be "1"
-			'playQueueState': {'currentIndex': 0,
-							   'queueServer': None,  # format: username@domain
-							   'queue': []
-							   },
+			'playQueueState': [],
+			# [{'currentIndex': 0,
+			# 			   'queueServer': None,  # format: username@domain
+			# 			   'queue': []
+			# 			   }],
 			'autoConnect': False,
 			'streamTypeDownload': False,
 			'useTLS': True,
@@ -86,6 +88,15 @@ class configManager():
 				setattr(self, item, userConfig[item])
 			else:
 				setattr(self, item, self.fallbackConfig[item])
+		queueList = os.listdir(getPath(''))
+		regex = re.compile(r'queue\d+.yaml')
+		self.playQueueState = []
+		for item in queueList:
+			if regex.fullmatch(item):
+				with open(getPath(item)) as file:
+					queue = yaml.safe_load(file)
+				self.playQueueState.append(queue)
+		print(f'loaded {len(self.playQueueState)} queues')
 
 	def setVar(self, var, val):
 		if var in self.fallbackConfig.keys():
@@ -93,24 +104,32 @@ class configManager():
 		else:
 			raise AttributeError('invalid config variable name: {}'.format(var))
 
-	def save(self, playbackController):
+	def save(self, playbackController, viewModels):
+		# don't save play queue twice
+		self.playQueueState = None
 		saveme = {}
 		for item in self.fallbackConfig.keys():
 			saveme[item] = getattr(self, item)
-		try:
-			index = playbackController.playQueueModel.indexFromItem(playbackController.currentSong).row()
-		except RuntimeError:
-			index = 0
-		queue = [playbackController.playQueueModel.item(i, 0).data() for i in
-				 range(0, playbackController.playQueueModel.rowCount())]
-		saveme['playQueueState'] = {
-			'currentIndex': index,
-			'queueServer': self.username + '@' + self.domain,
-			'queue': queue
-		}
 		writeme = yaml.safe_dump(saveme)
-		with open(getPath(), 'w') as file:
+		with open(getPath('config.yaml'), 'w') as file:
 			file.write(writeme)
+		viewNo = 1
+		for viewmodel in viewModels:
+			saveme = {}
+			if viewmodel[1] == playbackController.playQueueModel:
+				try:
+					saveme['currentIndex'] = playbackController.playQueueModel.indexFromItem(
+						playbackController.currentSong).row()
+				except RuntimeError:
+					pass
+			queue = [viewmodel[1].item(i, 0).data() for i in
+					 range(0, viewmodel[1].rowCount())]
+			saveme['queueServer'] = f'{config.username}@{config.domain}'
+			saveme['queue'] = queue
+			writeme = yaml.safe_dump(saveme)
+			with open(getPath('queue{}.yaml'.format(viewNo)), 'w') as file:
+				file.write(writeme)
+			viewNo += 1
 
 	def loadIcon(self, name):
 		return QIcon(self.appContext.get_resource('icons' + os.path.sep + name))
