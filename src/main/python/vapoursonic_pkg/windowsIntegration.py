@@ -11,7 +11,7 @@ from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, Qt
 
 
 # thanks to https://gist.github.com/mdavey/6d40a89dbc15aefcc8cd
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QStyle
 from PyQt5.QtWinExtras import QWinThumbnailToolBar, QWinThumbnailToolButton, QWinTaskbarButton
 
@@ -179,11 +179,15 @@ class taskbarProgressBar(QObject):
 						self.parent().albumArtCache[artId].scaled(256, 256, Qt.KeepAspectRatio,
 																  Qt.SmoothTransformation))
 				except KeyError:
-					self.thumbnailToolBar.setIconicThumbnailPixmap(QPixmap(128, 128))
-					self.thumbnailToolBar.setIconicLivePreviewPixmap(QPixmap(128, 128))  # UNTESTED
+					emptyPixmap = QPixmap(128, 128)
+					emptyPixmap.fill(QColor(0,0,0))
+					self.thumbnailToolBar.setIconicThumbnailPixmap(emptyPixmap)
+					self.thumbnailToolBar.setIconicLivePreviewPixmap(emptyPixmap)  # UNTESTED
 			else:
-				self.thumbnailToolBar.setIconicThumbnailPixmap(QPixmap(128, 128))
-				self.thumbnailToolBar.setIconicLivePreviewPixmap(QPixmap(128, 128))  # UNTESTED
+				emptyPixmap = QPixmap(128, 128)
+				emptyPixmap.fill(QColor(0,0,0))
+				self.thumbnailToolBar.setIconicThumbnailPixmap(emptyPixmap)
+				self.thumbnailToolBar.setIconicLivePreviewPixmap(emptyPixmap)  # UNTESTED
 
 # class systemMediaTransportControls(object):
 # 	def __init__(self):
