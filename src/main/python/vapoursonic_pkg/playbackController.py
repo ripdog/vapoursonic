@@ -7,7 +7,7 @@ import threading
 from datetime import timedelta
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSlot, pyqtSignal, QModelIndex, QTimer
-from PyQt5.QtGui import QStandardItem, QIcon
+from PyQt5.QtGui import QIcon
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
 try:
@@ -19,7 +19,6 @@ except FileNotFoundError:
 
 import mpv
 from vapoursonic_pkg.config import config
-from vapoursonic_pkg.playQueueModel import playQueueModel
 
 
 def my_log(loglevel, component, message):
@@ -228,7 +227,8 @@ class playbackController(QObject):
 	def playSongFromQueue(self, index, model=None):
 		if not model:
 			model = self.playQueueModel
-		self.playQueueModel = model
+		elif model is not self.playQueueModel:
+			self.setPlayQueue(model)
 		index = index.siblingAtColumn(0)
 		song = self.playQueueModel.itemFromIndex(index)
 		print('playing {} from queue click'.format(song.data()['title']))

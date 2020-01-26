@@ -52,6 +52,7 @@ class configManager():
 					 'baseline-close-white.svg',
 					 'baseline-keyboard-arrow-up.svg',
 					 'baseline-keyboard-arrow-down.svg',
+					 'baseline-close.svg',
 					 'baseline-add.svg',
 					 ]:
 			self.icons[item] = self.loadIcon(item)

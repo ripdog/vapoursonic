@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QSize, pyqtSignal
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabBar, QHBoxLayout, QPushButton, QStackedWidget
+from PyQt5.QtGui import QIcon, QCursor
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabBar, QHBoxLayout, QPushButton, QStackedWidget, qApp
 
 from vapoursonic_pkg import vapoursonicActions
 from vapoursonic_pkg.config import config
@@ -10,6 +10,7 @@ from vapoursonic_pkg.widgets.playqueueview import PlayQueueView
 
 class playQueueTabWidget(QWidget):
 	viewChanged = pyqtSignal(PlayQueueView)
+
 	def __init__(self, parent):
 		super(playQueueTabWidget, self).__init__(parent)
 
@@ -56,11 +57,19 @@ class playQueueTabWidget(QWidget):
 		self.attachActionsForQueue(view)
 		self.playQueueViews.append((view, model))
 		index = self.tabBar.addTab(f'Queue &{self.tabBar.count() + 1}')
+
 		widgetIndex = self.stackWidget.addWidget(parentView)
 		assert index == widgetIndex
 		self.tabBar.setCurrentIndex(index)
 		if index == self.currentlyPlayingTab:
 			self.tabBar.setTabIcon(index, config.icons['baseline-play-arrow.svg'])
+		else:
+			closeButton = QPushButton()
+			closeButton.setFlat(True)
+			closeButton.tabId = index
+			closeButton.clicked.connect(lambda checked: self.closeTab(index))
+			closeButton.setIcon(config.icons['baseline-close.svg'])
+			self.tabBar.setTabButton(index, QTabBar.RightSide, closeButton)
 		return view, model
 
 	def updateContextMenus(self):
@@ -69,13 +78,36 @@ class playQueueTabWidget(QWidget):
 
 	def attachActionsForQueue(self, view):
 		view.actionsObjects = [vapoursonicActions.goToAlbumAction(self.window(), view),
-								 vapoursonicActions.removeFromQueue(self.window(), view),
-								 vapoursonicActions.addToPlaylistMenu(self.window(), view),
-								 vapoursonicActions.copyDetailsMenu(self.window(), view)]
+							   vapoursonicActions.removeFromQueue(self.window(), view),
+							   vapoursonicActions.addToPlaylistMenu(self.window(), view),
+							   vapoursonicActions.copyDetailsMenu(self.window(), view)]
 
 	def currentPlayingModelChanged(self, model):
 		self.tabBar.setTabIcon(self.currentlyPlayingTab, QIcon())
 		for i in range(0, len(self.playQueueViews)):
 			if self.playQueueViews[i][1] == model:
 				self.currentlyPlayingTab = i
+				break
+		self.refreshTabAttachments()
+
+	def refreshTabAttachments(self):
+		for i in range(0, len(self.playQueueViews)):
+			if i == self.currentlyPlayingTab:
 				self.tabBar.setTabIcon(i, config.icons['baseline-play-arrow.svg'])
+				self.tabBar.setTabButton(i, QTabBar.RightSide, None)
+			else:
+				closeButton = QPushButton()
+				closeButton.setFlat(True)
+				closeButton.tabId = i
+				closeButton.clicked.connect(lambda checked: self.closeTab(i))
+				closeButton.setIcon(config.icons['baseline-close.svg'])
+				self.tabBar.setTabButton(i, QTabBar.RightSide, closeButton)
+
+	def closeTab(self, id):
+		print()
+		id = qApp.widgetAt(QCursor.pos()).tabId
+		self.tabBar.removeTab(id)
+		self.stackWidget.removeWidget(self.stackWidget.widget(id))
+		del self.playQueueViews[id]
+		print(self.playQueueViews)
+		self.refreshTabAttachments()
