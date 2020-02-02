@@ -46,7 +46,7 @@ class playQueueModel(QStandardItemModel):
 					standardItems.append(songItem(str(item[key]), item))
 				except KeyError:
 					standardItems.append(songItem('Unk. {}'.format(key), item))
-			if afterRow:
+			if afterRow is not None:
 				self.insertRow(afterRow, standardItems)
 				afterRow += 1
 				print('inserting row for {}'.format(item['title']))

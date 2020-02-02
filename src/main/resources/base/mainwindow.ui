@@ -967,17 +967,25 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionSettings"/>
-    <addaction name="actionExit"/>
+       <addaction name="actionSettings"/>
+       <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menuUtilities">
-    <property name="title">
-     <string>Utilities</string>
-    </property>
-    <addaction name="actionRescan_Songs_on_Server"/>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuUtilities"/>
+      <widget class="QMenu" name="menuUtilities">
+          <property name="title">
+              <string>Utilities</string>
+          </property>
+          <addaction name="actionRescan_Songs_on_Server"/>
+      </widget>
+      <widget class="QMenu" name="menuHelp">
+          <property name="title">
+              <string>Help</string>
+          </property>
+          <addaction name="actionAbout_Qt"/>
+          <addaction name="actionAbout_vapoursonic"/>
+      </widget>
+      <addaction name="menuFile"/>
+      <addaction name="menuUtilities"/>
+      <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
@@ -985,16 +993,35 @@
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionSettings">
-   <property name="text">
-    <string>Settings</string>
-   </property>
-  </action>
-  <action name="actionRescan_Songs_on_Server">
-   <property name="text">
-    <string>Rescan Songs on Server</string>
-   </property>
-  </action>
+     <action name="actionSettings">
+         <property name="text">
+             <string>Settings</string>
+         </property>
+         <property name="menuRole">
+             <enum>QAction::PreferencesRole</enum>
+         </property>
+     </action>
+     <action name="actionRescan_Songs_on_Server">
+         <property name="text">
+             <string>Rescan Songs on Server</string>
+         </property>
+     </action>
+     <action name="actionAbout_Qt">
+         <property name="text">
+             <string>About Qt...</string>
+         </property>
+         <property name="menuRole">
+             <enum>QAction::AboutQtRole</enum>
+         </property>
+     </action>
+     <action name="actionAbout_vapoursonic">
+         <property name="text">
+             <string>About vapoursonic...</string>
+         </property>
+         <property name="menuRole">
+             <enum>QAction::AboutRole</enum>
+         </property>
+     </action>
  </widget>
  <customwidgets>
   <customwidget>

@@ -161,7 +161,10 @@ class playbackController(QObject):
 			self.setPlayQueue(model)
 			self.clearPlayQueue(model)
 		if afterCurrent and self.currentSong:
-			insertAfterRow = self.playQueueModel.indexFromItem(self.currentSong).row() + 1
+			if model == self.playQueueModel:
+				insertAfterRow = self.playQueueModel.indexFromItem(self.currentSong).row() + 1
+			else:
+				insertAfterRow = 0  # Add to top of non-active playlists
 		else:
 			insertAfterRow = None
 		currentSongStandardObject = model.addSongs(songs, playThisSongNow, insertAfterRow)
@@ -276,7 +279,8 @@ class playbackController(QObject):
 	def mpvEventHandler(self, event):
 		if event['event_id'] in [mpv.MpvEventID.FILE_LOADED, mpv.MpvEventID.END_FILE, mpv.MpvEventID.SEEK]:
 			self._handleMpvEvent.emit(event)
-		#signal is used here to move execution back to the main thread.
+
+	# signal is used here to move execution back to the main thread.
 
 	@pyqtSlot(object)
 	def _mpvEventHandler(self, event):
