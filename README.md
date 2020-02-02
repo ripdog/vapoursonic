@@ -11,6 +11,10 @@ _*Non HTTPS server?*_
 
 I have tried to add support for non-https airsonic servers, but my airsonic server is https-only (as yours should be) so I couldn't test this. Do file an issue if it doesn't work.
 
+Download
+--
+vapoursonic is available in source form [here](https://github.com/ripdog/vapoursonic/archive/master.zip), or as Windows builds from [here](https://github.com/ripdog/vapoursonic/releases).
+
 Help wanted!
 --
 

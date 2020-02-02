@@ -16,6 +16,7 @@ from vapoursonic_pkg.config import config
 from vapoursonic_pkg.networkWorker import networkWorker
 from vapoursonic_pkg.playbackController import playbackController
 from vapoursonic_pkg.widgets import settingsPanel
+from vapoursonic_pkg.widgets.aboutDialog import aboutDialog
 from vapoursonic_pkg.widgets.albumArtViewer import albumArtViewer
 from vapoursonic_pkg.widgets.messagePopup import toastMessageDisplay
 from vapoursonic_pkg.widgets.ui_mainwindow import Ui_vapoursonic
@@ -235,6 +236,7 @@ class MainWindow(QMainWindow):
 	def populateMenuBar(self):
 		self.ui.menubar.show()
 		self.ui.actionRescan_Songs_on_Server.triggered.connect(self.networkWorker.startScanOnServer)
+		self.ui.actionAbout_vapoursonic.triggered.connect(self.showAbout)
 
 	def populateLeftPanel(self):
 		# Populate Left Panel
@@ -878,6 +880,12 @@ class MainWindow(QMainWindow):
 		dialog.show()
 		dialog.raise_()
 		dialog.activateWindow()
+
+	def showAbout(self):
+		dialog = aboutDialog()
+		dialog.show()
+		dialog.raise_()
+		dialog.exec()
 
 
 def buildItemForSong(song, fields):
